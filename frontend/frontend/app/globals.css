@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+/* Твои кастомные стили для дизайна смартфона */
+.rounded-4xl {
+    border-radius: 3.5rem;
+}
+
+.phone-top {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 3rem;
+    z-index: 10;
+}
+
+.phone-top-inner {
+    position: relative;
+    height: 2rem;
+    width: 100%;
+    background-color: #fff;
+    border-bottom-left-radius: 1.5rem;
+    border-bottom-right-radius: 1.5rem;
+}
+
+.phone-top-inner:before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -1rem;
+    height: 1rem;
+    width: 1rem;
+    border-top-right-radius: 50%;
+    box-shadow: 0.5rem -0.5rem 0 0 #fff;
+}
+
+.phone-top-inner:after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -1rem;
+    height: 1rem;
+    width: 1rem;
+    border-top-left-radius: 50%;
+    box-shadow: -0.5rem -0.5rem 0 0 #fff;
+}
