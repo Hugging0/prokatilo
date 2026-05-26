@@ -27,3 +27,20 @@
 - Каждый логический шаг завершается коммитом.
 - Использовать конвенцию коммитов (feat: ..., fix: ..., chore: ..., refactor: ...).
 - При добавлении новых сущностей (например, новой таблицы в БД или нового глобального стейта) этот файл ДОЛЖЕН БЫТЬ ОБНОВЛЕН.
+
+## 5. Backend/API правила
+
+1. Backend запускается как Python package через `uvicorn app.main:app`.
+2. PostgreSQL подключается через async SQLAlchemy engine и async-драйвер `asyncpg`.
+3. При использовании Supabase pooler с asyncpg отключается prepared statement cache через `statement_cache_size=0`.
+4. Статусы заказов задаются через единый enum `OrderStatus`.
+5. Тарифы аренды задаются через единый enum `TariffType`.
+6. `Base.metadata.create_all` разрешён только для раннего MVP/dev-режима. Перед production-деплоем нужен Alembic.
+
+## 6. Frontend domain rules
+
+1. Backend DTO-типы и UI-типы не смешиваются напрямую.
+2. Статусы заказов и тарифы хранятся в `src/lib`, а не внутри страниц.
+3. Mock-данные хранятся в `src/lib/mock-data.ts`.
+4. `src/app/page.tsx` может временно быть orchestration-файлом, но бизнес-константы и доменные типы должны быть вынесены.
+5. Стартовый mock-каталог должен соответствовать B2C-модели ПРОКАТило и стартовому инвентарю из мастер-контекста.
