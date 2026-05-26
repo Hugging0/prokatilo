@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc; /* slate-50 */
-  --foreground: #0f172a; /* slate-900 */
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 * {
@@ -10,18 +10,32 @@
 }
 
 html {
+  min-height: 100%;
   background: var(--background);
 }
 
 body {
+  min-height: 100%;
   margin: 0;
   color: var(--foreground);
   background-color: var(--background);
+  font-family: var(--font-manrope), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* Утилита для скрытия ползунка прокрутки, но сохранения самой прокрутки */
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
