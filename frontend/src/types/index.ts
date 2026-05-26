@@ -60,6 +60,8 @@ export interface AppOrder {
   date: string;
   time: string;
   price: number;
+  paymentMethod: PaymentMethod;
+  deliveryAddress: string;
   status: OrderStatus;
   review: Review | null;
 }

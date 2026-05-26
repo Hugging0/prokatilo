@@ -23,12 +23,21 @@ import {
   Wallet,
 } from "lucide-react";
 
+import {
+  getPaymentMethodLabel,
+  PAYMENT_METHOD_OPTIONS,
+  UI_COPY,
+} from "@/lib/copy";
 import { CATEGORIES, INITIAL_ITEMS } from "@/lib/mock-data";
 import {
   ORDER_STATUS_OPTIONS,
   ORDER_STATUSES,
 } from "@/lib/order-statuses";
-import { getTariffPrice, TARIFFS } from "@/lib/tariffs";
+import {
+  getTariffLabel,
+  getTariffPrice,
+  TARIFFS,
+} from "@/lib/tariffs";
 import type {
   AppItem,
   AppOrder,
@@ -38,24 +47,6 @@ import type {
   TariffType,
   User,
 } from "@/types";
-
-const PAYMENT_METHODS: Array<{
-  id: PaymentMethod;
-  label: string;
-}> = [
-  {
-    id: "sbp",
-    label: "СБП / Т-Банк / Сбер",
-  },
-  {
-    id: "card",
-    label: "Картой",
-  },
-  {
-    id: "cash",
-    label: "Наличными",
-  },
-];
 
 const PROFILE_STATS = [
   {
@@ -92,6 +83,7 @@ export default function App() {
   const [selectedTime, setSelectedTime] = useState("12:00");
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>("sbp");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] =
@@ -110,7 +102,7 @@ export default function App() {
     const phone = String(formData.get("phone") ?? "").trim();
 
     if (phone.length < 10) {
-      showNotification("Введите корректный номер телефона");
+      showNotification(UI_COPY.toast.invalidPhone);
       return;
     }
 
@@ -120,7 +112,7 @@ export default function App() {
       id: "user_1",
     });
     setView("home");
-    showNotification("С возвращением!");
+    showNotification(UI_COPY.toast.welcomeBack);
   };
 
   const handleOpenDetails = (item: AppItem) => {
@@ -131,7 +123,7 @@ export default function App() {
 
   const handleBook = () => {
     if (!selectedItem || !user) {
-      showNotification("Сначала выберите вещь и войдите в аккаунт");
+      showNotification(UI_COPY.toast.selectItemFirst);
       return;
     }
 
@@ -147,13 +139,17 @@ export default function App() {
       date: selectedDate,
       time: selectedTime,
       price: getTariffPrice(selectedItem, selectedTariff),
+      paymentMethod,
+      deliveryAddress:
+        deliveryAddress.trim() || UI_COPY.checkout.addressFallback,
       status: "pending",
       review: null,
     };
 
     setOrders((currentOrders) => [newOrder, ...currentOrders]);
+    setDeliveryAddress("");
     setView("orders");
-    showNotification("Заказ отправлен владельцу!");
+    showNotification(UI_COPY.toast.bookingCreated);
   };
 
   const updateOrderStatus = (
@@ -195,7 +191,7 @@ export default function App() {
       ),
     );
 
-    showNotification("Спасибо за отзыв! ⭐");
+    showNotification(UI_COPY.toast.reviewThanks);
   };
 
   const filteredItems = items.filter((item) => {
@@ -225,7 +221,7 @@ export default function App() {
         </h1>
 
         <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-12">
-          Сервис проката вещей
+          {UI_COPY.auth.subtitle}
         </p>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -233,7 +229,7 @@ export default function App() {
             htmlFor="phone"
             className="block text-xs font-black uppercase tracking-widest text-slate-400"
           >
-            Номер телефона
+            {UI_COPY.auth.phoneLabel}
           </label>
 
           <div className="relative">
@@ -254,7 +250,7 @@ export default function App() {
             type="submit"
             className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-slate-200 active:scale-95 transition-transform flex items-center justify-center gap-3"
           >
-            Войти
+            {UI_COPY.auth.loginButton}
             <ChevronRight size={20} />
           </button>
         </form>
@@ -271,12 +267,12 @@ export default function App() {
               ПРОКАТило
             </h1>
             <p className="text-white/90 text-[10px] font-black uppercase tracking-[0.2em] mt-2 opacity-80 leading-none">
-              Аренда без залога
+              {UI_COPY.home.slogan}
             </p>
           </div>
 
           <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/10 text-[10px] font-black uppercase">
-            На связи
+            {UI_COPY.home.serviceBadge}
           </div>
         </div>
 
@@ -289,7 +285,7 @@ export default function App() {
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             className="w-full text-white bg-white/20 backdrop-blur-md rounded-2xl border border-white/10 focus:border-white/40 focus:outline-none pl-11 pr-4 py-3 text-sm transition-all placeholder:text-white/60 shadow-inner font-bold"
-            placeholder="Что ищем?"
+            placeholder={UI_COPY.home.searchPlaceholder}
           />
         </div>
       </section>
@@ -348,7 +344,7 @@ export default function App() {
 
           {filteredItems.length === 0 && (
             <div className="bg-white rounded-[2rem] p-8 text-center text-slate-400 font-bold">
-              Ничего не найдено
+              {UI_COPY.home.emptyCatalog}
             </div>
           )}
         </div>
@@ -485,7 +481,7 @@ export default function App() {
         </button>
 
         <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-6">
-          Оформление
+          {UI_COPY.checkout.title}
         </h2>
 
         <section className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-sm mb-5">
@@ -507,13 +503,42 @@ export default function App() {
           </div>
         </section>
 
-        <section className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-sm">
-          <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4">
-            Способ оплаты
+        <section className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-sm mb-5">
+          <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-3">
+            {UI_COPY.checkout.deliveryTitle}
           </h3>
 
+          <p className="text-sm font-bold text-slate-500 leading-relaxed mb-4">
+            {UI_COPY.checkout.deliveryDescription}
+          </p>
+
+          <label
+            htmlFor="delivery-address"
+            className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2"
+          >
+            {UI_COPY.checkout.addressLabel}
+          </label>
+
+          <input
+            id="delivery-address"
+            value={deliveryAddress}
+            onChange={(event) => setDeliveryAddress(event.target.value)}
+            placeholder={UI_COPY.checkout.addressPlaceholder}
+            className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 px-4 text-sm font-bold text-slate-700 outline-none focus:border-rose-500 transition-all"
+          />
+        </section>
+
+        <section className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-sm">
+          <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-4">
+            {UI_COPY.checkout.paymentTitle}
+          </h3>
+
+          <p className="text-xs font-bold text-slate-400 leading-relaxed mb-4">
+            {UI_COPY.checkout.paymentDisclaimer}
+          </p>
+
           <div className="space-y-3">
-            {PAYMENT_METHODS.map((method) => (
+            {PAYMENT_METHOD_OPTIONS.map((method) => (
               <button
                 key={method.id}
                 type="button"
@@ -524,9 +549,22 @@ export default function App() {
                     : "border-slate-100 bg-white text-slate-900"
                 }`}
               >
-                <span className="flex items-center gap-3 font-black">
-                  <Wallet size={20} />
-                  {method.label}
+                <span className="flex items-center gap-3">
+                  <Wallet size={20} className="shrink-0" />
+                  <span>
+                    <span className="block font-black">
+                      {method.label}
+                    </span>
+                    <span
+                      className={`block text-xs font-bold mt-1 ${
+                        paymentMethod === method.id
+                          ? "text-white/80"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      {method.note}
+                    </span>
+                  </span>
                 </span>
 
                 {paymentMethod === method.id && (
@@ -542,7 +580,8 @@ export default function App() {
           onClick={handleBook}
           className="mt-8 w-full bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600 text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-rose-200 active:scale-95 transition-transform"
         >
-          Подтвердить · {getTariffPrice(selectedItem, selectedTariff)}₽
+          {UI_COPY.checkout.submitButton} ·{" "}
+          {getTariffPrice(selectedItem, selectedTariff)}₽
         </button>
       </main>
     );
@@ -551,7 +590,7 @@ export default function App() {
   const renderMyOrdersView = () => (
     <main className="min-h-screen bg-slate-50 px-6 pt-12 pb-32">
       <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-6">
-        Мои брони
+        {UI_COPY.orders.title}
       </h2>
 
       <div className="space-y-4">
@@ -585,19 +624,38 @@ export default function App() {
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ${status.color}`}
                 >
                   <status.icon size={10} />
-                  {status.label}
+                  {status.clientLabel}
                 </span>
               </div>
 
-              <div className="mt-4 flex items-center justify-between text-sm font-black text-slate-500">
-                <span>Тариф: {order.tariff}</span>
-                <span>{order.price}₽</span>
+              <p className="mt-3 text-sm font-bold text-slate-500 leading-relaxed">
+                {status.description}
+              </p>
+
+              <div className="mt-4 space-y-2 text-sm font-black text-slate-500">
+                <div className="flex items-center justify-between gap-4">
+                  <span>
+                    {UI_COPY.orders.tariffLabel}:{" "}
+                    {getTariffLabel(order.tariff)}
+                  </span>
+                  <span>
+                    {UI_COPY.orders.priceLabel}: {order.price}₽
+                  </span>
+                </div>
+                <p>
+                  {UI_COPY.orders.paymentLabel}:{" "}
+                  {getPaymentMethodLabel(order.paymentMethod)}
+                </p>
+                <p>
+                  {UI_COPY.orders.deliveryLabel}:{" "}
+                  {order.deliveryAddress}
+                </p>
               </div>
 
               {order.status === "returned" && !order.review && (
                 <div className="mt-5 rounded-2xl bg-amber-50 p-4">
                   <p className="text-xs font-black text-amber-700 mb-3">
-                    Вещь возвращена! Оцените прокат:
+                    {UI_COPY.orders.reviewTitle}
                   </p>
 
                   <div className="flex gap-2">
@@ -619,7 +677,7 @@ export default function App() {
 
               {order.review && (
                 <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-xs font-black text-slate-500">
-                  Ваш отзыв учтен: {order.review.rating} ⭐
+                  {UI_COPY.orders.reviewThanks}: {order.review.rating} ⭐
                 </div>
               )}
 
@@ -628,7 +686,7 @@ export default function App() {
                 className="mt-5 w-full flex items-center justify-center gap-2 bg-slate-900 text-white rounded-2xl py-4 text-sm font-black"
               >
                 <MessageCircle size={18} />
-                Связаться со мной
+                {UI_COPY.orders.supportButton}
               </button>
             </article>
           );
@@ -636,7 +694,7 @@ export default function App() {
 
         {myOrders.length === 0 && (
           <div className="bg-white rounded-[2rem] p-8 text-center text-slate-400 font-bold">
-            Заказов пока нет
+            {UI_COPY.orders.empty}
           </div>
         )}
       </div>
@@ -648,17 +706,17 @@ export default function App() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-3xl font-black tracking-tighter leading-none">
-            Управление
+            {UI_COPY.operator.title}
           </h2>
           <p className="text-white/40 text-sm font-bold mt-1">
-            Владелец
+            {UI_COPY.operator.subtitle}
           </p>
         </div>
 
         <LayoutDashboard className="text-white/30" size={30} />
       </div>
 
-      <h3 className="font-black mb-4">Активные аренды</h3>
+      <h3 className="font-black mb-4">{UI_COPY.operator.title}</h3>
 
       <div className="space-y-4">
         {orders.map((order) => (
@@ -676,7 +734,8 @@ export default function App() {
               <div>
                 <h4 className="font-black">{order.title}</h4>
                 <p className="text-xs font-bold text-slate-400">
-                  Клиент: {order.userId} • {order.price}₽
+                  {UI_COPY.operator.clientLabel}: {order.userId} •{" "}
+                  {order.price}₽
                 </p>
               </div>
             </div>
@@ -693,7 +752,7 @@ export default function App() {
                       : "bg-slate-100 text-slate-400"
                   }`}
                 >
-                  {ORDER_STATUSES[status].label}
+                  {ORDER_STATUSES[status].operatorLabel}
                 </button>
               ))}
             </div>
@@ -702,7 +761,7 @@ export default function App() {
 
         {orders.length === 0 && (
           <div className="bg-white/5 rounded-[2rem] p-8 text-center text-white/40 font-bold">
-            Пока пусто
+            {UI_COPY.operator.empty}
           </div>
         )}
       </div>
@@ -733,7 +792,14 @@ export default function App() {
       >
         <span className="flex items-center gap-3 font-black text-slate-900">
           <Settings size={20} />
-          Панель управления
+          <span>
+            <span className="block">
+              {UI_COPY.profile.operatorModeTitle}
+            </span>
+            <span className="block text-[10px] font-bold text-slate-400 mt-1">
+              {UI_COPY.profile.operatorModeHint}
+            </span>
+          </span>
         </span>
 
         <span
@@ -741,7 +807,9 @@ export default function App() {
             isAdmin ? "text-rose-500" : "text-slate-400"
           }`}
         >
-          {isAdmin ? "Вкл" : "Выкл"}
+          {isAdmin
+            ? UI_COPY.profile.enabled
+            : UI_COPY.profile.disabled}
         </span>
       </button>
 
@@ -834,12 +902,14 @@ export default function App() {
               }`}
             >
               <LayoutDashboard size={20} />
-              Админ
+              {UI_COPY.operator.navLabel}
             </button>
           ) : (
             <button
               type="button"
-              onClick={() => showNotification("Скоро добавим бонусы")}
+              onClick={() =>
+                showNotification(UI_COPY.bonus.comingSoon)
+              }
               className="flex flex-col items-center gap-1 rounded-3xl py-3 text-[10px] font-black text-slate-400"
             >
               <Info size={20} />
