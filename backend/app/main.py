@@ -1,103 +1,184 @@
-from fastapi import FastAPI, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import Annotated
 
-# Импортируем наши модули
-import crud
-import models
-import schemas
-from database import engine, get_db, Base
+from fastapi import Depends, FastAPI, Query, status
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app import crud, models, schemas
+from app.database import Base, engine, get_db
 
 app = FastAPI(
-    title="Neighborhood Rental API",
-    description="API для сервиса аренды вещей между соседями",
-    version="1.0.0"
+    title="ПРОКАТило API",
+    description=(
+        "API для MVP сервиса централизованной аренды вещей и техники "
+        "с доставкой за 15 минут и без залога."
+    ),
+    version="1.0.0",
 )
 
-# Создаем таблицы при запуске (удобно для MVP)
-# В реальном проекте лучше использовать Alembic
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 @app.on_event("startup")
-async def startup():
+async def startup() -> None:
     async with engine.begin() as conn:
-        # Это создаст таблицы в БД, если их еще нет
         await conn.run_sync(Base.metadata.create_all)
 
 
-# --- ЭНДПОИНТЫ ДЛЯ ТОВАРОВ (ITEMS) ---
+@app.get(
+    "/health",
+    response_model=schemas.HealthRead,
+    tags=["System"],
+)
+async def health_check() -> schemas.HealthRead:
+    return schemas.HealthRead(
+        status="ok",
+        service="prokatilo-api",
+    )
 
-@app.get("/items/", response_model=List[schemas.ItemRead], tags=["Items"])
+
+@app.get(
+    "/items/",
+    response_model=list[schemas.ItemRead],
+    tags=["Items"],
+)
 async def read_items(
-    skip: int = 0, 
-    limit: int = 100, 
-    db: AsyncSession = Depends(get_db)
-):
-    """Получить список всех товаров."""
+    db: Annotated[AsyncSession, Depends(get_db)],
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=100),
+) -> list[models.ItemModel]:
     return await crud.get_items(db, skip=skip, limit=limit)
 
 
-@app.get("/items/available/", response_model=List[schemas.ItemRead], tags=["Items"])
-async def read_available_items(db: AsyncSession = Depends(get_db)):
-    """Показать только те вещи, которые можно забронировать прямо сейчас."""
+@app.get(
+    "/items/available/",
+    response_model=list[schemas.ItemRead],
+    tags=["Items"],
+)
+async def read_available_items(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[models.ItemModel]:
     return await crud.get_available_items(db)
 
 
-@app.get("/items/search/", response_model=List[schemas.ItemRead], tags=["Items"])
+@app.get(
+    "/items/search/",
+    response_model=list[schemas.ItemRead],
+    tags=["Items"],
+)
 async def search_items(
+    db: Annotated[AsyncSession, Depends(get_db)],
     q: str = Query(..., min_length=2, description="Поисковый запрос"),
-    db: AsyncSession = Depends(get_db)
-):
-    """Поиск товаров по названию или описанию."""
+) -> list[models.ItemModel]:
     return await crud.search_items(db, query=q)
 
 
-@app.get("/items/{item_id}", response_model=schemas.ItemRead, tags=["Items"])
-async def read_item(item_id: int, db: AsyncSession = Depends(get_db)):
-    """Получить детальную информацию об одном товаре."""
+@app.get(
+    "/items/{item_id}",
+    response_model=schemas.ItemRead,
+    tags=["Items"],
+)
+async def read_item(
+    item_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.ItemModel:
     return await crud.get_item_by_id(db, item_id=item_id)
 
 
-@app.post("/items/", response_model=schemas.ItemRead, status_code=status.HTTP_201_CREATED, tags=["Items"])
-async def create_item(item: schemas.ItemCreate, db: AsyncSession = Depends(get_db)):
-    """Добавить новый товар в каталог."""
+@app.post(
+    "/items/",
+    response_model=schemas.ItemRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Items"],
+)
+async def create_item(
+    item: schemas.ItemCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.ItemModel:
     return await crud.create_item(db=db, item_data=item)
 
 
-@app.patch("/items/{item_id}", response_model=schemas.ItemRead, tags=["Items"])
+@app.patch(
+    "/items/{item_id}",
+    response_model=schemas.ItemRead,
+    tags=["Items"],
+)
 async def update_item(
-    item_id: int, 
-    item_update: schemas.ItemUpdate, 
-    db: AsyncSession = Depends(get_db)
-):
-    """Обновить информацию о товаре (цены, описание и т.д.)."""
-    return await crud.update_item(db=db, item_id=item_id, item_data=item_update)
+    item_id: int,
+    item_update: schemas.ItemUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.ItemModel:
+    return await crud.update_item(
+        db=db,
+        item_id=item_id,
+        item_data=item_update,
+    )
 
 
-@app.patch("/items/{item_id}/toggle", response_model=schemas.ItemRead, tags=["Items"])
-async def toggle_item(item_id: int, db: AsyncSession = Depends(get_db)):
-    """Переключить доступность товара (скрыть/показать)."""
+@app.patch(
+    "/items/{item_id}/toggle",
+    response_model=schemas.ItemRead,
+    tags=["Items"],
+)
+async def toggle_item(
+    item_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.ItemModel:
     return await crud.toggle_item_availability(db=db, item_id=item_id)
 
 
-@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Items"])
-async def delete_item(item_id: int, db: AsyncSession = Depends(get_db)):
-    """Полностью удалить товар из базы данных."""
+@app.delete(
+    "/items/{item_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Items"],
+)
+async def delete_item(
+    item_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> None:
     await crud.delete_item(db=db, item_id=item_id)
-    return None
 
 
-# --- ЭНДПОИНТЫ ДЛЯ ЗАКАЗОВ (ORDERS) ---
-
-@app.post("/orders/", response_model=schemas.OrderRead, status_code=status.HTTP_201_CREATED, tags=["Orders"])
-async def create_order(order: schemas.OrderCreate, db: AsyncSession = Depends(get_db)):
-    """Создать новый заказ на аренду вещи."""
+@app.post(
+    "/orders/",
+    response_model=schemas.OrderRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Orders"],
+)
+async def create_order(
+    order: schemas.OrderCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.OrderModel:
     return await crud.create_order(db=db, order_data=order)
 
 
-@app.patch("/orders/{order_id}/status", response_model=schemas.OrderRead, tags=["Orders"])
+@app.patch(
+    "/orders/{order_id}/status",
+    response_model=schemas.OrderRead,
+    tags=["Orders"],
+)
 async def change_order_status(
-    order_id: int, 
-    new_status: str = Query(..., description="Новый статус (pending, active, completed, cancelled)"), 
-    db: AsyncSession = Depends(get_db)
-):
-    """Изменить статус заказа и обновить состояние товара."""
-    return await crud.update_order_status(db=db, order_id=order_id, new_status=new_status)
+    order_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    new_status: schemas.OrderStatus = Query(
+        ...,
+        description=(
+            "Новый статус заказа: pending, confirmed, delivery, "
+            "active, returned, cancelled"
+        ),
+    ),
+) -> models.OrderModel:
+    return await crud.update_order_status(
+        db=db,
+        order_id=order_id,
+        new_status=new_status,
+    )
