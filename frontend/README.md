@@ -16,6 +16,30 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Backend catalog API
+
+Frontend reads the backend base URL from `NEXT_PUBLIC_API_URL`.
+Use `.env.local.example` as the local template:
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+If the backend is running and the catalog is empty, create a test item:
+
+```bash
+curl -X POST http://localhost:8000/items/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "PlayStation 5",
+    "description": "Игровая приставка для аренды",
+    "price_per_3h": 990,
+    "price_per_6h": 1490,
+    "price_per_24h": 2490,
+    "is_available": true
+  }'
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

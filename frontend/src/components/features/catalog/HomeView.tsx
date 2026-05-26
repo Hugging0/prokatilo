@@ -11,6 +11,9 @@ interface HomeViewProps {
   items: AppItem[];
   searchQuery: string;
   activeCategory: Category;
+  isLoading?: boolean;
+  catalogSource?: "api" | "mock";
+  catalogError?: string | null;
   onSearchChange: (value: string) => void;
   onCategoryChange: (category: Category) => void;
   onOpenDetails: (item: AppItem) => void;
@@ -20,6 +23,9 @@ export function HomeView({
   items,
   searchQuery,
   activeCategory,
+  isLoading = false,
+  catalogSource = "mock",
+  catalogError = null,
   onSearchChange,
   onCategoryChange,
   onOpenDetails,
@@ -77,6 +83,14 @@ export function HomeView({
             </button>
           ))}
         </div>
+
+        {(isLoading || (catalogSource === "mock" && catalogError)) && (
+          <div className="mt-3 rounded-2xl border border-slate-100 bg-white/95 px-4 py-3 text-xs font-black text-slate-400 shadow-sm">
+            {isLoading
+              ? UI_COPY.home.catalogLoading
+              : UI_COPY.home.catalogFallback}
+          </div>
+        )}
 
         <div className="grid gap-4 mt-4">
           {items.map((item) => (

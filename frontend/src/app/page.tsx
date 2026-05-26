@@ -12,8 +12,9 @@ import { OperatorDashboard } from "@/components/features/operator/OperatorDashbo
 import { ProfileView } from "@/components/features/profile/ProfileView";
 import { AppNavigation } from "@/components/layout/AppNavigation";
 import { Toast } from "@/components/ui/Toast";
+import { useItems } from "@/hooks/use-items";
 import { UI_COPY } from "@/lib/copy";
-import { CATEGORIES, INITIAL_ITEMS } from "@/lib/mock-data";
+import { CATEGORIES } from "@/lib/mock-data";
 import { ORDER_STATUSES } from "@/lib/order-statuses";
 import { getTariffPrice } from "@/lib/tariffs";
 import type {
@@ -33,7 +34,12 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [view, setView] = useState<AppView>("auth");
 
-  const [items] = useState<AppItem[]>(INITIAL_ITEMS);
+  const {
+    items,
+    isLoading: isCatalogLoading,
+    error: catalogError,
+    source: catalogSource,
+  } = useItems();
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [selectedItem, setSelectedItem] = useState<AppItem | null>(null);
 
@@ -190,6 +196,9 @@ export default function App() {
           items={filteredItems}
           searchQuery={searchQuery}
           activeCategory={activeCategory}
+          isLoading={isCatalogLoading}
+          catalogSource={catalogSource}
+          catalogError={catalogError}
           onSearchChange={setSearchQuery}
           onCategoryChange={setActiveCategory}
           onOpenDetails={handleOpenDetails}

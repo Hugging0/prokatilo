@@ -11,6 +11,9 @@ export const UI_COPY = {
     serviceBadge: "Доставим за 15 мин",
     searchPlaceholder: "Что хотите арендовать?",
     emptyCatalog: "Ничего не найдено",
+    catalogLoading: "Загружаем каталог…",
+    catalogFallback:
+      "Каталог временно показан из демо-данных",
   },
   checkout: {
     title: "Оформление",
