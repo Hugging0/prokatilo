@@ -10,13 +10,41 @@ async def get_items(
     skip: int = 0,
     limit: int = 100,
 ) -> list[models.ItemModel]:
-    stmt = select(models.ItemModel).offset(skip).limit(limit)
+    stmt = (
+        select(models.ItemModel)
+        .where(models.ItemModel.is_active.is_(True))
+        .order_by(
+            models.ItemModel.sort_order.asc(),
+            models.ItemModel.created_at.desc(),
+        )
+        .offset(skip)
+        .limit(limit)
+    )
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
 async def get_available_items(db: AsyncSession) -> list[models.ItemModel]:
-    stmt = select(models.ItemModel).where(models.ItemModel.is_available.is_(True))
+    stmt = (
+        select(models.ItemModel)
+        .where(
+            models.ItemModel.is_active.is_(True),
+            models.ItemModel.is_available.is_(True),
+        )
+        .order_by(
+            models.ItemModel.sort_order.asc(),
+            models.ItemModel.created_at.desc(),
+        )
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_admin_items(db: AsyncSession) -> list[models.ItemModel]:
+    stmt = select(models.ItemModel).order_by(
+        models.ItemModel.sort_order.asc(),
+        models.ItemModel.created_at.desc(),
+    )
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
@@ -36,15 +64,35 @@ async def get_item_by_id(
     return item
 
 
+async def get_public_item_by_id(
+    db: AsyncSession,
+    item_id: int,
+) -> models.ItemModel:
+    item = await get_item_by_id(db, item_id)
+
+    if not item.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Товар с ID {item_id} не найден",
+        )
+
+    return item
+
+
 async def search_items(
     db: AsyncSession,
     query: str,
 ) -> list[models.ItemModel]:
     stmt = select(models.ItemModel).where(
+        models.ItemModel.is_active.is_(True),
         or_(
             models.ItemModel.title.ilike(f"%{query}%"),
             models.ItemModel.description.ilike(f"%{query}%"),
-        )
+            models.ItemModel.category.ilike(f"%{query}%"),
+        ),
+    ).order_by(
+        models.ItemModel.sort_order.asc(),
+        models.ItemModel.created_at.desc(),
     )
 
     result = await db.execute(stmt)
@@ -95,6 +143,33 @@ async def toggle_item_availability(
     return db_item
 
 
+async def set_item_availability(
+    db: AsyncSession,
+    item_id: int,
+    is_available: bool,
+) -> models.ItemModel:
+    db_item = await get_item_by_id(db, item_id)
+    db_item.is_available = is_available
+
+    await db.commit()
+    await db.refresh(db_item)
+
+    return db_item
+
+
+async def archive_item(
+    db: AsyncSession,
+    item_id: int,
+) -> models.ItemModel:
+    db_item = await get_item_by_id(db, item_id)
+    db_item.is_active = False
+
+    await db.commit()
+    await db.refresh(db_item)
+
+    return db_item
+
+
 async def delete_item(
     db: AsyncSession,
     item_id: int,
@@ -117,7 +192,7 @@ async def create_order(
             detail=f"Товар с ID {order_data.item_id} не найден",
         )
 
-    if not item.is_available:
+    if not item.is_active or not item.is_available:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Товар недоступен для заказа",

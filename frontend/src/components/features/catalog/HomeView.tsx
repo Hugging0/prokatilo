@@ -2,25 +2,24 @@ import { Search } from "lucide-react";
 
 import { BRAND_GRADIENT, BRAND_LOGO_CLASS } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
-import { CATEGORIES } from "@/lib/mock-data";
 import type { AppItem } from "@/types";
-
-type Category = (typeof CATEGORIES)[number];
 
 interface HomeViewProps {
   items: AppItem[];
+  categories: string[];
   searchQuery: string;
-  activeCategory: Category;
+  activeCategory: string;
   isLoading?: boolean;
   catalogSource?: "api" | "mock";
   catalogError?: string | null;
   onSearchChange: (value: string) => void;
-  onCategoryChange: (category: Category) => void;
+  onCategoryChange: (category: string) => void;
   onOpenDetails: (item: AppItem) => void;
 }
 
 export function HomeView({
   items,
+  categories,
   searchQuery,
   activeCategory,
   isLoading = false,
@@ -68,7 +67,7 @@ export function HomeView({
 
       <section className="px-6 -mt-8 relative z-40">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <button
               key={category}
               type="button"

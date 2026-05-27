@@ -50,6 +50,47 @@ docker compose up
 
 Backend будет доступен на `http://localhost:8000`, frontend — на `http://localhost:3000`.
 
+## Управление Каталогом
+
+Каталог товаров управляется через операторский UI, а не через правку frontend-кода. Для доступа к управлению задай `ADMIN_API_KEY` в `backend/.env`:
+
+```env
+ADMIN_API_KEY=long-random-admin-token
+```
+
+В интерфейсе открой профиль, включи режим оператора, перейди в `Каталог` и введи этот ключ в форму `Доступ оператора`. Ключ хранится только в текущем браузере и отправляется в backend как header `X-Admin-Token`.
+
+Текущий `X-Admin-Token` — internal admin guard до полноценной авторизации. Не добавляй его в `NEXT_PUBLIC_*` переменные и не вшивай в frontend bundle.
+
+Основные действия оператора:
+
+```text
+Добавить товар -> заполнить форму -> Создать товар
+Редактировать -> изменить поля -> Сохранить товар
+Скрыть -> товар получает is_active=false и исчезает из публичного каталога
+Доступен/Недоступен -> меняет текущую доступность аренды
+```
+
+Public endpoints:
+
+```text
+GET /items/
+GET /items/available/
+GET /items/search/?q=
+GET /items/{item_id}
+```
+
+Admin endpoints:
+
+```text
+GET /admin/items/
+POST /admin/items/
+PATCH /admin/items/{item_id}
+PATCH /admin/items/{item_id}/availability?is_available=true
+PATCH /admin/items/{item_id}/archive
+DELETE /admin/items/{item_id}
+```
+
 ## Миграции
 
 Применить миграции:

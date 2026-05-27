@@ -14,7 +14,6 @@ import { AppNavigation } from "@/components/layout/AppNavigation";
 import { Toast } from "@/components/ui/Toast";
 import { useItems } from "@/hooks/use-items";
 import { UI_COPY } from "@/lib/copy";
-import { CATEGORIES } from "@/lib/mock-data";
 import { ORDER_STATUSES } from "@/lib/order-statuses";
 import { getTariffPrice } from "@/lib/tariffs";
 import type {
@@ -27,8 +26,6 @@ import type {
   User,
 } from "@/types";
 
-type Category = (typeof CATEGORIES)[number];
-
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -39,6 +36,7 @@ export default function App() {
     isLoading: isCatalogLoading,
     error: catalogError,
     source: catalogSource,
+    reload: reloadCatalog,
   } = useItems();
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [selectedItem, setSelectedItem] = useState<AppItem | null>(null);
@@ -54,8 +52,7 @@ export default function App() {
   const [deliveryAddress, setDeliveryAddress] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] =
-    useState<Category>("Все вещи");
+  const [activeCategory, setActiveCategory] = useState("Все вещи");
   const [toast, setToast] = useState<string | null>(null);
 
   const showNotification = (message: string) => {
@@ -182,6 +179,10 @@ export default function App() {
   });
 
   const myOrders = orders.filter((order) => order.userId === user?.id);
+  const categories = [
+    "Все вещи",
+    ...Array.from(new Set(items.map((item) => item.category))),
+  ];
 
   if (!user) {
     return <AuthView onLogin={handleLogin} />;
@@ -194,6 +195,7 @@ export default function App() {
       {view === "home" && (
         <HomeView
           items={filteredItems}
+          categories={categories}
           searchQuery={searchQuery}
           activeCategory={activeCategory}
           isLoading={isCatalogLoading}
@@ -253,6 +255,7 @@ export default function App() {
         <OperatorDashboard
           orders={orders}
           onUpdateOrderStatus={updateOrderStatus}
+          onCatalogChanged={reloadCatalog}
         />
       )}
 

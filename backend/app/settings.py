@@ -6,8 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     database_url: str = Field(alias="DATABASE_URL")
+    admin_api_key: str | None = Field(default=None, alias="ADMIN_API_KEY")
     cors_origins: str = Field(
-        default="http://localhost:3000",
+        default="http://localhost:3000,http://127.0.0.1:3000",
         alias="CORS_ORIGINS",
     )
     environment: str = Field(default="development", alias="ENVIRONMENT")

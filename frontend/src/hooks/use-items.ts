@@ -14,6 +14,7 @@ interface UseItemsResult {
   isLoading: boolean;
   error: string | null;
   source: CatalogSource;
+  reload: () => Promise<void>;
 }
 
 export function useItems(): UseItemsResult {
@@ -22,22 +23,58 @@ export function useItems(): UseItemsResult {
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<CatalogSource>("mock");
 
+  async function loadItems(
+    shouldApply = () => true,
+    markAsLoading = true,
+  ) {
+    if (markAsLoading) {
+      setIsLoading(true);
+    }
+
+    try {
+      const backendItems = await getAvailableItems();
+      const appItems = mapBackendItemsToAppItems(backendItems);
+
+      if (!shouldApply()) {
+        return;
+      }
+
+      setItems(appItems);
+      setSource("api");
+      setError(null);
+    } catch (requestError) {
+      if (!shouldApply()) {
+        return;
+      }
+
+      setItems(INITIAL_ITEMS);
+      setSource("mock");
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Не удалось загрузить каталог",
+      );
+    } finally {
+      if (shouldApply()) {
+        setIsLoading(false);
+      }
+    }
+  }
+
   useEffect(() => {
     let isMounted = true;
 
-    async function loadItems() {
-      try {
-        const backendItems = await getAvailableItems();
-        const appItems = mapBackendItemsToAppItems(backendItems);
-
+    void getAvailableItems()
+      .then((backendItems) => {
         if (!isMounted) {
           return;
         }
 
-        setItems(appItems);
+        setItems(mapBackendItemsToAppItems(backendItems));
         setSource("api");
         setError(null);
-      } catch (requestError) {
+      })
+      .catch((requestError) => {
         if (!isMounted) {
           return;
         }
@@ -49,14 +86,12 @@ export function useItems(): UseItemsResult {
             ? requestError.message
             : "Не удалось загрузить каталог",
         );
-      } finally {
+      })
+      .finally(() => {
         if (isMounted) {
           setIsLoading(false);
         }
-      }
-    }
-
-    void loadItems();
+      });
 
     return () => {
       isMounted = false;
@@ -68,5 +103,6 @@ export function useItems(): UseItemsResult {
     isLoading,
     error,
     source,
+    reload: () => loadItems(),
   };
 }

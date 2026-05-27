@@ -95,3 +95,13 @@
 5. Dockerfiles и `docker-compose.yml` должны быть поддерживаемыми артефактами, а не одноразовыми черновиками.
 6. Public frontend env переменные начинаются с `NEXT_PUBLIC_`; секреты туда не помещаются.
 7. README должен обновляться при изменении команд запуска, миграций или deployment flow.
+
+## 13. Admin/catalog management rules
+
+1. Каталог товаров управляется через операторский UI и backend API, а не через правку frontend-кода.
+2. Public catalog показывает только активные товары (`is_active=true`).
+3. `is_available` отвечает за текущую доступность аренды, а `is_active` — за видимость товара в каталоге.
+4. Backend DTO содержит реальные catalog fields: category, image_url, icon_key, sort_order, is_active.
+5. Frontend не угадывает категорию по названию, если backend отдаёт category.
+6. Admin endpoints должны быть защищены. До полноценной авторизации используется `X-Admin-Token`, который не вшивается в frontend bundle.
+7. Hard delete не должен быть основным действием оператора; по умолчанию используется archive/hide.

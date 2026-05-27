@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Query, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,22 @@ from app.settings import get_settings
 
 
 settings = get_settings()
+
+
+async def verify_admin_token(
+    x_admin_token: Annotated[str | None, Header()] = None,
+) -> None:
+    if not settings.admin_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin API key is not configured",
+        )
+
+    if x_admin_token != settings.admin_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin token",
+        )
 
 app = FastAPI(
     title="ПРОКАТило API",
@@ -96,28 +112,42 @@ async def read_item(
     item_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> models.ItemModel:
-    return await crud.get_item_by_id(db, item_id=item_id)
+    return await crud.get_public_item_by_id(db, item_id=item_id)
 
 
 @app.post(
-    "/items/",
-    response_model=schemas.ItemRead,
+    "/admin/items/",
+    response_model=schemas.AdminItemRead,
     status_code=status.HTTP_201_CREATED,
-    tags=["Items"],
+    tags=["Admin Items"],
+    dependencies=[Depends(verify_admin_token)],
 )
-async def create_item(
+async def create_admin_item(
     item: schemas.ItemCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> models.ItemModel:
     return await crud.create_item(db=db, item_data=item)
 
 
-@app.patch(
-    "/items/{item_id}",
-    response_model=schemas.ItemRead,
-    tags=["Items"],
+@app.get(
+    "/admin/items/",
+    response_model=list[schemas.AdminItemRead],
+    tags=["Admin Items"],
+    dependencies=[Depends(verify_admin_token)],
 )
-async def update_item(
+async def read_admin_items(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[models.ItemModel]:
+    return await crud.get_admin_items(db)
+
+
+@app.patch(
+    "/admin/items/{item_id}",
+    response_model=schemas.AdminItemRead,
+    tags=["Admin Items"],
+    dependencies=[Depends(verify_admin_token)],
+)
+async def update_admin_item(
     item_id: int,
     item_update: schemas.ItemUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -130,23 +160,43 @@ async def update_item(
 
 
 @app.patch(
-    "/items/{item_id}/toggle",
-    response_model=schemas.ItemRead,
-    tags=["Items"],
+    "/admin/items/{item_id}/availability",
+    response_model=schemas.AdminItemRead,
+    tags=["Admin Items"],
+    dependencies=[Depends(verify_admin_token)],
 )
-async def toggle_item(
+async def set_admin_item_availability(
+    item_id: int,
+    is_available: bool,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.ItemModel:
+    return await crud.set_item_availability(
+        db=db,
+        item_id=item_id,
+        is_available=is_available,
+    )
+
+
+@app.patch(
+    "/admin/items/{item_id}/archive",
+    response_model=schemas.AdminItemRead,
+    tags=["Admin Items"],
+    dependencies=[Depends(verify_admin_token)],
+)
+async def archive_admin_item(
     item_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> models.ItemModel:
-    return await crud.toggle_item_availability(db=db, item_id=item_id)
+    return await crud.archive_item(db=db, item_id=item_id)
 
 
 @app.delete(
-    "/items/{item_id}",
+    "/admin/items/{item_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    tags=["Items"],
+    tags=["Admin Items"],
+    dependencies=[Depends(verify_admin_token)],
 )
-async def delete_item(
+async def delete_admin_item(
     item_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> None:

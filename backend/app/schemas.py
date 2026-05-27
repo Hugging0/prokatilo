@@ -22,11 +22,16 @@ class OrderStatus(StrEnum):
 
 class ItemBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
-    description: str | None = Field(None, max_length=1000)
+    description: str | None = Field(None, max_length=2000)
+    category: str = Field(default="Техника", min_length=1, max_length=100)
     price_per_3h: Decimal = Field(..., ge=0)
     price_per_6h: Decimal = Field(..., ge=0)
     price_per_24h: Decimal = Field(..., ge=0)
+    image_url: str | None = Field(None, max_length=2048)
+    icon_key: str = Field(default="package", min_length=1, max_length=50)
+    sort_order: int = Field(default=100, ge=0)
     is_available: bool = True
+    is_active: bool = True
 
 
 class ItemCreate(ItemBase):
@@ -35,18 +40,28 @@ class ItemCreate(ItemBase):
 
 class ItemUpdate(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=100)
-    description: str | None = Field(None, max_length=1000)
+    description: str | None = Field(None, max_length=2000)
+    category: str | None = Field(None, min_length=1, max_length=100)
     price_per_3h: Decimal | None = Field(None, ge=0)
     price_per_6h: Decimal | None = Field(None, ge=0)
     price_per_24h: Decimal | None = Field(None, ge=0)
+    image_url: str | None = Field(None, max_length=2048)
+    icon_key: str | None = Field(None, min_length=1, max_length=50)
+    sort_order: int | None = Field(None, ge=0)
     is_available: bool | None = None
+    is_active: bool | None = None
 
 
 class ItemRead(ItemBase):
     id: int
     created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AdminItemRead(ItemRead):
+    pass
 
 
 class OrderBase(BaseModel):

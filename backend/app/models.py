@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from sqlalchemy import String, Numeric, ForeignKey, DateTime, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
@@ -10,14 +10,24 @@ class ItemModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(255), index=True)
     description: Mapped[str | None] = mapped_column(String(1000))
+    category: Mapped[str] = mapped_column(String(100), default="Техника")
+    image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    icon_key: Mapped[str] = mapped_column(String(50), default="package")
+    sort_order: Mapped[int] = mapped_column(Integer, default=100)
     price_per_3h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     price_per_6h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     price_per_24h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
-    is_available: Mapped[bool] = mapped_column(default=True)
+    is_available: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
         server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     orders: Mapped[list["OrderModel"]] = relationship(back_populates="item")
@@ -30,7 +40,7 @@ class OrderModel(Base):
     item_id: Mapped[int] = mapped_column(ForeignKey('items.id'))
     customer_login: Mapped[str] = mapped_column(String(255))
     customer_phone: Mapped[str] = mapped_column(String(50))
-    tariff_type: Mapped[str] = mapped_column(String(50)) # например '3h', '6h', '24h'
+    tariff_type: Mapped[str] = mapped_column(String(50))
     total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     status: Mapped[str] = mapped_column(default='pending')
     

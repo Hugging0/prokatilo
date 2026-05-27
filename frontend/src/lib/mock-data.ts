@@ -28,6 +28,10 @@ export const INITIAL_ITEMS: AppItem[] = [
     bg: "bg-indigo-50",
     category: "Игры",
     available: true,
+    active: true,
+    iconKey: "gamepad",
+    imageUrl: null,
+    sortOrder: 10,
   },
   {
     id: 2,
@@ -42,6 +46,10 @@ export const INITIAL_ITEMS: AppItem[] = [
     bg: "bg-violet-50",
     category: "Игры",
     available: true,
+    active: true,
+    iconKey: "gamepad",
+    imageUrl: null,
+    sortOrder: 20,
   },
   {
     id: 3,
@@ -56,6 +64,10 @@ export const INITIAL_ITEMS: AppItem[] = [
     bg: "bg-cyan-50",
     category: "Уборка",
     available: true,
+    active: true,
+    iconKey: "sparkles",
+    imageUrl: null,
+    sortOrder: 30,
   },
   {
     id: 4,
@@ -70,6 +82,10 @@ export const INITIAL_ITEMS: AppItem[] = [
     bg: "bg-emerald-50",
     category: "Техника",
     available: true,
+    active: true,
+    iconKey: "vacuum",
+    imageUrl: null,
+    sortOrder: 40,
   },
   {
     id: 5,
@@ -84,5 +100,9 @@ export const INITIAL_ITEMS: AppItem[] = [
     bg: "bg-rose-50",
     category: "Уборка",
     available: true,
+    active: true,
+    iconKey: "package",
+    imageUrl: null,
+    sortOrder: 50,
   },
 ];

@@ -41,6 +41,10 @@ export interface AppItem {
   bg: string;
   category: string;
   available: boolean;
+  active: boolean;
+  iconKey: string;
+  imageUrl: string | null;
+  sortOrder: number;
 }
 
 export interface Review {
@@ -70,11 +74,31 @@ export interface BackendItemDto {
   id: number;
   title: string;
   description: string | null;
+  category: string;
   price_per_3h: string;
   price_per_6h: string;
   price_per_24h: string;
+  image_url: string | null;
+  icon_key: string;
+  sort_order: number;
   is_available: boolean;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
+}
+
+export interface AdminItemFormPayload {
+  title: string;
+  description: string | null;
+  category: string;
+  price_per_3h: number;
+  price_per_6h: number;
+  price_per_24h: number;
+  image_url: string | null;
+  icon_key: string;
+  sort_order: number;
+  is_available: boolean;
+  is_active: boolean;
 }
 
 export interface BackendOrderDto {
