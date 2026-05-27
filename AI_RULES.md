@@ -35,7 +35,7 @@
 3. При использовании Supabase pooler с asyncpg отключается prepared statement cache через `statement_cache_size=0`.
 4. Статусы заказов задаются через единый enum `OrderStatus`.
 5. Тарифы аренды задаются через единый enum `TariffType`.
-6. `Base.metadata.create_all` разрешён только для раннего MVP/dev-режима. Перед production-деплоем нужен Alembic.
+6. `Base.metadata.create_all` разрешён только для локального dev через `CREATE_TABLES_ON_STARTUP=true`; production schema changes выполняются через Alembic.
 
 ## 6. Frontend domain rules
 
@@ -85,3 +85,13 @@
 3. Backend DTO-типы не используются напрямую в UI-компонентах; они преобразуются через mapper в `AppItem`, `AppOrder` и другие UI-модели.
 4. Пока backend API может быть недоступен, каталог обязан иметь fallback на `src/lib/mock-data.ts`.
 5. Компоненты не должны знать о структуре backend DTO.
+
+## 12. Production foundation rules
+
+1. Production/backend schema changes выполняются через Alembic migrations, не через `Base.metadata.create_all`.
+2. `CREATE_TABLES_ON_STARTUP` разрешён только для локального dev и по умолчанию выключен.
+3. Backend config читается через `app/settings.py`, а не через разрозненные `os.getenv`.
+4. Frontend production build использует Next.js `output: "standalone"`.
+5. Dockerfiles и `docker-compose.yml` должны быть поддерживаемыми артефактами, а не одноразовыми черновиками.
+6. Public frontend env переменные начинаются с `NEXT_PUBLIC_`; секреты туда не помещаются.
+7. README должен обновляться при изменении команд запуска, миграций или deployment flow.

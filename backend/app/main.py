@@ -6,6 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud, models, schemas
 from app.database import Base, engine, get_db
+from app.settings import get_settings
+
+
+settings = get_settings()
 
 app = FastAPI(
     title="ПРОКАТило API",
@@ -18,10 +22,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -30,6 +31,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup() -> None:
+    # Production schema changes are handled by Alembic migrations.
+    if not settings.create_tables_on_startup:
+        return
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 

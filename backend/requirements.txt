@@ -1,8 +1,11 @@
 fastapi[standard]
 sqlalchemy
 asyncpg
+alembic
+psycopg[binary]
 python-dotenv
 pydantic
+pydantic-settings
 pydantic-extra-types
 phonenumbers
 greenlet

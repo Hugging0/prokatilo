@@ -1,16 +1,13 @@
-import os
 from collections.abc import AsyncGenerator
 
-from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-load_dotenv()
+from app.settings import get_settings
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not SQLALCHEMY_DATABASE_URL:
-    raise RuntimeError("DATABASE_URL не найден. Проверь backend/.env")
+settings = get_settings()
+SQLALCHEMY_DATABASE_URL = settings.database_url
 
 if SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(
