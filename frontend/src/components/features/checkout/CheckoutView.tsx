@@ -12,6 +12,7 @@ interface CheckoutViewProps {
   selectedTime: string;
   paymentMethod: PaymentMethod;
   deliveryAddress: string;
+  isSubmitting: boolean;
   onBack: () => void;
   onPaymentMethodChange: (method: PaymentMethod) => void;
   onDeliveryAddressChange: (address: string) => void;
@@ -25,6 +26,7 @@ export function CheckoutView({
   selectedTime,
   paymentMethod,
   deliveryAddress,
+  isSubmitting,
   onBack,
   onPaymentMethodChange,
   onDeliveryAddressChange,
@@ -140,9 +142,10 @@ export function CheckoutView({
       <button
         type="button"
         onClick={onSubmit}
+        disabled={isSubmitting}
         className={`mt-8 w-full ${BRAND_GRADIENT} text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-rose-200 active:scale-95 transition-transform`}
       >
-        {UI_COPY.checkout.submitButton} ·{" "}
+        {isSubmitting ? "Создаём бронь…" : UI_COPY.checkout.submitButton} ·{" "}
         {getTariffPrice(selectedItem, selectedTariff)}₽
       </button>
     </main>

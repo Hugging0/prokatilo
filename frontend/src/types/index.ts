@@ -53,13 +53,14 @@ export interface Review {
 }
 
 export interface AppOrder {
-  id: string;
+  id: number;
   itemId: number;
   title: string;
   icon: LucideIcon;
   color: string;
   bg: string;
-  userId: string;
+  customerName: string;
+  customerPhone: string;
   tariff: TariffType;
   date: string;
   time: string;
@@ -67,6 +68,9 @@ export interface AppOrder {
   paymentMethod: PaymentMethod;
   deliveryAddress: string;
   status: OrderStatus;
+  comment: string | null;
+  createdAt: string;
+  updatedAt: string;
   review: Review | null;
 }
 
@@ -101,15 +105,62 @@ export interface AdminItemFormPayload {
   is_active: boolean;
 }
 
+export interface CatalogItemFormState {
+  title: string;
+  description: string;
+  category: string;
+  price_per_3h: string;
+  price_per_6h: string;
+  price_per_24h: string;
+  image_url: string;
+  icon_key: string;
+  sort_order: string;
+  is_available: boolean;
+  is_active: boolean;
+}
+
 export interface BackendOrderDto {
   id: number;
   item_id: number;
   customer_login: string;
+  customer_name: string;
   customer_phone: string;
+  delivery_address: string;
+  payment_method: PaymentMethod;
   tariff_type: TariffType;
   total_price: string;
   status: OrderStatus;
+  comment: string | null;
+  rental_date: string;
+  rental_time: string;
   created_at: string;
+  updated_at: string;
+  item: BackendItemDto;
+}
+
+export interface CreateOrderPayload {
+  item_id: number;
+  customer_name: string;
+  customer_phone: string;
+  delivery_address: string;
+  payment_method: PaymentMethod;
+  tariff_type: TariffType;
+  total_price: number;
+  rental_date: string;
+  rental_time: string;
+  comment?: string | null;
+}
+
+export interface AdminOrderUpdatePayload {
+  customer_name?: string;
+  customer_phone?: string;
+  delivery_address?: string;
+  payment_method?: PaymentMethod;
+  tariff_type?: TariffType;
+  total_price?: number;
+  rental_date?: string;
+  rental_time?: string;
+  comment?: string | null;
 }
 
 export type Item = AppItem;

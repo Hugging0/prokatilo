@@ -11,6 +11,12 @@ class TariffType(StrEnum):
     TWENTY_FOUR_HOURS = "24h"
 
 
+class PaymentMethod(StrEnum):
+    SBP = "sbp"
+    CARD = "card"
+    CASH = "cash"
+
+
 class OrderStatus(StrEnum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
@@ -66,22 +72,50 @@ class AdminItemRead(ItemRead):
 
 class OrderBase(BaseModel):
     item_id: int = Field(..., gt=0)
-    customer_login: str = Field(..., min_length=1, max_length=100)
+    customer_name: str = Field(..., min_length=1, max_length=100)
     customer_phone: str = Field(..., min_length=3, max_length=50)
+    delivery_address: str = Field(..., min_length=5, max_length=500)
+    payment_method: PaymentMethod
     tariff_type: TariffType
     total_price: Decimal = Field(..., ge=0)
+    rental_date: str = Field(..., min_length=1, max_length=20)
+    rental_time: str = Field(..., min_length=1, max_length=20)
+    comment: str | None = Field(None, max_length=1000)
 
 
 class OrderCreate(OrderBase):
     pass
 
 
+class OrderUpdate(BaseModel):
+    customer_name: str | None = Field(None, min_length=1, max_length=100)
+    customer_phone: str | None = Field(None, min_length=3, max_length=50)
+    delivery_address: str | None = Field(None, min_length=5, max_length=500)
+    payment_method: PaymentMethod | None = None
+    tariff_type: TariffType | None = None
+    total_price: Decimal | None = Field(None, ge=0)
+    rental_date: str | None = Field(None, min_length=1, max_length=20)
+    rental_time: str | None = Field(None, min_length=1, max_length=20)
+    comment: str | None = Field(None, max_length=1000)
+
+
+class OrderStatusUpdate(BaseModel):
+    new_status: OrderStatus
+
+
 class OrderRead(OrderBase):
     id: int
+    customer_login: str
     status: OrderStatus
     created_at: datetime
+    updated_at: datetime
+    item: AdminItemRead
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AdminOrderRead(OrderRead):
+    pass
 
 
 class HealthRead(BaseModel):

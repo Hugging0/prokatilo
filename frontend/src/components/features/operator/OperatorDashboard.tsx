@@ -1,33 +1,149 @@
 "use client";
 
-import { useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { LayoutDashboard } from "lucide-react";
 
+import { CatalogManagement } from "@/components/features/operator/CatalogManagement";
+import { clearAdminToken, getAdminToken, setAdminToken } from "@/lib/admin-token";
+import { getAdminOrders, updateAdminOrderStatus } from "@/lib/api/admin-orders";
 import { UI_COPY } from "@/lib/copy";
+import { mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
 import {
   ORDER_STATUS_OPTIONS,
   ORDER_STATUSES,
 } from "@/lib/order-statuses";
-import type { AppOrder, OrderStatus } from "@/types";
-import { CatalogManagement } from "@/components/features/operator/CatalogManagement";
+import type { AppItem, AppOrder, OrderStatus } from "@/types";
 
 interface OperatorDashboardProps {
-  orders: AppOrder[];
-  onUpdateOrderStatus: (
-    orderId: string,
-    newStatus: OrderStatus,
-  ) => void;
+  items: AppItem[];
   onCatalogChanged: () => Promise<void>;
 }
 
 type OperatorTab = "orders" | "catalog" | "settings";
 
 export function OperatorDashboard({
-  orders,
-  onUpdateOrderStatus,
+  items,
   onCatalogChanged,
 }: OperatorDashboardProps) {
   const [activeTab, setActiveTab] = useState<OperatorTab>("orders");
+  const [token, setToken] = useState<string | null>(() => getAdminToken());
+  const [tokenInput, setTokenInput] = useState(() => getAdminToken() ?? "");
+  const [orders, setOrders] = useState<AppOrder[]>([]);
+  const [isOrdersLoading, setIsOrdersLoading] = useState(() =>
+    Boolean(getAdminToken()),
+  );
+  const [ordersMessage, setOrdersMessage] = useState<string | null>(null);
+
+  async function refreshOrders(activeToken = token) {
+    if (!activeToken) {
+      return;
+    }
+
+    setIsOrdersLoading(true);
+    setOrdersMessage(null);
+
+    try {
+      const backendOrders = await getAdminOrders(activeToken);
+      setOrders((currentOrders) =>
+        mapBackendOrdersToAppOrders(backendOrders, items, currentOrders),
+      );
+    } catch (error) {
+      setOrdersMessage(
+        error instanceof Error
+          ? error.message
+          : UI_COPY.operator.ordersLoadError,
+      );
+    } finally {
+      setIsOrdersLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void getAdminOrders(token)
+      .then((backendOrders) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setOrders((currentOrders) =>
+          mapBackendOrdersToAppOrders(backendOrders, items, currentOrders),
+        );
+      })
+      .catch((error) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setOrdersMessage(
+          error instanceof Error
+            ? error.message
+            : UI_COPY.operator.ordersLoadError,
+        );
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsOrdersLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [token, items]);
+
+  const handleSaveToken = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const nextToken = tokenInput.trim();
+
+    if (!nextToken) {
+      setOrdersMessage("Введите ключ доступа");
+      return;
+    }
+
+    setAdminToken(nextToken);
+    setToken(nextToken);
+    setIsOrdersLoading(true);
+    setOrdersMessage(null);
+    void refreshOrders(nextToken);
+  };
+
+  const handleClearToken = () => {
+    clearAdminToken();
+    setToken(null);
+    setTokenInput("");
+    setOrders([]);
+    setOrdersMessage(null);
+  };
+
+  const handleUpdateOrderStatus = async (
+    orderId: number,
+    newStatus: OrderStatus,
+  ) => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      await updateAdminOrderStatus(token, orderId, newStatus);
+      await refreshOrders(token);
+      await onCatalogChanged();
+      setOrdersMessage(UI_COPY.toast.statusUpdated);
+    } catch (error) {
+      setOrdersMessage(
+        error instanceof Error
+          ? error.message
+          : "Не удалось обновить статус заявки",
+      );
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 pt-12 pb-32 text-white">
@@ -65,9 +181,62 @@ export function OperatorDashboard({
         ))}
       </div>
 
-      {activeTab === "orders" && (
+      {!token && (
+        <section className="rounded-[2rem] bg-white p-5 text-slate-900 mb-4">
+          <h3 className="text-xl font-black">
+            {UI_COPY.operator.accessTitle}
+          </h3>
+          <p className="mt-2 text-sm font-bold text-slate-400">
+            {UI_COPY.operator.accessHint}
+          </p>
+
+          <form onSubmit={handleSaveToken} className="mt-5 space-y-3">
+            <label className="block text-xs font-black uppercase tracking-widest text-slate-400">
+              {UI_COPY.operator.accessKeyLabel}
+            </label>
+            <input
+              type="password"
+              value={tokenInput}
+              onChange={(event) => setTokenInput(event.target.value)}
+              className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-4 text-sm font-bold outline-none focus:border-rose-500"
+            />
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-black text-white"
+            >
+              {UI_COPY.operator.saveAccessKey}
+            </button>
+          </form>
+        </section>
+      )}
+
+      {token && (
+        <div className="mb-4 flex justify-end">
+          <button
+            type="button"
+            onClick={handleClearToken}
+            className="rounded-2xl bg-white/10 px-4 py-3 text-[10px] font-black text-white/60"
+          >
+            {UI_COPY.operator.clearAccessKey}
+          </button>
+        </div>
+      )}
+
+      {activeTab === "orders" && token && (
         <>
           <h3 className="font-black mb-4">{UI_COPY.operator.title}</h3>
+
+          {isOrdersLoading && (
+            <div className="mb-4 rounded-[2rem] bg-white/5 p-4 text-sm font-bold text-white/60">
+              {UI_COPY.operator.ordersLoading}
+            </div>
+          )}
+
+          {ordersMessage && (
+            <div className="mb-4 rounded-[2rem] bg-white/10 p-4 text-xs font-black text-white/70">
+              {ordersMessage}
+            </div>
+          )}
 
           <div className="space-y-4">
             {orders.map((order) => (
@@ -82,14 +251,23 @@ export function OperatorDashboard({
                     <order.icon size={24} />
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <h4 className="font-black">{order.title}</h4>
                     <p className="text-xs font-bold text-slate-400">
-                      {UI_COPY.operator.clientLabel}: {order.userId} •{" "}
-                      {order.price}₽
+                      {UI_COPY.operator.clientLabel}: {order.customerName}
+                    </p>
+                    <p className="text-xs font-bold text-slate-400">
+                      {order.customerPhone} • {order.deliveryAddress}
+                    </p>
+                    <p className="text-xs font-bold text-slate-400">
+                      {order.price}₽ • {order.date} • {order.time}
                     </p>
                   </div>
                 </div>
+
+                <p className="mt-3 text-sm font-bold text-slate-500">
+                  {ORDER_STATUSES[order.status].description}
+                </p>
 
                 <div className="flex flex-wrap gap-2 mt-5">
                   {ORDER_STATUS_OPTIONS.map((status) => (
@@ -97,7 +275,7 @@ export function OperatorDashboard({
                       key={status}
                       type="button"
                       onClick={() =>
-                        onUpdateOrderStatus(order.id, status)
+                        void handleUpdateOrderStatus(order.id, status)
                       }
                       className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${
                         order.status === status
@@ -112,7 +290,7 @@ export function OperatorDashboard({
               </article>
             ))}
 
-            {orders.length === 0 && (
+            {!isOrdersLoading && orders.length === 0 && (
               <div className="bg-white/5 rounded-[2rem] p-8 text-center text-white/40 font-bold">
                 {UI_COPY.operator.empty}
               </div>
@@ -121,8 +299,17 @@ export function OperatorDashboard({
         </>
       )}
 
-      {activeTab === "catalog" && (
-        <CatalogManagement onCatalogChanged={onCatalogChanged} />
+      {activeTab === "catalog" && token && (
+        <CatalogManagement
+          token={token}
+          onCatalogChanged={onCatalogChanged}
+        />
+      )}
+
+      {activeTab !== "settings" && !token && !ordersMessage && (
+        <div className="rounded-[2rem] bg-white/5 p-8 text-center text-sm font-bold text-white/40">
+          Сохраните ключ доступа, чтобы управлять заявками и каталогом.
+        </div>
       )}
 
       {activeTab === "settings" && (

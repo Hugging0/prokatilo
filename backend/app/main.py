@@ -216,10 +216,98 @@ async def create_order(
     return await crud.create_order(db=db, order_data=order)
 
 
-@app.patch(
-    "/orders/{order_id}/status",
+@app.get(
+    "/orders/my",
+    response_model=list[schemas.OrderRead],
+    tags=["Orders"],
+)
+async def read_my_orders(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    customer_phone: str = Query(
+        ...,
+        min_length=3,
+        description="Телефон клиента, который использовался при создании брони",
+    ),
+) -> list[models.OrderModel]:
+    return await crud.get_orders_by_customer_phone(
+        db=db,
+        customer_phone=customer_phone,
+    )
+
+
+@app.get(
+    "/orders/{order_id}",
     response_model=schemas.OrderRead,
     tags=["Orders"],
+)
+async def read_order(
+    order_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    customer_phone: str = Query(..., min_length=3),
+) -> models.OrderModel:
+    order = await crud.get_order_by_id(db, order_id)
+
+    if order.customer_phone != customer_phone:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Заказ недоступен для этого клиента",
+        )
+
+    return order
+
+
+@app.get(
+    "/admin/orders/",
+    response_model=list[schemas.AdminOrderRead],
+    tags=["Admin Orders"],
+    dependencies=[Depends(verify_admin_token)],
+)
+async def read_admin_orders(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    status_filter: schemas.OrderStatus | None = Query(default=None),
+) -> list[models.OrderModel]:
+    return await crud.get_admin_orders(
+        db=db,
+        status_filter=status_filter,
+    )
+
+
+@app.get(
+    "/admin/orders/{order_id}",
+    response_model=schemas.AdminOrderRead,
+    tags=["Admin Orders"],
+    dependencies=[Depends(verify_admin_token)],
+)
+async def read_admin_order(
+    order_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.OrderModel:
+    return await crud.get_order_by_id(db, order_id)
+
+
+@app.patch(
+    "/admin/orders/{order_id}",
+    response_model=schemas.AdminOrderRead,
+    tags=["Admin Orders"],
+    dependencies=[Depends(verify_admin_token)],
+)
+async def update_admin_order(
+    order_id: int,
+    order_update: schemas.OrderUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.OrderModel:
+    return await crud.update_order(
+        db=db,
+        order_id=order_id,
+        order_data=order_update,
+    )
+
+
+@app.patch(
+    "/admin/orders/{order_id}/status",
+    response_model=schemas.AdminOrderRead,
+    tags=["Admin Orders"],
+    dependencies=[Depends(verify_admin_token)],
 )
 async def change_order_status(
     order_id: int,

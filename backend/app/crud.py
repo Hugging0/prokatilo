@@ -1,4 +1,5 @@
 from sqlalchemy import or_, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
@@ -47,6 +48,27 @@ async def get_admin_items(db: AsyncSession) -> list[models.ItemModel]:
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def get_order_by_id(
+    db: AsyncSession,
+    order_id: int,
+) -> models.OrderModel:
+    stmt = (
+        select(models.OrderModel)
+        .options(selectinload(models.OrderModel.item))
+        .where(models.OrderModel.id == order_id)
+    )
+    result = await db.execute(stmt)
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Заказ не найден",
+        )
+
+    return order
 
 
 async def get_item_by_id(
@@ -200,10 +222,16 @@ async def create_order(
 
     db_order = models.OrderModel(
         item_id=order_data.item_id,
-        customer_login=order_data.customer_login,
+        customer_login=order_data.customer_phone,
+        customer_name=order_data.customer_name,
         customer_phone=order_data.customer_phone,
+        delivery_address=order_data.delivery_address,
+        payment_method=order_data.payment_method.value,
         tariff_type=order_data.tariff_type.value,
         total_price=order_data.total_price,
+        rental_date=order_data.rental_date,
+        rental_time=order_data.rental_time,
+        comment=order_data.comment,
         status=schemas.OrderStatus.PENDING.value,
     )
 
@@ -211,9 +239,56 @@ async def create_order(
 
     db.add(db_order)
     await db.commit()
-    await db.refresh(db_order)
+    return await get_order_by_id(db, db_order.id)
 
-    return db_order
+
+async def get_orders_by_customer_phone(
+    db: AsyncSession,
+    customer_phone: str,
+) -> list[models.OrderModel]:
+    stmt = (
+        select(models.OrderModel)
+        .options(selectinload(models.OrderModel.item))
+        .where(models.OrderModel.customer_phone == customer_phone)
+        .order_by(models.OrderModel.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_admin_orders(
+    db: AsyncSession,
+    status_filter: schemas.OrderStatus | None = None,
+) -> list[models.OrderModel]:
+    stmt = select(models.OrderModel).options(
+        selectinload(models.OrderModel.item),
+    )
+
+    if status_filter is not None:
+        stmt = stmt.where(models.OrderModel.status == status_filter.value)
+
+    stmt = stmt.order_by(models.OrderModel.created_at.desc())
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def update_order(
+    db: AsyncSession,
+    order_id: int,
+    order_data: schemas.OrderUpdate,
+) -> models.OrderModel:
+    order = await get_order_by_id(db, order_id)
+    update_data = order_data.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        if key in {"payment_method", "tariff_type"} and value is not None:
+            setattr(order, key, value.value)
+            continue
+
+        setattr(order, key, value)
+
+    await db.commit()
+    return await get_order_by_id(db, order_id)
 
 
 async def update_order_status(
@@ -221,13 +296,7 @@ async def update_order_status(
     order_id: int,
     new_status: schemas.OrderStatus,
 ) -> models.OrderModel:
-    order = await db.get(models.OrderModel, order_id)
-
-    if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Заказ не найден",
-        )
+    order = await get_order_by_id(db, order_id)
 
     order.status = new_status.value
 
@@ -241,6 +310,4 @@ async def update_order_status(
             item.is_available = True
 
     await db.commit()
-    await db.refresh(order)
-
-    return order
+    return await get_order_by_id(db, order_id)

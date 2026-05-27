@@ -39,14 +39,25 @@ class OrderModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     item_id: Mapped[int] = mapped_column(ForeignKey('items.id'))
     customer_login: Mapped[str] = mapped_column(String(255))
+    customer_name: Mapped[str] = mapped_column(String(255), default="Клиент")
     customer_phone: Mapped[str] = mapped_column(String(50))
+    delivery_address: Mapped[str] = mapped_column(String(500))
+    payment_method: Mapped[str] = mapped_column(String(50), default="cash")
     tariff_type: Mapped[str] = mapped_column(String(50))
     total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     status: Mapped[str] = mapped_column(default='pending')
+    comment: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    rental_date: Mapped[str] = mapped_column(String(20))
+    rental_time: Mapped[str] = mapped_column(String(20))
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
         server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     item: Mapped["ItemModel"] = relationship(back_populates="orders")

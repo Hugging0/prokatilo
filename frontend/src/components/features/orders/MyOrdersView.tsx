@@ -10,8 +10,11 @@ import type { AppOrder } from "@/types";
 
 interface MyOrdersViewProps {
   orders: AppOrder[];
+  isLoading: boolean;
+  error: string | null;
+  onRefresh: () => void;
   onLeaveReview: (
-    orderId: string,
+    orderId: number,
     rating: number,
     comment: string,
   ) => void;
@@ -19,6 +22,9 @@ interface MyOrdersViewProps {
 
 export function MyOrdersView({
   orders,
+  isLoading,
+  error,
+  onRefresh,
   onLeaveReview,
 }: MyOrdersViewProps) {
   return (
@@ -26,6 +32,25 @@ export function MyOrdersView({
       <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-6">
         {UI_COPY.orders.title}
       </h2>
+
+      {isLoading && (
+        <div className="mb-4 rounded-[2rem] bg-white p-4 text-sm font-bold text-slate-400">
+          {UI_COPY.orders.loading}
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 rounded-[2rem] bg-rose-50 p-4 text-sm font-bold text-rose-500">
+          {error}
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="mt-3 block text-left text-xs font-black uppercase tracking-widest"
+          >
+            Обновить
+          </button>
+        </div>
+      )}
 
       <div className="space-y-4">
         {orders.map((order) => {
@@ -49,7 +74,7 @@ export function MyOrdersView({
                       {order.title}
                     </h3>
                     <p className="text-xs font-bold text-slate-400 mt-1">
-                      {order.date} • {order.time}
+                      {UI_COPY.orders.dateLabel}: {order.date} • {order.time}
                     </p>
                   </div>
                 </div>

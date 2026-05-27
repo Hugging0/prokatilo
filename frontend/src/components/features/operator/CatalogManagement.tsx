@@ -11,86 +11,124 @@ import {
   setAdminItemAvailability,
   updateAdminItem,
 } from "@/lib/api/admin-items";
-import {
-  clearAdminToken,
-  getAdminToken,
-  setAdminToken,
-} from "@/lib/admin-token";
 import { UI_COPY } from "@/lib/copy";
 import { ITEM_ICON_KEYS } from "@/lib/mappers/items";
-import type { AdminItemFormPayload, BackendItemDto } from "@/types";
+import type {
+  AdminItemFormPayload,
+  BackendItemDto,
+  CatalogItemFormState,
+} from "@/types";
 
-const EMPTY_FORM: AdminItemFormPayload = {
+const EMPTY_FORM: CatalogItemFormState = {
   title: "",
   description: "",
   category: "Техника",
-  price_per_3h: 0,
-  price_per_6h: 0,
-  price_per_24h: 0,
-  image_url: null,
+  price_per_3h: "",
+  price_per_6h: "",
+  price_per_24h: "",
+  image_url: "",
   icon_key: "package",
-  sort_order: 100,
+  sort_order: "100",
   is_available: true,
   is_active: true,
 };
 
 interface CatalogManagementProps {
+  token: string;
   onCatalogChanged: () => Promise<void>;
 }
 
-function toFormPayload(item: BackendItemDto): AdminItemFormPayload {
+function toFormState(item: BackendItemDto): CatalogItemFormState {
   return {
     title: item.title,
     description: item.description ?? "",
     category: item.category,
-    price_per_3h: Number(item.price_per_3h),
-    price_per_6h: Number(item.price_per_6h),
-    price_per_24h: Number(item.price_per_24h),
-    image_url: item.image_url,
+    price_per_3h: String(Number(item.price_per_3h)),
+    price_per_6h: String(Number(item.price_per_6h)),
+    price_per_24h: String(Number(item.price_per_24h)),
+    image_url: item.image_url ?? "",
     icon_key: item.icon_key,
-    sort_order: item.sort_order,
+    sort_order: String(item.sort_order),
     is_available: item.is_available,
     is_active: item.is_active,
   };
 }
 
 function normalizePayload(
-  payload: AdminItemFormPayload,
+  form: CatalogItemFormState,
 ): AdminItemFormPayload {
   return {
-    ...payload,
-    description: payload.description?.trim() || null,
-    image_url: payload.image_url?.trim() || null,
-    title: payload.title.trim(),
-    category: payload.category.trim(),
-    icon_key: payload.icon_key.trim() || "package",
+    title: form.title.trim(),
+    description: form.description.trim() || null,
+    category: form.category.trim(),
+    price_per_3h: Number(form.price_per_3h),
+    price_per_6h: Number(form.price_per_6h),
+    price_per_24h: Number(form.price_per_24h),
+    image_url: form.image_url.trim() || null,
+    icon_key: form.icon_key.trim() || "package",
+    sort_order: Number(form.sort_order),
+    is_available: form.is_available,
+    is_active: form.is_active,
   };
 }
 
-function validatePayload(payload: AdminItemFormPayload): string | null {
-  if (!payload.title.trim()) {
+function validatePayload(form: CatalogItemFormState): string | null {
+  if (!form.title.trim()) {
     return "Укажите название товара";
   }
 
-  if (!payload.category.trim()) {
+  if (!form.category.trim()) {
     return "Укажите категорию";
   }
 
-  if (
-    payload.price_per_3h < 0 ||
-    payload.price_per_6h < 0 ||
-    payload.price_per_24h < 0
-  ) {
-    return "Цены не могут быть отрицательными";
+  if (!form.price_per_3h.trim()) {
+    return "Укажите цену за 3 часа";
   }
 
-  if (payload.sort_order < 0) {
-    return "Порядок не может быть отрицательным";
+  if (!form.price_per_6h.trim()) {
+    return "Укажите цену за 6 часов";
+  }
+
+  if (!form.price_per_24h.trim()) {
+    return "Укажите цену за сутки";
+  }
+
+  if (!form.sort_order.trim()) {
+    return "Укажите порядок отображения";
+  }
+
+  const numericValues: Array<{ label: string; value: number }> = [
+    {
+      label: UI_COPY.operator.price3hLabel,
+      value: Number(form.price_per_3h),
+    },
+    {
+      label: UI_COPY.operator.price6hLabel,
+      value: Number(form.price_per_6h),
+    },
+    {
+      label: UI_COPY.operator.price24hLabel,
+      value: Number(form.price_per_24h),
+    },
+    {
+      label: UI_COPY.operator.sortOrderLabel,
+      value: Number(form.sort_order),
+    },
+  ];
+
+  for (const { label, value } of numericValues) {
+    if (Number.isNaN(value)) {
+      return `${label} должна быть числом`;
+    }
+
+    if (value < 0) {
+      return `${label} не может быть отрицательной`;
+    }
   }
 
   if (
-    payload.image_url &&
-    !/^https?:\/\/\S+\.\S+/.test(payload.image_url)
+    form.image_url.trim() &&
+    !/^https?:\/\/\S+\.\S+/.test(form.image_url.trim())
   ) {
     return "URL изображения должен начинаться с http:// или https://";
   }
@@ -98,104 +136,116 @@ function validatePayload(payload: AdminItemFormPayload): string | null {
   return null;
 }
 
+function isDirty(
+  form: CatalogItemFormState,
+  initialForm: CatalogItemFormState,
+): boolean {
+  return JSON.stringify(form) !== JSON.stringify(initialForm);
+}
+
 export function CatalogManagement({
+  token,
   onCatalogChanged,
 }: CatalogManagementProps) {
-  const [token, setToken] = useState<string | null>(() =>
-    getAdminToken(),
-  );
-  const [tokenInput, setTokenInput] = useState(
-    () => getAdminToken() ?? "",
-  );
   const [items, setItems] = useState<BackendItemDto[]>([]);
-  const [form, setForm] = useState<AdminItemFormPayload>(EMPTY_FORM);
+  const [form, setForm] = useState<CatalogItemFormState>(EMPTY_FORM);
+  const [initialForm, setInitialForm] =
+    useState<CatalogItemFormState>(EMPTY_FORM);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(() =>
-    Boolean(getAdminToken()),
-  );
+  const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function refreshItems(activeToken = token) {
-    if (!activeToken) {
-      return;
-    }
-
+  async function refreshItems() {
     setIsLoading(true);
     setMessage(null);
 
     try {
-      const nextItems = await getAdminItems(activeToken);
+      const nextItems = await getAdminItems(token);
       setItems(nextItems);
-    } catch {
-      setMessage("Не удалось загрузить каталог. Проверьте ключ доступа.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : UI_COPY.operator.catalogLoadError,
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
   useEffect(() => {
-    if (token) {
-      void getAdminItems(token)
-        .then((nextItems) => {
-          setItems(nextItems);
-          setMessage(null);
-        })
-        .catch(() => {
-          setMessage(
-            "Не удалось загрузить каталог. Проверьте ключ доступа.",
-          );
-        })
-        .finally(() => {
+    let isMounted = true;
+
+    void getAdminItems(token)
+      .then((nextItems) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setItems(nextItems);
+      })
+      .catch((error) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : UI_COPY.operator.catalogLoadError,
+        );
+      })
+      .finally(() => {
+        if (isMounted) {
           setIsLoading(false);
-        });
-    }
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
-  const handleSaveToken = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const nextToken = tokenInput.trim();
-
-    if (!nextToken) {
-      setMessage("Введите ключ доступа");
-      return;
-    }
-
-    setAdminToken(nextToken);
-    setToken(nextToken);
-    void refreshItems(nextToken);
-  };
-
-  const handleClearToken = () => {
-    clearAdminToken();
-    setToken(null);
-    setTokenInput("");
-    setItems([]);
-    setMessage(null);
+  const handleFieldChange = (
+    field: keyof CatalogItemFormState,
+    value: string | boolean,
+  ) => {
+    setForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }));
   };
 
   const handleEdit = (item: BackendItemDto) => {
+    const nextForm = toFormState(item);
     setEditingItemId(item.id);
-    setForm(toFormPayload(item));
+    setForm(nextForm);
+    setInitialForm(nextForm);
     setMessage(null);
   };
 
-  const handleNew = () => {
+  const resetToNewItem = () => {
     setEditingItemId(null);
     setForm(EMPTY_FORM);
+    setInitialForm(EMPTY_FORM);
     setMessage(null);
+  };
+
+  const handleSecondaryAction = () => {
+    if (
+      isDirty(form, initialForm) &&
+      !window.confirm(UI_COPY.operator.discardChanges)
+    ) {
+      return;
+    }
+
+    resetToNewItem();
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!token) {
-      setMessage("Сначала сохраните ключ доступа");
-      return;
-    }
-
-    const normalizedPayload = normalizePayload(form);
-    const validationError = validatePayload(normalizedPayload);
+    const validationError = validatePayload(form);
 
     if (validationError) {
       setMessage(validationError);
@@ -203,277 +253,248 @@ export function CatalogManagement({
     }
 
     try {
+      const normalizedPayload = normalizePayload(form);
+
       if (editingItemId) {
         await updateAdminItem(token, editingItemId, normalizedPayload);
       } else {
         await createAdminItem(token, normalizedPayload);
       }
 
-      setForm(EMPTY_FORM);
-      setEditingItemId(null);
       setMessage("Каталог обновлён");
-      await refreshItems(token);
+      resetToNewItem();
+      await refreshItems();
       await onCatalogChanged();
-    } catch {
-      setMessage("Не удалось сохранить товар");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить товар",
+      );
     }
   };
 
   const handleArchiveToggle = async (item: BackendItemDto) => {
-    if (!token) {
-      return;
-    }
-
     try {
       if (item.is_active) {
         await archiveAdminItem(token, item.id);
       } else {
-        await updateAdminItem(token, item.id, {
-          is_active: true,
-        });
+        await updateAdminItem(token, item.id, { is_active: true });
       }
 
-      await refreshItems(token);
+      await refreshItems();
       await onCatalogChanged();
-    } catch {
-      setMessage("Не удалось изменить видимость товара");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Не удалось изменить видимость товара",
+      );
     }
   };
 
   const handleAvailabilityToggle = async (item: BackendItemDto) => {
-    if (!token) {
-      return;
-    }
-
     try {
-      await setAdminItemAvailability(
-        token,
-        item.id,
-        !item.is_available,
-      );
-      await refreshItems(token);
+      await setAdminItemAvailability(token, item.id, !item.is_available);
+      await refreshItems();
       await onCatalogChanged();
-    } catch {
-      setMessage("Не удалось изменить доступность товара");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Не удалось изменить доступность товара",
+      );
     }
   };
 
   const handleDelete = async (item: BackendItemDto) => {
-    if (!token || !window.confirm("Удалить товар безвозвратно?")) {
+    if (!window.confirm("Удалить товар безвозвратно?")) {
       return;
     }
 
     try {
       await deleteAdminItem(token, item.id);
-      await refreshItems(token);
+      await refreshItems();
       await onCatalogChanged();
-    } catch {
-      setMessage("Не удалось удалить товар");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Не удалось удалить товар",
+      );
     }
   };
 
-  if (!token) {
-    return (
-      <section className="rounded-[2rem] bg-white p-5 text-slate-900">
-        <h3 className="text-xl font-black">
-          {UI_COPY.operator.accessTitle}
-        </h3>
-        <p className="mt-2 text-sm font-bold text-slate-400">
-          {UI_COPY.operator.accessHint}
-        </p>
+  return (
+    <section className="space-y-4">
+      <div className="rounded-[2rem] bg-white p-5 text-slate-900">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xl font-black">
+              {editingItemId
+                ? UI_COPY.operator.editItemTitle
+                : UI_COPY.operator.newItemTitle}
+            </h3>
+            <p className="mt-1 text-xs font-bold text-slate-400">
+              {isLoading ? "Загружаем товары…" : `Товаров: ${items.length}`}
+            </p>
+          </div>
 
-        <form onSubmit={handleSaveToken} className="mt-5 space-y-3">
-          <label className="block text-xs font-black uppercase tracking-widest text-slate-400">
-            {UI_COPY.operator.accessKeyLabel}
+          <button
+            type="button"
+            onClick={handleSecondaryAction}
+            className="rounded-2xl bg-slate-100 px-4 py-3 text-[10px] font-black text-slate-500"
+          >
+            {editingItemId
+              ? UI_COPY.operator.cancelEdit
+              : UI_COPY.operator.newItem}
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+          <label className="block text-[10px] font-black text-slate-400">
+            {UI_COPY.operator.titleLabel}
+            <input
+              value={form.title}
+              onChange={(event) =>
+                handleFieldChange("title", event.target.value)
+              }
+              placeholder={UI_COPY.operator.titleLabel}
+              className="mt-1 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
+            />
           </label>
-          <input
-            type="password"
-            value={tokenInput}
-            onChange={(event) => setTokenInput(event.target.value)}
-            className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-4 text-sm font-bold outline-none focus:border-rose-500"
-          />
+
+          <label className="block text-[10px] font-black text-slate-400">
+            {UI_COPY.operator.descriptionLabel}
+            <textarea
+              value={form.description}
+              onChange={(event) =>
+                handleFieldChange("description", event.target.value)
+              }
+              placeholder={UI_COPY.operator.descriptionLabel}
+              className="mt-1 min-h-24 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
+            />
+          </label>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-[10px] font-black text-slate-400">
+              {UI_COPY.operator.categoryLabel}
+              <input
+                value={form.category}
+                onChange={(event) =>
+                  handleFieldChange("category", event.target.value)
+                }
+                placeholder={UI_COPY.operator.categoryLabel}
+                className="mt-1 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
+              />
+            </label>
+
+            <label className="block text-[10px] font-black text-slate-400">
+              {UI_COPY.operator.iconLabel}
+              <select
+                value={form.icon_key}
+                onChange={(event) =>
+                  handleFieldChange("icon_key", event.target.value)
+                }
+                className="mt-1 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
+              >
+                {ITEM_ICON_KEYS.map((iconKey) => (
+                  <option key={iconKey} value={iconKey}>
+                    {iconKey}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              ["price_per_3h", UI_COPY.operator.price3hLabel],
+              ["price_per_6h", UI_COPY.operator.price6hLabel],
+              ["price_per_24h", UI_COPY.operator.price24hLabel],
+            ].map(([field, label]) => (
+              <label
+                key={field}
+                className="block text-[10px] font-black text-slate-400"
+              >
+                {label}
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form[field as keyof CatalogItemFormState] as string}
+                  onChange={(event) =>
+                    handleFieldChange(
+                      field as keyof CatalogItemFormState,
+                      event.target.value,
+                    )
+                  }
+                  placeholder="0"
+                  className="mt-1 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-900 outline-none focus:border-rose-500"
+                />
+              </label>
+            ))}
+          </div>
+
+          <label className="block text-[10px] font-black text-slate-400">
+            {UI_COPY.operator.imageUrlLabel}
+            <input
+              value={form.image_url}
+              onChange={(event) =>
+                handleFieldChange("image_url", event.target.value)
+              }
+              placeholder={UI_COPY.operator.imageUrlLabel}
+              className="mt-1 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
+            />
+          </label>
+
+          <label className="block text-[10px] font-black text-slate-400">
+            {UI_COPY.operator.sortOrderLabel}
+            <input
+              type="number"
+              min={0}
+              value={form.sort_order}
+              onChange={(event) =>
+                handleFieldChange("sort_order", event.target.value)
+              }
+              placeholder="100"
+              className="mt-1 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-rose-500"
+            />
+          </label>
+
+          <div className="grid grid-cols-1 gap-3 text-xs font-black text-slate-500 sm:grid-cols-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.is_active}
+                onChange={(event) =>
+                  handleFieldChange("is_active", event.target.checked)
+                }
+              />
+              {UI_COPY.operator.activeLabel}
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={form.is_available}
+                onChange={(event) =>
+                  handleFieldChange("is_available", event.target.checked)
+                }
+              />
+              {UI_COPY.operator.availableLabel}
+            </label>
+          </div>
+
           <button
             type="submit"
             className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-black text-white"
           >
-            {UI_COPY.operator.saveAccessKey}
+            {editingItemId
+              ? UI_COPY.operator.saveChanges
+              : UI_COPY.operator.createItem}
           </button>
         </form>
-
-        {message && (
-          <p className="mt-4 text-xs font-black text-rose-500">
-            {message}
-          </p>
-        )}
-      </section>
-    );
-  }
-
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xl font-black">
-            {UI_COPY.operator.catalogTitle}
-          </h3>
-          <p className="text-xs font-bold text-white/40">
-            {isLoading ? "Загружаем товары…" : `Товаров: ${items.length}`}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleClearToken}
-          className="rounded-2xl bg-white/10 px-4 py-3 text-[10px] font-black text-white/60"
-        >
-          {UI_COPY.operator.clearAccessKey}
-        </button>
       </div>
-
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-3 rounded-[2rem] bg-white p-5 text-slate-900"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <h4 className="font-black">
-            {editingItemId
-              ? UI_COPY.operator.saveItem
-              : UI_COPY.operator.addItem}
-          </h4>
-          <button
-            type="button"
-            onClick={handleNew}
-            className="text-xs font-black text-rose-500"
-          >
-            {UI_COPY.operator.createItem}
-          </button>
-        </div>
-
-        <input
-          value={form.title}
-          onChange={(event) =>
-            setForm({ ...form, title: event.target.value })
-          }
-          placeholder="Название"
-          className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
-        />
-        <textarea
-          value={form.description ?? ""}
-          onChange={(event) =>
-            setForm({ ...form, description: event.target.value })
-          }
-          placeholder="Описание"
-          className="min-h-24 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
-        />
-
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            value={form.category}
-            onChange={(event) =>
-              setForm({ ...form, category: event.target.value })
-            }
-            placeholder="Категория"
-            className="rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
-          />
-          <select
-            value={form.icon_key}
-            onChange={(event) =>
-              setForm({ ...form, icon_key: event.target.value })
-            }
-            className="rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
-          >
-            {ITEM_ICON_KEYS.map((iconKey) => (
-              <option key={iconKey} value={iconKey}>
-                {iconKey}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            ["price_per_3h", "3 часа"],
-            ["price_per_6h", "6 часов"],
-            ["price_per_24h", "сутки"],
-          ].map(([field, label]) => (
-            <label
-              key={field}
-              className="text-[10px] font-black text-slate-400"
-            >
-              {label}
-              <input
-                type="number"
-                min={0}
-                value={form[field as keyof AdminItemFormPayload] as number}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    [field]: Number(event.target.value),
-                  })
-                }
-                className="mt-1 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-900 outline-none focus:border-rose-500"
-              />
-            </label>
-          ))}
-        </div>
-
-        <input
-          value={form.image_url ?? ""}
-          onChange={(event) =>
-            setForm({ ...form, image_url: event.target.value })
-          }
-          placeholder="URL изображения"
-          className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold outline-none focus:border-rose-500"
-        />
-
-        <label className="block text-[10px] font-black text-slate-400">
-          Порядок
-          <input
-            type="number"
-            min={0}
-            value={form.sort_order}
-            onChange={(event) =>
-              setForm({ ...form, sort_order: Number(event.target.value) })
-            }
-            className="mt-1 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-rose-500"
-          />
-        </label>
-
-        <div className="grid grid-cols-2 gap-3 text-xs font-black text-slate-500">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={form.is_active}
-              onChange={(event) =>
-                setForm({ ...form, is_active: event.target.checked })
-              }
-            />
-            Показывать
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={form.is_available}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  is_available: event.target.checked,
-                })
-              }
-            />
-            Доступен
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full rounded-2xl bg-slate-900 py-4 text-sm font-black text-white"
-        >
-          {editingItemId
-            ? UI_COPY.operator.saveItem
-            : UI_COPY.operator.createItem}
-        </button>
-      </form>
 
       {message && (
         <p className="rounded-2xl bg-white/10 p-4 text-xs font-black text-white/70">
@@ -519,14 +540,18 @@ export function CatalogManagement({
               <button
                 type="button"
                 onClick={() => handleAvailabilityToggle(item)}
-                className="rounded-xl bg-slate-100 px-3 py-2 text-[10px] font-black text-slate-500"
+                className={`rounded-xl px-3 py-2 text-[10px] font-black ${
+                  item.is_available
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-amber-100 text-amber-600"
+                }`}
               >
-                {item.is_available ? "Недоступен" : "Доступен"}
+                {item.is_available ? "Доступен" : "Недоступен"}
               </button>
               <button
                 type="button"
                 onClick={() => handleDelete(item)}
-                className="rounded-xl bg-rose-50 px-3 py-2 text-[10px] font-black text-rose-500"
+                className="rounded-xl bg-rose-100 px-3 py-2 text-[10px] font-black text-rose-500"
               >
                 {UI_COPY.operator.deleteItem}
               </button>

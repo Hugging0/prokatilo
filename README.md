@@ -66,7 +66,7 @@ ADMIN_API_KEY=long-random-admin-token
 
 ```text
 Добавить товар -> заполнить форму -> Создать товар
-Редактировать -> изменить поля -> Сохранить товар
+Редактировать -> изменить поля -> Сохранить изменения
 Скрыть -> товар получает is_active=false и исчезает из публичного каталога
 Доступен/Недоступен -> меняет текущую доступность аренды
 ```
@@ -89,6 +89,63 @@ PATCH /admin/items/{item_id}
 PATCH /admin/items/{item_id}/availability?is_available=true
 PATCH /admin/items/{item_id}/archive
 DELETE /admin/items/{item_id}
+```
+
+## Бронирования И Заявки
+
+Бронь считается созданной только после успешного `POST /orders/`. Frontend больше не создаёт фиктивные локальные брони, если backend недоступен.
+
+Клиентский flow:
+
+```bash
+curl -X POST http://localhost:8000/orders/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "item_id": 1,
+    "customer_name": "Александр",
+    "customer_phone": "+79990000000",
+    "delivery_address": "ул. Ленина, 10",
+    "payment_method": "cash",
+    "tariff_type": "3h",
+    "total_price": 990,
+    "rental_date": "2026-05-27",
+    "rental_time": "12:00"
+  }'
+```
+
+Посмотреть брони клиента:
+
+```bash
+curl "http://localhost:8000/orders/my?customer_phone=%2B79990000000"
+```
+
+Операторский flow:
+
+```bash
+curl http://localhost:8000/admin/orders/ \
+  -H "X-Admin-Token: $ADMIN_API_KEY"
+```
+
+```bash
+curl -X PATCH "http://localhost:8000/admin/orders/1/status?new_status=confirmed" \
+  -H "X-Admin-Token: $ADMIN_API_KEY"
+```
+
+Public order endpoints:
+
+```text
+POST /orders/
+GET /orders/my?customer_phone=
+GET /orders/{order_id}?customer_phone=
+```
+
+Admin order endpoints:
+
+```text
+GET /admin/orders/
+GET /admin/orders/{order_id}
+PATCH /admin/orders/{order_id}
+PATCH /admin/orders/{order_id}/status?new_status=
 ```
 
 ## Миграции

@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AuthView } from "@/components/features/auth/AuthView";
 import { CheckoutView } from "@/components/features/checkout/CheckoutView";
@@ -13,14 +13,14 @@ import { ProfileView } from "@/components/features/profile/ProfileView";
 import { AppNavigation } from "@/components/layout/AppNavigation";
 import { Toast } from "@/components/ui/Toast";
 import { useItems } from "@/hooks/use-items";
+import { createOrder, getMyOrders } from "@/lib/api/orders";
 import { UI_COPY } from "@/lib/copy";
-import { ORDER_STATUSES } from "@/lib/order-statuses";
+import { mapAppCheckoutToOrderCreatePayload, mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
 import { getTariffPrice } from "@/lib/tariffs";
 import type {
   AppItem,
   AppOrder,
   AppView,
-  OrderStatus,
   PaymentMethod,
   TariffType,
   User,
@@ -30,6 +30,21 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [view, setView] = useState<AppView>("auth");
+  const [selectedItem, setSelectedItem] = useState<AppItem | null>(null);
+  const [selectedTariff, setSelectedTariff] = useState<TariffType>("24h");
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
+  const [selectedTime, setSelectedTime] = useState("12:00");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("sbp");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("Все вещи");
+  const [toast, setToast] = useState<string | null>(null);
+  const [orders, setOrders] = useState<AppOrder[]>([]);
+  const [isOrdersLoading, setIsOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
 
   const {
     items,
@@ -38,27 +53,76 @@ export default function App() {
     source: catalogSource,
     reload: reloadCatalog,
   } = useItems();
-  const [orders, setOrders] = useState<AppOrder[]>([]);
-  const [selectedItem, setSelectedItem] = useState<AppItem | null>(null);
-
-  const [selectedTariff, setSelectedTariff] =
-    useState<TariffType>("24h");
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0],
-  );
-  const [selectedTime, setSelectedTime] = useState("12:00");
-  const [paymentMethod, setPaymentMethod] =
-    useState<PaymentMethod>("sbp");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("Все вещи");
-  const [toast, setToast] = useState<string | null>(null);
 
   const showNotification = (message: string) => {
     setToast(message);
     setTimeout(() => setToast(null), 3000);
   };
+
+  async function reloadOrders(customerPhone = user?.phone) {
+    if (!customerPhone) {
+      setOrders([]);
+      setOrdersError(null);
+      return;
+    }
+
+    setIsOrdersLoading(true);
+    setOrdersError(null);
+
+    try {
+      const backendOrders = await getMyOrders(customerPhone);
+      setOrders((currentOrders) =>
+        mapBackendOrdersToAppOrders(backendOrders, items, currentOrders),
+      );
+    } catch (error) {
+      setOrdersError(
+        error instanceof Error
+          ? error.message
+          : UI_COPY.orders.loadError,
+      );
+    } finally {
+      setIsOrdersLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!user?.phone) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void getMyOrders(user.phone)
+      .then((backendOrders) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setOrders((currentOrders) =>
+          mapBackendOrdersToAppOrders(backendOrders, items, currentOrders),
+        );
+      })
+      .catch((error) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setOrdersError(
+          error instanceof Error
+            ? error.message
+            : UI_COPY.orders.loadError,
+        );
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsOrdersLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.phone, items]);
 
   const handleLogin = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -74,8 +138,10 @@ export default function App() {
     setUser({
       phone,
       name: "Александр",
-      id: "user_1",
+      id: `user_${phone}`,
     });
+    setIsOrdersLoading(true);
+    setOrdersError(null);
     setView("home");
     showNotification(UI_COPY.toast.welcomeBack);
   };
@@ -86,59 +152,46 @@ export default function App() {
     setView("details");
   };
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!selectedItem || !user) {
       showNotification(UI_COPY.toast.selectItemFirst);
       return;
     }
 
-    const newOrder: AppOrder = {
-      id: `ord_${Date.now()}`,
-      itemId: selectedItem.id,
-      title: selectedItem.title,
-      icon: selectedItem.icon,
-      color: selectedItem.color,
-      bg: selectedItem.bg,
-      userId: user.id,
-      tariff: selectedTariff,
-      date: selectedDate,
-      time: selectedTime,
-      price: getTariffPrice(selectedItem, selectedTariff),
-      paymentMethod,
-      deliveryAddress:
-        deliveryAddress.trim() || UI_COPY.checkout.addressFallback,
-      status: "pending",
-      review: null,
-    };
+    setIsBookingSubmitting(true);
 
-    setOrders((currentOrders) => [newOrder, ...currentOrders]);
-    setDeliveryAddress("");
-    setView("orders");
-    showNotification(UI_COPY.toast.bookingCreated);
-  };
+    try {
+      await createOrder(
+        mapAppCheckoutToOrderCreatePayload({
+          user,
+          item: selectedItem,
+          tariff: selectedTariff,
+          paymentMethod,
+          deliveryAddress,
+          selectedDate,
+          selectedTime,
+          totalPrice: getTariffPrice(selectedItem, selectedTariff),
+        }),
+      );
 
-  const updateOrderStatus = (
-    orderId: string,
-    newStatus: OrderStatus,
-  ) => {
-    setOrders((currentOrders) =>
-      currentOrders.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              status: newStatus,
-            }
-          : order,
-      ),
-    );
-
-    showNotification(
-      `Статус обновлен на: ${ORDER_STATUSES[newStatus].label}`,
-    );
+      await reloadCatalog();
+      await reloadOrders(user.phone);
+      setDeliveryAddress("");
+      setView("orders");
+      showNotification(UI_COPY.toast.bookingCreated);
+    } catch (error) {
+      showNotification(
+        error instanceof Error
+          ? error.message
+          : UI_COPY.toast.bookingError,
+      );
+    } finally {
+      setIsBookingSubmitting(false);
+    }
   };
 
   const leaveReview = (
-    orderId: string,
+    orderId: number,
     rating: number,
     comment: string,
   ) => {
@@ -161,6 +214,7 @@ export default function App() {
 
   const handleLogout = () => {
     setUser(null);
+    setOrders([]);
     setIsAdmin(false);
     setView("auth");
   };
@@ -178,7 +232,6 @@ export default function App() {
     return matchesSearch && matchesCategory;
   });
 
-  const myOrders = orders.filter((order) => order.userId === user?.id);
   const categories = [
     "Все вещи",
     ...Array.from(new Set(items.map((item) => item.category))),
@@ -229,33 +282,40 @@ export default function App() {
           selectedTime={selectedTime}
           paymentMethod={paymentMethod}
           deliveryAddress={deliveryAddress}
+          isSubmitting={isBookingSubmitting}
           onBack={() => setView("details")}
           onPaymentMethodChange={setPaymentMethod}
           onDeliveryAddressChange={setDeliveryAddress}
-          onSubmit={handleBook}
+          onSubmit={() => void handleBook()}
         />
       )}
 
       {view === "orders" && (
-        <MyOrdersView orders={myOrders} onLeaveReview={leaveReview} />
+        <MyOrdersView
+          orders={orders}
+          isLoading={isOrdersLoading}
+          error={ordersError}
+          onRefresh={() => void reloadOrders()}
+          onLeaveReview={leaveReview}
+        />
       )}
 
       {view === "profile" && (
         <ProfileView
           user={user}
           isAdmin={isAdmin}
-          onToggleAdmin={() =>
-            setIsAdmin((currentValue) => !currentValue)
-          }
+          onToggleAdmin={() => setIsAdmin((currentValue) => !currentValue)}
           onLogout={handleLogout}
         />
       )}
 
       {view === "admin-dashboard" && (
         <OperatorDashboard
-          orders={orders}
-          onUpdateOrderStatus={updateOrderStatus}
-          onCatalogChanged={reloadCatalog}
+          items={items}
+          onCatalogChanged={async () => {
+            await reloadCatalog();
+            await reloadOrders();
+          }}
         />
       )}
 
@@ -263,9 +323,7 @@ export default function App() {
         view={view}
         isAdmin={isAdmin}
         onNavigate={setView}
-        onBonusClick={() =>
-          showNotification(UI_COPY.bonus.comingSoon)
-        }
+        onBonusClick={() => showNotification(UI_COPY.bonus.comingSoon)}
       />
     </div>
   );

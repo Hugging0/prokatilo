@@ -36,7 +36,18 @@ export async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    let detail = `API request failed: ${response.status}`;
+
+    try {
+      const errorBody = (await response.json()) as {
+        detail?: string;
+      };
+      detail = errorBody.detail || detail;
+    } catch {
+      // Ignore parsing errors and keep a generic message.
+    }
+
+    throw new Error(detail);
   }
 
   if (response.status === 204) {
