@@ -10,8 +10,8 @@ import { getAdminOrders, updateAdminOrderStatus } from "@/lib/api/admin-orders";
 import { UI_COPY } from "@/lib/copy";
 import { mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
 import {
-  ORDER_STATUS_OPTIONS,
   ORDER_STATUSES,
+  getAllowedNextOrderStatuses,
 } from "@/lib/order-statuses";
 import type { AppItem, AppOrder, OrderStatus } from "@/types";
 
@@ -269,23 +269,25 @@ export function OperatorDashboard({
                   {ORDER_STATUSES[order.status].description}
                 </p>
 
-                <div className="flex flex-wrap gap-2 mt-5">
-                  {ORDER_STATUS_OPTIONS.map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() =>
-                        void handleUpdateOrderStatus(order.id, status)
-                      }
-                      className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase transition-all ${
-                        order.status === status
-                          ? "bg-slate-900 text-white shadow-md"
-                          : "bg-slate-100 text-slate-400"
-                      }`}
-                    >
-                      {ORDER_STATUSES[status].operatorLabel}
-                    </button>
-                  ))}
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <span className="rounded-xl bg-slate-900 px-3 py-2 text-[9px] font-black uppercase text-white shadow-md">
+                    {ORDER_STATUSES[order.status].operatorLabel}
+                  </span>
+
+                  {getAllowedNextOrderStatuses(order.status).map(
+                    (status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() =>
+                          void handleUpdateOrderStatus(order.id, status)
+                        }
+                        className="rounded-xl bg-slate-100 px-3 py-2 text-[9px] font-black uppercase text-slate-500 transition-all hover:bg-slate-200"
+                      >
+                        {ORDER_STATUSES[status].operatorLabel}
+                      </button>
+                    ),
+                  )}
                 </div>
               </article>
             ))}

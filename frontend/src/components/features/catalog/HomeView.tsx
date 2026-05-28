@@ -97,13 +97,25 @@ export function HomeView({
               key={item.id}
               type="button"
               onClick={() => onOpenDetails(item)}
-              className="bg-white p-4 shadow-sm rounded-[2rem] cursor-pointer transition-all active:scale-[0.97] border border-slate-100 flex items-center hover:shadow-md group text-left"
+              disabled={!item.available}
+              className="bg-white p-4 shadow-sm rounded-[2rem] cursor-pointer transition-all active:scale-[0.97] border border-slate-100 flex items-center hover:shadow-md group text-left disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <div
-                className={`w-16 h-16 rounded-[1.5rem] ${item.bg} ${item.color} flex items-center justify-center mr-4 shrink-0`}
-              >
-                <item.icon size={30} strokeWidth={1.7} />
-              </div>
+              {item.imageUrl ? (
+                <div className="mr-4 h-16 w-16 shrink-0 overflow-hidden rounded-[1.5rem] bg-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div
+                  className={`w-16 h-16 rounded-[1.5rem] ${item.bg} ${item.color} flex items-center justify-center mr-4 shrink-0`}
+                >
+                  <item.icon size={30} strokeWidth={1.7} />
+                </div>
+              )}
 
               <div className="flex-1 min-w-0">
                 <h2 className="font-bold text-slate-800 text-base leading-tight tracking-tight">

@@ -95,6 +95,8 @@ DELETE /admin/items/{item_id}
 
 Бронь считается созданной только после успешного `POST /orders/`. Frontend больше не создаёт фиктивные локальные брони, если backend недоступен.
 
+Цена заказа рассчитывается на backend из сохранённых цен товара по выбранному тарифу. Поле `total_price` в клиентском payload остаётся совместимым с текущим API, но не является источником истины.
+
 Клиентский flow:
 
 ```bash
@@ -193,3 +195,28 @@ curl http://localhost:8000/health
 - `Base.metadata.create_all` выключен по умолчанию.
 - Схема production базы меняется через Alembic migrations.
 - Перед запуском новой версии применяй `alembic upgrade head`.
+
+## Roadmap До Production MVP
+
+Sprint 2 — email-авторизация и личный кабинет:
+
+```text
+User model
+email/password регистрация и вход
+password hashing
+/auth/me
+/me/orders
+is_admin или простая role-модель
+заказы клиента без доступа по customer_phone query
+```
+
+Sprint 3 — YooKassa и VPS release candidate:
+
+```text
+создание платежа на backend
+YooKassa payment id и payment_status
+redirect/confirmation flow
+webhook succeeded/canceled
+статус оплаты в админке и личном кабинете
+reverse proxy, HTTPS, production env checklist
+```

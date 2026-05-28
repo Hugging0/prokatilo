@@ -1,4 +1,4 @@
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
@@ -197,9 +197,33 @@ async def delete_item(
     item_id: int,
 ) -> None:
     db_item = await get_item_by_id(db, item_id)
+    order_count_result = await db.execute(
+        select(func.count(models.OrderModel.id)).where(
+            models.OrderModel.item_id == item_id,
+        ),
+    )
+    order_count = order_count_result.scalar_one()
+
+    if order_count > 0:
+        db_item.is_active = False
+        await db.commit()
+        return
 
     await db.delete(db_item)
     await db.commit()
+
+
+def get_tariff_price(
+    item: models.ItemModel,
+    tariff_type: schemas.TariffType,
+):
+    match tariff_type:
+        case schemas.TariffType.THREE_HOURS:
+            return item.price_per_3h
+        case schemas.TariffType.SIX_HOURS:
+            return item.price_per_6h
+        case schemas.TariffType.TWENTY_FOUR_HOURS:
+            return item.price_per_24h
 
 
 async def create_order(
@@ -228,7 +252,7 @@ async def create_order(
         delivery_address=order_data.delivery_address,
         payment_method=order_data.payment_method.value,
         tariff_type=order_data.tariff_type.value,
-        total_price=order_data.total_price,
+        total_price=get_tariff_price(item, order_data.tariff_type),
         rental_date=order_data.rental_date,
         rental_time=order_data.rental_time,
         comment=order_data.comment,
@@ -297,6 +321,16 @@ async def update_order_status(
     new_status: schemas.OrderStatus,
 ) -> models.OrderModel:
     order = await get_order_by_id(db, order_id)
+    current_status = schemas.OrderStatus(order.status)
+
+    if current_status in {
+        schemas.OrderStatus.CANCELLED,
+        schemas.OrderStatus.RETURNED,
+    } and new_status != current_status:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Недопустимый переход статуса заказа",
+        )
 
     order.status = new_status.value
 

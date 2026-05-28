@@ -39,7 +39,19 @@ export function DetailsView({
           <ArrowLeft size={22} />
         </button>
 
-        <item.icon size={96} strokeWidth={1.3} className={item.color} />
+        {item.imageUrl ? (
+          <div className="h-full min-h-[330px] w-full overflow-hidden rounded-b-[3rem]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.imageUrl}
+              alt={item.title}
+              className="h-full min-h-[330px] w-full object-cover"
+            />
+            <div className="absolute inset-0 rounded-b-[3rem] bg-gradient-to-t from-black/30 via-transparent to-white/10" />
+          </div>
+        ) : (
+          <item.icon size={96} strokeWidth={1.3} className={item.color} />
+        )}
       </section>
 
       <section className="px-6 -mt-10 relative z-10">
@@ -116,9 +128,10 @@ export function DetailsView({
           <button
             type="button"
             onClick={onCheckout}
-            className="mt-8 w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-slate-300 active:scale-95 transition-transform"
+            disabled={!item.available}
+            className="mt-8 w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-slate-300 active:scale-95 transition-transform disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
           >
-            Далее к оформлению
+            {item.available ? "Далее к оформлению" : "Сейчас недоступно"}
           </button>
         </div>
       </section>

@@ -48,11 +48,22 @@ export function CheckoutView({
 
       <section className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-sm mb-5">
         <div className="flex items-center gap-4">
-          <div
-            className={`w-14 h-14 rounded-2xl ${selectedItem.bg} ${selectedItem.color} flex items-center justify-center`}
-          >
-            <selectedItem.icon size={28} />
-          </div>
+          {selectedItem.imageUrl ? (
+            <div className="h-14 w-14 overflow-hidden rounded-2xl bg-slate-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={selectedItem.imageUrl}
+                alt={selectedItem.title}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div
+              className={`w-14 h-14 rounded-2xl ${selectedItem.bg} ${selectedItem.color} flex items-center justify-center`}
+            >
+              <selectedItem.icon size={28} />
+            </div>
+          )}
 
           <div>
             <h3 className="font-black text-slate-900">

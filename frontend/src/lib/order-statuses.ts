@@ -78,3 +78,21 @@ export const ORDER_STATUS_OPTIONS: OrderStatus[] = [
   "returned",
   "cancelled",
 ];
+
+export function getAllowedNextOrderStatuses(
+  status: OrderStatus,
+): OrderStatus[] {
+  switch (status) {
+    case "pending":
+      return ["confirmed", "cancelled"];
+    case "confirmed":
+      return ["delivery", "active", "cancelled"];
+    case "delivery":
+      return ["active", "cancelled"];
+    case "active":
+      return ["returned"];
+    case "returned":
+    case "cancelled":
+      return [];
+  }
+}
