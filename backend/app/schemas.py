@@ -70,9 +70,38 @@ class AdminItemRead(ItemRead):
     pass
 
 
+class UserRead(BaseModel):
+    id: int
+    email: str
+    name: str
+    phone: str | None
+    is_admin: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AuthRegister(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255)
+    password: str = Field(..., min_length=6, max_length=128)
+    name: str = Field(..., min_length=1, max_length=100)
+    phone: str | None = Field(None, min_length=3, max_length=50)
+
+
+class AuthLogin(BaseModel):
+    email: str = Field(..., min_length=5, max_length=255)
+    password: str = Field(..., min_length=6, max_length=128)
+
+
+class AuthRead(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserRead
+
+
 class OrderBase(BaseModel):
     item_id: int = Field(..., gt=0)
     customer_name: str = Field(..., min_length=1, max_length=100)
+    customer_email: str | None = Field(None, max_length=255)
     customer_phone: str = Field(..., min_length=3, max_length=50)
     delivery_address: str = Field(..., min_length=5, max_length=500)
     payment_method: PaymentMethod
@@ -89,6 +118,7 @@ class OrderCreate(OrderBase):
 
 class OrderUpdate(BaseModel):
     customer_name: str | None = Field(None, min_length=1, max_length=100)
+    customer_email: str | None = Field(None, max_length=255)
     customer_phone: str | None = Field(None, min_length=3, max_length=50)
     delivery_address: str | None = Field(None, min_length=5, max_length=500)
     payment_method: PaymentMethod | None = None
@@ -105,6 +135,7 @@ class OrderStatusUpdate(BaseModel):
 
 class OrderRead(OrderBase):
     id: int
+    user_id: int | None
     customer_login: str
     status: OrderStatus
     created_at: datetime

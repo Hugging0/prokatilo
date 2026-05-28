@@ -22,10 +22,11 @@ export type AppView =
   | "admin-dashboard";
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
+  email: string;
   phone: string;
-  isAdmin?: boolean;
+  isAdmin: boolean;
 }
 
 export interface AppItem {
@@ -122,8 +123,10 @@ export interface CatalogItemFormState {
 export interface BackendOrderDto {
   id: number;
   item_id: number;
+  user_id: number | null;
   customer_login: string;
   customer_name: string;
+  customer_email: string | null;
   customer_phone: string;
   delivery_address: string;
   payment_method: PaymentMethod;
@@ -141,6 +144,7 @@ export interface BackendOrderDto {
 export interface CreateOrderPayload {
   item_id: number;
   customer_name: string;
+  customer_email?: string | null;
   customer_phone: string;
   delivery_address: string;
   payment_method: PaymentMethod;
@@ -153,6 +157,7 @@ export interface CreateOrderPayload {
 
 export interface AdminOrderUpdatePayload {
   customer_name?: string;
+  customer_email?: string | null;
   customer_phone?: string;
   delivery_address?: string;
   payment_method?: PaymentMethod;
@@ -161,6 +166,32 @@ export interface AdminOrderUpdatePayload {
   rental_date?: string;
   rental_time?: string;
   comment?: string | null;
+}
+
+export interface BackendUserDto {
+  id: number;
+  email: string;
+  name: string;
+  phone: string | null;
+  is_admin: boolean;
+}
+
+export interface AuthResponseDto {
+  access_token: string;
+  token_type: "bearer";
+  user: BackendUserDto;
+}
+
+export interface AuthRegisterPayload {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string | null;
+}
+
+export interface AuthLoginPayload {
+  email: string;
+  password: string;
 }
 
 export type Item = AppItem;

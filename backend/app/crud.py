@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
 from app import models, schemas
+from app.auth import hash_password, verify_password
 
 
 async def get_items(
@@ -48,6 +49,66 @@ async def get_admin_items(db: AsyncSession) -> list[models.ItemModel]:
     )
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def get_user_by_email(
+    db: AsyncSession,
+    email: str,
+) -> models.UserModel | None:
+    result = await db.execute(
+        select(models.UserModel).where(
+            models.UserModel.email == email.lower(),
+        ),
+    )
+    return result.scalar_one_or_none()
+
+
+async def create_user(
+    db: AsyncSession,
+    user_data: schemas.AuthRegister,
+    is_admin: bool = False,
+) -> models.UserModel:
+    existing_user = await get_user_by_email(db, user_data.email)
+
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Пользователь с таким email уже существует",
+        )
+
+    db_user = models.UserModel(
+        email=user_data.email.lower(),
+        password_hash=hash_password(user_data.password),
+        name=user_data.name.strip(),
+        phone=user_data.phone,
+        is_admin=is_admin,
+    )
+    db.add(db_user)
+    await db.commit()
+    await db.refresh(db_user)
+    return db_user
+
+
+async def authenticate_user(
+    db: AsyncSession,
+    email: str,
+    password: str,
+) -> models.UserModel:
+    user = await get_user_by_email(db, email)
+
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный email или пароль",
+        )
+
+    if not verify_password(password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный email или пароль",
+        )
+
+    return user
 
 
 async def get_order_by_id(
@@ -229,6 +290,7 @@ def get_tariff_price(
 async def create_order(
     db: AsyncSession,
     order_data: schemas.OrderCreate,
+    user: models.UserModel,
 ) -> models.OrderModel:
     item = await db.get(models.ItemModel, order_data.item_id)
 
@@ -246,8 +308,10 @@ async def create_order(
 
     db_order = models.OrderModel(
         item_id=order_data.item_id,
-        customer_login=order_data.customer_phone,
-        customer_name=order_data.customer_name,
+        user_id=user.id,
+        customer_login=user.email,
+        customer_name=order_data.customer_name or user.name,
+        customer_email=user.email,
         customer_phone=order_data.customer_phone,
         delivery_address=order_data.delivery_address,
         payment_method=order_data.payment_method.value,
@@ -274,6 +338,20 @@ async def get_orders_by_customer_phone(
         select(models.OrderModel)
         .options(selectinload(models.OrderModel.item))
         .where(models.OrderModel.customer_phone == customer_phone)
+        .order_by(models.OrderModel.created_at.desc())
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_orders_by_user(
+    db: AsyncSession,
+    user_id: int,
+) -> list[models.OrderModel]:
+    stmt = (
+        select(models.OrderModel)
+        .options(selectinload(models.OrderModel.item))
+        .where(models.OrderModel.user_id == user_id)
         .order_by(models.OrderModel.created_at.desc())
     )
     result = await db.execute(stmt)

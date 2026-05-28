@@ -13,7 +13,9 @@ import { ProfileView } from "@/components/features/profile/ProfileView";
 import { AppNavigation } from "@/components/layout/AppNavigation";
 import { Toast } from "@/components/ui/Toast";
 import { useItems } from "@/hooks/use-items";
+import { getCurrentUser, loginUser, registerUser } from "@/lib/api/auth";
 import { createOrder, getMyOrders } from "@/lib/api/orders";
+import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/auth-session";
 import { UI_COPY } from "@/lib/copy";
 import { mapAppCheckoutToOrderCreatePayload, mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
 import { getTariffPrice } from "@/lib/tariffs";
@@ -26,10 +28,29 @@ import type {
   User,
 } from "@/types";
 
+function mapBackendUserToUser(user: {
+  id: number;
+  email: string;
+  name: string;
+  phone: string | null;
+  is_admin: boolean;
+}): User {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    phone: user.phone ?? "",
+    isAdmin: user.is_admin,
+  };
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [view, setView] = useState<AppView>("auth");
+  const [authToken, setAuthTokenState] = useState<string | null>(() =>
+    getAuthToken(),
+  );
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [view, setView] = useState<AppView>("home");
   const [selectedItem, setSelectedItem] = useState<AppItem | null>(null);
   const [selectedTariff, setSelectedTariff] = useState<TariffType>("24h");
   const [selectedDate, setSelectedDate] = useState(
@@ -59,8 +80,8 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  async function reloadOrders(customerPhone = user?.phone) {
-    if (!customerPhone) {
+  async function reloadOrders(token = authToken) {
+    if (!token) {
       setOrders([]);
       setOrdersError(null);
       return;
@@ -70,7 +91,7 @@ export default function App() {
     setOrdersError(null);
 
     try {
-      const backendOrders = await getMyOrders(customerPhone);
+      const backendOrders = await getMyOrders(token);
       setOrders((currentOrders) =>
         mapBackendOrdersToAppOrders(backendOrders, items, currentOrders),
       );
@@ -86,15 +107,23 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!user?.phone) {
+    if (!authToken) {
       return;
     }
 
     let isMounted = true;
 
-    void getMyOrders(user.phone)
-      .then((backendOrders) => {
+    void getCurrentUser(authToken)
+      .then((backendUser) => {
         if (!isMounted) {
+          return;
+        }
+
+        setUser(mapBackendUserToUser(backendUser));
+        return getMyOrders(authToken);
+      })
+      .then((backendOrders) => {
+        if (!isMounted || !backendOrders) {
           return;
         }
 
@@ -122,28 +151,62 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [user?.phone, items]);
+  }, [authToken, items]);
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleAuth = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "").trim().toLowerCase();
+    const password = String(formData.get("password") ?? "");
+    const name = String(formData.get("name") ?? "").trim();
     const phone = String(formData.get("phone") ?? "").trim();
 
-    if (phone.length < 10) {
-      showNotification(UI_COPY.toast.invalidPhone);
+    if (!email.includes("@")) {
+      showNotification(UI_COPY.toast.invalidEmail);
       return;
     }
 
-    setUser({
-      phone,
-      name: "Александр",
-      id: `user_${phone}`,
-    });
-    setIsOrdersLoading(true);
-    setOrdersError(null);
-    setView("home");
-    showNotification(UI_COPY.toast.welcomeBack);
+    if (password.length < 6) {
+      showNotification(UI_COPY.toast.invalidPassword);
+      return;
+    }
+
+    if (authMode === "register" && !name) {
+      showNotification("Введите имя");
+      return;
+    }
+
+    try {
+      const authResponse =
+        authMode === "register"
+          ? await registerUser({
+              email,
+              password,
+              name,
+              phone: phone || null,
+            })
+          : await loginUser({
+              email,
+              password,
+            });
+
+      setAuthToken(authResponse.access_token);
+      setAuthTokenState(authResponse.access_token);
+      setUser(mapBackendUserToUser(authResponse.user));
+      setIsOrdersLoading(true);
+      setOrdersError(null);
+      setView("home");
+      showNotification(
+        authMode === "register"
+          ? UI_COPY.toast.registered
+          : UI_COPY.toast.welcomeBack,
+      );
+    } catch (error) {
+      showNotification(
+        error instanceof Error ? error.message : "Не удалось войти",
+      );
+    }
   };
 
   const handleOpenDetails = (item: AppItem) => {
@@ -153,8 +216,14 @@ export default function App() {
   };
 
   const handleBook = async () => {
-    if (!selectedItem || !user) {
+    if (!selectedItem) {
       showNotification(UI_COPY.toast.selectItemFirst);
+      return;
+    }
+
+    if (!user || !authToken) {
+      setView("auth");
+      showNotification(UI_COPY.toast.loginRequired);
       return;
     }
 
@@ -162,6 +231,7 @@ export default function App() {
 
     try {
       await createOrder(
+        authToken,
         mapAppCheckoutToOrderCreatePayload({
           user,
           item: selectedItem,
@@ -175,7 +245,7 @@ export default function App() {
       );
 
       await reloadCatalog();
-      await reloadOrders(user.phone);
+      await reloadOrders(authToken);
       setDeliveryAddress("");
       setView("orders");
       showNotification(UI_COPY.toast.bookingCreated);
@@ -213,10 +283,11 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    clearAuthToken();
+    setAuthTokenState(null);
     setUser(null);
     setOrders([]);
-    setIsAdmin(false);
-    setView("auth");
+    setView("home");
   };
 
   const filteredItems = items.filter((item) => {
@@ -237,13 +308,17 @@ export default function App() {
     ...Array.from(new Set(items.map((item) => item.category))),
   ];
 
-  if (!user) {
-    return <AuthView onLogin={handleLogin} />;
-  }
-
   return (
     <div className="min-h-screen bg-slate-50">
       <Toast message={toast} />
+
+      {view === "auth" && (
+        <AuthView
+          mode={authMode}
+          onModeChange={setAuthMode}
+          onSubmit={(event) => void handleAuth(event)}
+        />
+      )}
 
       {view === "home" && (
         <HomeView
@@ -290,7 +365,7 @@ export default function App() {
         />
       )}
 
-      {view === "orders" && (
+      {view === "orders" && user && (
         <MyOrdersView
           orders={orders}
           isLoading={isOrdersLoading}
@@ -300,17 +375,32 @@ export default function App() {
         />
       )}
 
-      {view === "profile" && (
+      {view === "orders" && !user && (
+        <AuthView
+          mode={authMode}
+          onModeChange={setAuthMode}
+          onSubmit={(event) => void handleAuth(event)}
+        />
+      )}
+
+      {view === "profile" && user && (
         <ProfileView
           user={user}
-          isAdmin={isAdmin}
-          onToggleAdmin={() => setIsAdmin((currentValue) => !currentValue)}
           onLogout={handleLogout}
         />
       )}
 
-      {view === "admin-dashboard" && (
+      {view === "profile" && !user && (
+        <AuthView
+          mode={authMode}
+          onModeChange={setAuthMode}
+          onSubmit={(event) => void handleAuth(event)}
+        />
+      )}
+
+      {view === "admin-dashboard" && user?.isAdmin && authToken && (
         <OperatorDashboard
+          authToken={authToken}
           items={items}
           onCatalogChanged={async () => {
             await reloadCatalog();
@@ -321,8 +411,15 @@ export default function App() {
 
       <AppNavigation
         view={view}
-        isAdmin={isAdmin}
-        onNavigate={setView}
+        isAdmin={Boolean(user?.isAdmin)}
+        onNavigate={(nextView) => {
+          if (nextView === "admin-dashboard" && !user?.isAdmin) {
+            setView("profile");
+            return;
+          }
+
+          setView(nextView);
+        }}
         onBonusClick={() => showNotification(UI_COPY.bonus.comingSoon)}
       />
     </div>

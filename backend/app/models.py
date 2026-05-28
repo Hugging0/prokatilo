@@ -33,13 +33,38 @@ class ItemModel(Base):
     orders: Mapped[list["OrderModel"]] = relationship(back_populates="item")
 
 
+class UserModel(Base):
+    __tablename__ = 'users'
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    name: Mapped[str] = mapped_column(String(255))
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    orders: Mapped[list["OrderModel"]] = relationship(back_populates="user")
+
+
 class OrderModel(Base):
     __tablename__ = 'orders'
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     item_id: Mapped[int] = mapped_column(ForeignKey('items.id'))
+    user_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'), nullable=True)
     customer_login: Mapped[str] = mapped_column(String(255))
     customer_name: Mapped[str] = mapped_column(String(255), default="Клиент")
+    customer_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     customer_phone: Mapped[str] = mapped_column(String(50))
     delivery_address: Mapped[str] = mapped_column(String(500))
     payment_method: Mapped[str] = mapped_column(String(50), default="cash")
@@ -61,3 +86,4 @@ class OrderModel(Base):
     )
 
     item: Mapped["ItemModel"] = relationship(back_populates="orders")
+    user: Mapped["UserModel | None"] = relationship(back_populates="orders")

@@ -2,23 +2,74 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud, models, schemas
+from app.auth import create_access_token, parse_access_token
 from app.database import Base, engine, get_db
 from app.settings import get_settings
 
 
 settings = get_settings()
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
-async def verify_admin_token(
+async def get_optional_current_user(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Depends(bearer_scheme),
+    ] = None,
+) -> models.UserModel | None:
+    if not credentials:
+        return None
+
+    token_payload = parse_access_token(
+        credentials.credentials,
+        settings.auth_secret,
+    )
+
+    if not token_payload:
+        return None
+
+    user = await db.get(models.UserModel, token_payload.user_id)
+
+    if not user or not user.is_active:
+        return None
+
+    return user
+
+
+async def get_current_user(
+    user: Annotated[
+        models.UserModel | None,
+        Depends(get_optional_current_user),
+    ],
+) -> models.UserModel:
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Недействительная сессия",
+        )
+
+    return user
+
+
+async def verify_admin_access(
+    current_user: Annotated[
+        models.UserModel | None,
+        Depends(get_optional_current_user),
+    ] = None,
     x_admin_token: Annotated[str | None, Header()] = None,
 ) -> None:
+    if current_user and current_user.is_admin:
+        return
+
     if not settings.admin_api_key:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin API key is not configured",
+            detail="Нужен аккаунт администратора",
         )
 
     if x_admin_token != settings.admin_api_key:
@@ -65,6 +116,58 @@ async def health_check() -> schemas.HealthRead:
         status="ok",
         service="prokatilo-api",
     )
+
+
+@app.post(
+    "/auth/register",
+    response_model=schemas.AuthRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Auth"],
+)
+async def register(
+    payload: schemas.AuthRegister,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> schemas.AuthRead:
+    user = await crud.create_user(
+        db=db,
+        user_data=payload,
+        is_admin=payload.email.lower() in settings.admin_email_set,
+    )
+    return schemas.AuthRead(
+        access_token=create_access_token(user.id, settings.auth_secret),
+        user=user,
+    )
+
+
+@app.post(
+    "/auth/login",
+    response_model=schemas.AuthRead,
+    tags=["Auth"],
+)
+async def login(
+    payload: schemas.AuthLogin,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> schemas.AuthRead:
+    user = await crud.authenticate_user(
+        db=db,
+        email=payload.email,
+        password=payload.password,
+    )
+    return schemas.AuthRead(
+        access_token=create_access_token(user.id, settings.auth_secret),
+        user=user,
+    )
+
+
+@app.get(
+    "/auth/me",
+    response_model=schemas.UserRead,
+    tags=["Auth"],
+)
+async def read_me(
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> models.UserModel:
+    return current_user
 
 
 @app.get(
@@ -120,7 +223,7 @@ async def read_item(
     response_model=schemas.AdminItemRead,
     status_code=status.HTTP_201_CREATED,
     tags=["Admin Items"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def create_admin_item(
     item: schemas.ItemCreate,
@@ -133,7 +236,7 @@ async def create_admin_item(
     "/admin/items/",
     response_model=list[schemas.AdminItemRead],
     tags=["Admin Items"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def read_admin_items(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -145,7 +248,7 @@ async def read_admin_items(
     "/admin/items/{item_id}",
     response_model=schemas.AdminItemRead,
     tags=["Admin Items"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def update_admin_item(
     item_id: int,
@@ -163,7 +266,7 @@ async def update_admin_item(
     "/admin/items/{item_id}/availability",
     response_model=schemas.AdminItemRead,
     tags=["Admin Items"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def set_admin_item_availability(
     item_id: int,
@@ -181,7 +284,7 @@ async def set_admin_item_availability(
     "/admin/items/{item_id}/archive",
     response_model=schemas.AdminItemRead,
     tags=["Admin Items"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def archive_admin_item(
     item_id: int,
@@ -194,7 +297,7 @@ async def archive_admin_item(
     "/admin/items/{item_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["Admin Items"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def delete_admin_item(
     item_id: int,
@@ -212,8 +315,25 @@ async def delete_admin_item(
 async def create_order(
     order: schemas.OrderCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
 ) -> models.OrderModel:
-    return await crud.create_order(db=db, order_data=order)
+    return await crud.create_order(
+        db=db,
+        order_data=order,
+        user=current_user,
+    )
+
+
+@app.get(
+    "/me/orders",
+    response_model=list[schemas.OrderRead],
+    tags=["Orders"],
+)
+async def read_account_orders(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> list[models.OrderModel]:
+    return await crud.get_orders_by_user(db=db, user_id=current_user.id)
 
 
 @app.get(
@@ -260,7 +380,7 @@ async def read_order(
     "/admin/orders/",
     response_model=list[schemas.AdminOrderRead],
     tags=["Admin Orders"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def read_admin_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -276,7 +396,7 @@ async def read_admin_orders(
     "/admin/orders/{order_id}",
     response_model=schemas.AdminOrderRead,
     tags=["Admin Orders"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def read_admin_order(
     order_id: int,
@@ -289,7 +409,7 @@ async def read_admin_order(
     "/admin/orders/{order_id}",
     response_model=schemas.AdminOrderRead,
     tags=["Admin Orders"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def update_admin_order(
     order_id: int,
@@ -307,7 +427,7 @@ async def update_admin_order(
     "/admin/orders/{order_id}/status",
     response_model=schemas.AdminOrderRead,
     tags=["Admin Orders"],
-    dependencies=[Depends(verify_admin_token)],
+    dependencies=[Depends(verify_admin_access)],
 )
 async def change_order_status(
     order_id: int,

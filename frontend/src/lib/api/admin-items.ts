@@ -1,17 +1,12 @@
 import { apiRequest } from "@/lib/api/client";
+import { getAuthHeaders } from "@/lib/auth-session";
 import type { AdminItemFormPayload, BackendItemDto } from "@/types";
-
-function getAdminHeaders(token: string): HeadersInit {
-  return {
-    "X-Admin-Token": token,
-  };
-}
 
 export async function getAdminItems(
   token: string,
 ): Promise<BackendItemDto[]> {
   return apiRequest<BackendItemDto[]>("/admin/items/", {
-    headers: getAdminHeaders(token),
+    headers: getAuthHeaders(token),
   });
 }
 
@@ -21,7 +16,7 @@ export async function createAdminItem(
 ): Promise<BackendItemDto> {
   return apiRequest<BackendItemDto>("/admin/items/", {
     method: "POST",
-    headers: getAdminHeaders(token),
+    headers: getAuthHeaders(token),
     body: JSON.stringify(payload),
   });
 }
@@ -33,7 +28,7 @@ export async function updateAdminItem(
 ): Promise<BackendItemDto> {
   return apiRequest<BackendItemDto>(`/admin/items/${itemId}`, {
     method: "PATCH",
-    headers: getAdminHeaders(token),
+    headers: getAuthHeaders(token),
     body: JSON.stringify(payload),
   });
 }
@@ -50,7 +45,7 @@ export async function setAdminItemAvailability(
       query: {
         is_available: isAvailable,
       },
-      headers: getAdminHeaders(token),
+      headers: getAuthHeaders(token),
     },
   );
 }
@@ -61,7 +56,7 @@ export async function archiveAdminItem(
 ): Promise<BackendItemDto> {
   return apiRequest<BackendItemDto>(`/admin/items/${itemId}/archive`, {
     method: "PATCH",
-    headers: getAdminHeaders(token),
+    headers: getAuthHeaders(token),
   });
 }
 
@@ -71,6 +66,6 @@ export async function deleteAdminItem(
 ): Promise<void> {
   await apiRequest<void>(`/admin/items/${itemId}`, {
     method: "DELETE",
-    headers: getAdminHeaders(token),
+    headers: getAuthHeaders(token),
   });
 }

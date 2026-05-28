@@ -3,8 +3,15 @@ import type { PaymentMethod } from "@/types";
 export const UI_COPY = {
   auth: {
     subtitle: "Сервис проката вещей",
-    phoneLabel: "Номер телефона",
+    loginTab: "Вход",
+    registerTab: "Регистрация",
+    emailPlaceholder: "Email",
+    passwordPlaceholder: "Пароль",
+    namePlaceholder: "Имя",
+    phonePlaceholder: "Телефон для связи",
+    phoneLabel: "Телефон",
     loginButton: "Войти",
+    registerButton: "Создать аккаунт",
   },
   home: {
     slogan: "Аренда без залога",
@@ -92,6 +99,10 @@ export const UI_COPY = {
   profile: {
     operatorModeTitle: "Режим оператора",
     operatorModeHint: "Только для тестирования MVP",
+    adminAccountTitle: "Админский аккаунт",
+    adminAccountHint: "Каталог и заявки доступны через нижнюю навигацию",
+    customerAccountTitle: "Клиентский аккаунт",
+    customerAccountHint: "Здесь хранятся ваши брони и контактные данные",
     enabled: "Вкл",
     disabled: "Выкл",
   },
@@ -100,8 +111,12 @@ export const UI_COPY = {
   },
   toast: {
     invalidPhone: "Введите корректный номер телефона",
+    invalidEmail: "Введите корректный email",
+    invalidPassword: "Пароль должен быть не короче 6 символов",
     welcomeBack: "С возвращением!",
+    registered: "Аккаунт создан",
     selectItemFirst: "Сначала выберите вещь и войдите в аккаунт",
+    loginRequired: "Войдите в аккаунт, чтобы создать бронь",
     bookingCreated: "Бронь создана, скоро подтвердим",
     bookingError:
       "Не удалось создать бронь. Проверьте соединение или попробуйте позже.",

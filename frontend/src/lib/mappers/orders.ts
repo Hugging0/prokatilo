@@ -80,6 +80,7 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
   return {
     item_id: input.item.id,
     customer_name: input.user.name,
+    customer_email: input.user.email,
     customer_phone: input.user.phone,
     delivery_address:
       input.deliveryAddress.trim() || UI_COPY.checkout.addressFallback,

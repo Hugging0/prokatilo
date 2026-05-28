@@ -1,14 +1,22 @@
 import type { FormEvent } from "react";
-import { ChevronRight, Phone, ShoppingBag } from "lucide-react";
+import { ChevronRight, Lock, Mail, Phone, ShoppingBag, User } from "lucide-react";
 
 import { BRAND_LOGO_CLASS } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
 
 interface AuthViewProps {
-  onLogin: (event: FormEvent<HTMLFormElement>) => void;
+  mode: "login" | "register";
+  onModeChange: (mode: "login" | "register") => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
-export function AuthView({ onLogin }: AuthViewProps) {
+export function AuthView({
+  mode,
+  onModeChange,
+  onSubmit,
+}: AuthViewProps) {
+  const isRegister = mode === "register";
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex items-center justify-center p-6">
       <section className="w-full max-w-sm bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-slate-200/70 border border-slate-100">
@@ -22,37 +30,92 @@ export function AuthView({ onLogin }: AuthViewProps) {
           ПРОКАТило
         </h1>
 
-        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-12">
+        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-8">
           {UI_COPY.auth.subtitle}
         </p>
 
-        <form onSubmit={onLogin} className="space-y-4">
-          <label
-            htmlFor="phone"
-            className="block text-xs font-black uppercase tracking-widest text-slate-400"
-          >
-            {UI_COPY.auth.phoneLabel}
-          </label>
+        <div className="mb-5 grid grid-cols-2 rounded-3xl bg-slate-50 p-1">
+          {[
+            ["login", UI_COPY.auth.loginTab],
+            ["register", UI_COPY.auth.registerTab],
+          ].map(([nextMode, label]) => (
+            <button
+              key={nextMode}
+              type="button"
+              onClick={() => onModeChange(nextMode as "login" | "register")}
+              className={`rounded-2xl py-3 text-xs font-black ${
+                mode === nextMode
+                  ? "bg-slate-900 text-white shadow-lg"
+                  : "text-slate-400"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-4">
+          {isRegister && (
+            <div className="relative">
+              <User
+                size={18}
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                name="name"
+                type="text"
+                placeholder={UI_COPY.auth.namePlaceholder}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 pl-14 pr-6 font-bold text-slate-700 outline-none focus:border-rose-500 transition-all"
+              />
+            </div>
+          )}
 
           <div className="relative">
-            <Phone
+            <Mail
               size={18}
               className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <input
-              id="phone"
-              name="phone"
-              type="tel"
-              placeholder="+7 999 000-00-00"
+              name="email"
+              type="email"
+              placeholder={UI_COPY.auth.emailPlaceholder}
               className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 pl-14 pr-6 font-bold text-slate-700 outline-none focus:border-rose-500 transition-all"
             />
           </div>
+
+          <div className="relative">
+            <Lock
+              size={18}
+              className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              name="password"
+              type="password"
+              placeholder={UI_COPY.auth.passwordPlaceholder}
+              className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 pl-14 pr-6 font-bold text-slate-700 outline-none focus:border-rose-500 transition-all"
+            />
+          </div>
+
+          {isRegister && (
+            <div className="relative">
+              <Phone
+                size={18}
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                name="phone"
+                type="tel"
+                placeholder={UI_COPY.auth.phonePlaceholder}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 pl-14 pr-6 font-bold text-slate-700 outline-none focus:border-rose-500 transition-all"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
             className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-slate-200 active:scale-95 transition-transform flex items-center justify-center gap-3"
           >
-            {UI_COPY.auth.loginButton}
+            {isRegister ? UI_COPY.auth.registerButton : UI_COPY.auth.loginButton}
             <ChevronRight size={20} />
           </button>
         </form>

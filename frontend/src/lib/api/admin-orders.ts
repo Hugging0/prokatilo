@@ -1,21 +1,16 @@
 import { apiRequest } from "@/lib/api/client";
+import { getAuthHeaders } from "@/lib/auth-session";
 import type {
   AdminOrderUpdatePayload,
   BackendOrderDto,
   OrderStatus,
 } from "@/types";
 
-function getAdminHeaders(token: string): HeadersInit {
-  return {
-    "X-Admin-Token": token,
-  };
-}
-
 export async function getAdminOrders(
   token: string,
 ): Promise<BackendOrderDto[]> {
   return apiRequest<BackendOrderDto[]>("/admin/orders/", {
-    headers: getAdminHeaders(token),
+    headers: getAuthHeaders(token),
   });
 }
 
@@ -29,7 +24,7 @@ export async function updateAdminOrderStatus(
     query: {
       new_status: status,
     },
-    headers: getAdminHeaders(token),
+    headers: getAuthHeaders(token),
   });
 }
 
@@ -40,7 +35,7 @@ export async function updateAdminOrder(
 ): Promise<BackendOrderDto> {
   return apiRequest<BackendOrderDto>(`/admin/orders/${orderId}`, {
     method: "PATCH",
-    headers: getAdminHeaders(token),
+    headers: getAuthHeaders(token),
     body: JSON.stringify(payload),
   });
 }

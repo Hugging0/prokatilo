@@ -1,10 +1,4 @@
-import {
-  Bell,
-  CreditCard,
-  Settings,
-  Star,
-  User as UserIcon,
-} from "lucide-react";
+import { Bell, CreditCard, ShieldCheck, Star, User as UserIcon } from "lucide-react";
 
 import { BRAND_GRADIENT } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
@@ -30,15 +24,11 @@ const PROFILE_STATS = [
 
 interface ProfileViewProps {
   user: User;
-  isAdmin: boolean;
-  onToggleAdmin: () => void;
   onLogout: () => void;
 }
 
 export function ProfileView({
   user,
-  isAdmin,
-  onToggleAdmin,
   onLogout,
 }: ProfileViewProps) {
   return (
@@ -53,40 +43,33 @@ export function ProfileView({
         <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">
           {user.name}
         </h2>
-        <p className="text-slate-400 font-bold mt-2">{user.phone}</p>
+        <p className="text-slate-400 font-bold mt-2">{user.email}</p>
+        {user.phone && (
+          <p className="text-slate-300 font-bold mt-1">{user.phone}</p>
+        )}
       </section>
 
-      <button
-        type="button"
-        onClick={onToggleAdmin}
-        className={`mt-5 w-full p-5 rounded-[2rem] flex justify-between items-center cursor-pointer transition-all border-2 ${
-          isAdmin
-            ? "bg-rose-50 border-rose-200"
-            : "bg-white border-slate-50 shadow-sm"
-        }`}
-      >
+      <div className="mt-5 w-full p-5 rounded-[2rem] flex justify-between items-center border-2 bg-white border-slate-50 shadow-sm">
         <span className="flex items-center gap-3 font-black text-slate-900">
-          <Settings size={20} />
+          <ShieldCheck size={20} />
           <span>
             <span className="block">
-              {UI_COPY.profile.operatorModeTitle}
+              {user.isAdmin
+                ? UI_COPY.profile.adminAccountTitle
+                : UI_COPY.profile.customerAccountTitle}
             </span>
             <span className="block text-[10px] font-bold text-slate-400 mt-1">
-              {UI_COPY.profile.operatorModeHint}
+              {user.isAdmin
+                ? UI_COPY.profile.adminAccountHint
+                : UI_COPY.profile.customerAccountHint}
             </span>
           </span>
         </span>
 
-        <span
-          className={`text-xs font-black ${
-            isAdmin ? "text-rose-500" : "text-slate-400"
-          }`}
-        >
-          {isAdmin
-            ? UI_COPY.profile.enabled
-            : UI_COPY.profile.disabled}
+        <span className="text-xs font-black text-rose-500">
+          {user.isAdmin ? "Админ" : "Клиент"}
         </span>
-      </button>
+      </div>
 
       <div className="mt-5 space-y-3">
         {PROFILE_STATS.map((item) => (
