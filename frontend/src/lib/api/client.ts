@@ -26,14 +26,23 @@ export async function apiRequest<T>(
   options: ApiRequestOptions = {},
 ): Promise<T> {
   const { query, headers, ...requestOptions } = options;
+  const url = buildUrl(path, query);
 
-  const response = await fetch(buildUrl(path, query), {
-    ...requestOptions,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(url, {
+      ...requestOptions,
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+      },
+    });
+  } catch {
+    throw new Error(
+      "Не удалось связаться с сервером. Проверьте, что backend запущен.",
+    );
+  }
 
   if (!response.ok) {
     let detail = `API request failed: ${response.status}`;
