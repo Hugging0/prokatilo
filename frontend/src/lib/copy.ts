@@ -32,8 +32,9 @@ export const UI_COPY = {
     addressFallback: "Адрес уточнит оператор после подтверждения",
     paymentTitle: "Способ оплаты",
     paymentDisclaimer:
-      "Сейчас деньги не списываются. Оплату подтвердим после проверки наличия.",
+      "Онлайн-оплата проходит через YooKassa. Наличные можно оплатить курьеру при получении.",
     submitButton: "Создать бронь",
+    paymentRedirect: "Переходим к оплате…",
   },
   orders: {
     title: "Мои брони",
@@ -43,6 +44,7 @@ export const UI_COPY = {
       "Не удалось загрузить брони. Проверьте соединение и попробуйте снова.",
     tariffLabel: "Тариф",
     paymentLabel: "Оплата",
+    paymentStatusLabel: "Статус оплаты",
     deliveryLabel: "Доставка",
     priceLabel: "К оплате",
     customerLabel: "Клиент",
@@ -118,6 +120,7 @@ export const UI_COPY = {
     selectItemFirst: "Сначала выберите вещь и войдите в аккаунт",
     loginRequired: "Войдите в аккаунт, чтобы создать бронь",
     bookingCreated: "Бронь создана, скоро подтвердим",
+    paymentCreated: "Бронь создана, переходим к оплате",
     bookingError:
       "Не удалось создать бронь. Проверьте соединение или попробуйте позже.",
     statusUpdated: "Статус заявки обновлён",

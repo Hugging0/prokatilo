@@ -27,6 +27,15 @@ class Settings(BaseSettings):
         default=False,
         alias="CREATE_TABLES_ON_STARTUP",
     )
+    yookassa_shop_id: str | None = Field(default=None, alias="YOOKASSA_SHOP_ID")
+    yookassa_secret_key: str | None = Field(
+        default=None,
+        alias="YOOKASSA_SECRET_KEY",
+    )
+    yookassa_return_url: str = Field(
+        default="http://localhost:3000",
+        alias="YOOKASSA_RETURN_URL",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -49,6 +58,10 @@ class Settings(BaseSettings):
             for email in self.admin_emails.split(",")
             if email.strip()
         }
+
+    @property
+    def yookassa_is_configured(self) -> bool:
+        return bool(self.yookassa_shop_id and self.yookassa_secret_key)
 
 
 @lru_cache

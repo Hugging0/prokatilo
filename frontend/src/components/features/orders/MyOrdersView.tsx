@@ -5,6 +5,10 @@ import {
   UI_COPY,
 } from "@/lib/copy";
 import { ORDER_STATUSES } from "@/lib/order-statuses";
+import {
+  PAYMENT_STATUS_CLASSES,
+  PAYMENT_STATUS_LABELS,
+} from "@/lib/payment-statuses";
 import { getTariffLabel } from "@/lib/tariffs";
 import type { AppOrder } from "@/types";
 
@@ -104,6 +108,14 @@ export function MyOrdersView({
                 <p>
                   {UI_COPY.orders.paymentLabel}:{" "}
                   {getPaymentMethodLabel(order.paymentMethod)}
+                </p>
+                <p className="flex items-center justify-between gap-3">
+                  <span>{UI_COPY.orders.paymentStatusLabel}</span>
+                  <span
+                    className={`rounded-full px-3 py-1 text-[10px] font-black ${PAYMENT_STATUS_CLASSES[order.paymentStatus]}`}
+                  >
+                    {PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                  </span>
                 </p>
                 <p>
                   {UI_COPY.orders.deliveryLabel}:{" "}

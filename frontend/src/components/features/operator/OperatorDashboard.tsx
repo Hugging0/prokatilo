@@ -11,6 +11,10 @@ import {
   ORDER_STATUSES,
   getAllowedNextOrderStatuses,
 } from "@/lib/order-statuses";
+import {
+  PAYMENT_STATUS_CLASSES,
+  PAYMENT_STATUS_LABELS,
+} from "@/lib/payment-statuses";
 import type { AppItem, AppOrder, OrderStatus } from "@/types";
 
 interface OperatorDashboardProps {
@@ -179,6 +183,13 @@ export function OperatorDashboard({
                     </p>
                     <p className="text-xs font-bold text-slate-400">
                       {order.price}₽ • {order.date} • {order.time}
+                    </p>
+                    <p className="mt-2">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[9px] font-black ${PAYMENT_STATUS_CLASSES[order.paymentStatus]}`}
+                      >
+                        {PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                      </span>
                     </p>
                   </div>
                 </div>

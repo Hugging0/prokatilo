@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import crud, models, schemas
 from app.auth import create_access_token, parse_access_token
 from app.database import Base, engine, get_db
+from app.payments import create_yookassa_payment, get_yookassa_payment
 from app.settings import get_settings
 
 
@@ -322,6 +323,114 @@ async def create_order(
         order_data=order,
         user=current_user,
     )
+
+
+def map_yookassa_payment_status(status_value: str) -> schemas.PaymentStatus:
+    match status_value:
+        case "succeeded":
+            return schemas.PaymentStatus.SUCCEEDED
+        case "waiting_for_capture":
+            return schemas.PaymentStatus.WAITING_FOR_CAPTURE
+        case "canceled":
+            return schemas.PaymentStatus.CANCELED
+        case _:
+            return schemas.PaymentStatus.PENDING
+
+
+@app.post(
+    "/orders/{order_id}/payment",
+    response_model=schemas.PaymentRead,
+    tags=["Payments"],
+)
+async def create_order_payment(
+    order_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> schemas.PaymentRead:
+    order = await crud.get_order_for_user(
+        db=db,
+        order_id=order_id,
+        user_id=current_user.id,
+    )
+
+    if order.payment_method == schemas.PaymentMethod.CASH.value:
+        return schemas.PaymentRead(
+            order_id=order.id,
+            payment_status=schemas.PaymentStatus.NOT_REQUIRED,
+            provider_payment_id=None,
+            confirmation_url=None,
+        )
+
+    if order.payment_status == schemas.PaymentStatus.SUCCEEDED.value:
+        return schemas.PaymentRead(
+            order_id=order.id,
+            payment_status=schemas.PaymentStatus.SUCCEEDED,
+            provider_payment_id=order.yookassa_payment_id,
+            confirmation_url=None,
+        )
+
+    if order.yookassa_payment_id and order.yookassa_confirmation_url:
+        return schemas.PaymentRead(
+            order_id=order.id,
+            payment_status=schemas.PaymentStatus(order.payment_status),
+            provider_payment_id=order.yookassa_payment_id,
+            confirmation_url=order.yookassa_confirmation_url,
+        )
+
+    payment = await create_yookassa_payment(
+        settings=settings,
+        order_id=order.id,
+        amount=order.total_price,
+        description=f"Бронь ПРОКАТило №{order.id}",
+    )
+    confirmation = payment.get("confirmation") or {}
+    payment_status = map_yookassa_payment_status(str(payment.get("status", "")))
+
+    updated_order = await crud.attach_order_payment(
+        db=db,
+        order_id=order.id,
+        payment_id=str(payment.get("id")),
+        confirmation_url=confirmation.get("confirmation_url"),
+        payment_status=payment_status,
+    )
+
+    return schemas.PaymentRead(
+        order_id=updated_order.id,
+        payment_status=schemas.PaymentStatus(updated_order.payment_status),
+        provider_payment_id=updated_order.yookassa_payment_id,
+        confirmation_url=updated_order.yookassa_confirmation_url,
+    )
+
+
+@app.post(
+    "/payments/yookassa/webhook",
+    tags=["Payments"],
+)
+async def yookassa_webhook(
+    payload: dict,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    payment_object = payload.get("object") or {}
+    payment_id = payment_object.get("id")
+
+    if not payment_id:
+        return {"status": "ignored"}
+
+    verified_payment = await get_yookassa_payment(
+        settings=settings,
+        payment_id=str(payment_id),
+    )
+    payment_status = map_yookassa_payment_status(
+        str(verified_payment.get("status", "")),
+    )
+
+    await crud.update_order_payment_status(
+        db=db,
+        payment_id=str(payment_id),
+        payment_status=payment_status,
+    )
+
+    return {"status": "ok"}
 
 
 @app.get(

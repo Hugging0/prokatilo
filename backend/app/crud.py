@@ -315,6 +315,11 @@ async def create_order(
         customer_phone=order_data.customer_phone,
         delivery_address=order_data.delivery_address,
         payment_method=order_data.payment_method.value,
+        payment_status=(
+            schemas.PaymentStatus.NOT_REQUIRED.value
+            if order_data.payment_method == schemas.PaymentMethod.CASH
+            else schemas.PaymentStatus.PENDING.value
+        ),
         tariff_type=order_data.tariff_type.value,
         total_price=get_tariff_price(item, order_data.tariff_type),
         rental_date=order_data.rental_date,
@@ -328,6 +333,22 @@ async def create_order(
     db.add(db_order)
     await db.commit()
     return await get_order_by_id(db, db_order.id)
+
+
+async def get_order_for_user(
+    db: AsyncSession,
+    order_id: int,
+    user_id: int,
+) -> models.OrderModel:
+    order = await get_order_by_id(db, order_id)
+
+    if order.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Заказ недоступен для этого аккаунта",
+        )
+
+    return order
 
 
 async def get_orders_by_customer_phone(
@@ -423,3 +444,54 @@ async def update_order_status(
 
     await db.commit()
     return await get_order_by_id(db, order_id)
+
+
+async def attach_order_payment(
+    db: AsyncSession,
+    order_id: int,
+    payment_id: str,
+    confirmation_url: str | None,
+    payment_status: schemas.PaymentStatus,
+) -> models.OrderModel:
+    order = await get_order_by_id(db, order_id)
+    order.yookassa_payment_id = payment_id
+    order.yookassa_confirmation_url = confirmation_url
+    order.payment_status = payment_status.value
+
+    await db.commit()
+    return await get_order_by_id(db, order_id)
+
+
+async def update_order_payment_status(
+    db: AsyncSession,
+    payment_id: str,
+    payment_status: schemas.PaymentStatus,
+) -> models.OrderModel:
+    stmt = (
+        select(models.OrderModel)
+        .options(selectinload(models.OrderModel.item))
+        .where(models.OrderModel.yookassa_payment_id == payment_id)
+    )
+    result = await db.execute(stmt)
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Заказ по платежу не найден",
+        )
+
+    order.payment_status = payment_status.value
+
+    if payment_status == schemas.PaymentStatus.SUCCEEDED:
+        order.status = schemas.OrderStatus.CONFIRMED.value
+
+    if payment_status == schemas.PaymentStatus.CANCELED:
+        order.status = schemas.OrderStatus.CANCELLED.value
+        item = await db.get(models.ItemModel, order.item_id)
+
+        if item:
+            item.is_available = True
+
+    await db.commit()
+    return await get_order_by_id(db, order.id)

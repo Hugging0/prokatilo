@@ -14,7 +14,11 @@ import { AppNavigation } from "@/components/layout/AppNavigation";
 import { Toast } from "@/components/ui/Toast";
 import { useItems } from "@/hooks/use-items";
 import { getCurrentUser, loginUser, registerUser } from "@/lib/api/auth";
-import { createOrder, getMyOrders } from "@/lib/api/orders";
+import {
+  createOrder,
+  createOrderPayment,
+  getMyOrders,
+} from "@/lib/api/orders";
 import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/auth-session";
 import { UI_COPY } from "@/lib/copy";
 import { mapAppCheckoutToOrderCreatePayload, mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
@@ -230,7 +234,7 @@ export default function App() {
     setIsBookingSubmitting(true);
 
     try {
-      await createOrder(
+      const createdOrder = await createOrder(
         authToken,
         mapAppCheckoutToOrderCreatePayload({
           user,
@@ -247,6 +251,20 @@ export default function App() {
       await reloadCatalog();
       await reloadOrders(authToken);
       setDeliveryAddress("");
+
+      if (paymentMethod !== "cash") {
+        const payment = await createOrderPayment(
+          authToken,
+          createdOrder.id,
+        );
+
+        if (payment.confirmation_url) {
+          showNotification(UI_COPY.toast.paymentCreated);
+          window.location.href = payment.confirmation_url;
+          return;
+        }
+      }
+
       setView("orders");
       showNotification(UI_COPY.toast.bookingCreated);
     } catch (error) {

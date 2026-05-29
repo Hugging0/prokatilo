@@ -69,6 +69,15 @@ docker compose up
 
 Backend будет доступен на `http://localhost:8000`, frontend — на `http://localhost:3000`.
 
+Для production/VPS можно переопределить публичные URL перед сборкой:
+
+```bash
+NEXT_PUBLIC_API_URL=http://193.233.246.61:8000 \
+YOOKASSA_RETURN_URL=http://193.233.246.61:3000 \
+CORS_ORIGINS=http://193.233.246.61:3000 \
+docker compose build
+```
+
 ## Управление Каталогом
 
 Каталог товаров управляется через операторский UI, а не через правку frontend-кода. Админка доступна только аккаунтам с `is_admin=true`.
@@ -171,6 +180,43 @@ GET /admin/orders/{order_id}
 PATCH /admin/orders/{order_id}
 PATCH /admin/orders/{order_id}/status?new_status=
 ```
+
+## Оплата YooKassa
+
+Онлайн-оплата создаётся на backend. Frontend после создания брони вызывает `POST /orders/{order_id}/payment` и переходит на `confirmation_url`, который вернула YooKassa.
+
+Env для backend:
+
+```env
+YOOKASSA_SHOP_ID=your-shop-id
+YOOKASSA_SECRET_KEY=your-secret-key
+YOOKASSA_RETURN_URL=http://localhost:3000
+```
+
+Создать платёж:
+
+```bash
+curl -X POST http://localhost:8000/orders/1/payment \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Webhook для YooKassa:
+
+```text
+POST /payments/yookassa/webhook
+```
+
+Статус оплаты хранится отдельно от статуса аренды:
+
+```text
+pending
+waiting_for_capture
+succeeded
+canceled
+not_required
+```
+
+`cash` не создаёт YooKassa payment и получает статус `not_required`. Для `sbp` и `card` backend создаёт YooKassa payment по цене заказа из БД.
 
 ## Миграции
 

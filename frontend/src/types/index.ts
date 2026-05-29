@@ -12,6 +12,13 @@ export type OrderStatus =
 
 export type PaymentMethod = "sbp" | "card" | "cash";
 
+export type PaymentStatus =
+  | "pending"
+  | "waiting_for_capture"
+  | "succeeded"
+  | "canceled"
+  | "not_required";
+
 export type AppView =
   | "auth"
   | "home"
@@ -67,6 +74,9 @@ export interface AppOrder {
   time: string;
   price: number;
   paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  paymentConfirmationUrl: string | null;
+  providerPaymentId: string | null;
   deliveryAddress: string;
   status: OrderStatus;
   comment: string | null;
@@ -130,6 +140,9 @@ export interface BackendOrderDto {
   customer_phone: string;
   delivery_address: string;
   payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
+  yookassa_payment_id: string | null;
+  yookassa_confirmation_url: string | null;
   tariff_type: TariffType;
   total_price: string;
   status: OrderStatus;
@@ -192,6 +205,13 @@ export interface AuthRegisterPayload {
 export interface AuthLoginPayload {
   email: string;
   password: string;
+}
+
+export interface PaymentResponseDto {
+  order_id: number;
+  payment_status: PaymentStatus;
+  provider_payment_id: string | null;
+  confirmation_url: string | null;
 }
 
 export type Item = AppItem;

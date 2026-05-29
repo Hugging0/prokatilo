@@ -68,6 +68,12 @@ class OrderModel(Base):
     customer_phone: Mapped[str] = mapped_column(String(50))
     delivery_address: Mapped[str] = mapped_column(String(500))
     payment_method: Mapped[str] = mapped_column(String(50), default="cash")
+    payment_status: Mapped[str] = mapped_column(String(50), default="pending")
+    yookassa_payment_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    yookassa_confirmation_url: Mapped[str | None] = mapped_column(
+        String(2048),
+        nullable=True,
+    )
     tariff_type: Mapped[str] = mapped_column(String(50))
     total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     status: Mapped[str] = mapped_column(default='pending')

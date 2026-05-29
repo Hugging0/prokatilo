@@ -17,6 +17,14 @@ class PaymentMethod(StrEnum):
     CASH = "cash"
 
 
+class PaymentStatus(StrEnum):
+    PENDING = "pending"
+    WAITING_FOR_CAPTURE = "waiting_for_capture"
+    SUCCEEDED = "succeeded"
+    CANCELED = "canceled"
+    NOT_REQUIRED = "not_required"
+
+
 class OrderStatus(StrEnum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
@@ -138,6 +146,9 @@ class OrderRead(OrderBase):
     user_id: int | None
     customer_login: str
     status: OrderStatus
+    payment_status: PaymentStatus
+    yookassa_payment_id: str | None
+    yookassa_confirmation_url: str | None
     created_at: datetime
     updated_at: datetime
     item: AdminItemRead
@@ -147,6 +158,13 @@ class OrderRead(OrderBase):
 
 class AdminOrderRead(OrderRead):
     pass
+
+
+class PaymentRead(BaseModel):
+    order_id: int
+    payment_status: PaymentStatus
+    provider_payment_id: str | None
+    confirmation_url: str | None
 
 
 class HealthRead(BaseModel):

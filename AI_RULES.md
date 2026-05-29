@@ -127,3 +127,13 @@
 4. Админка доступна только пользователю с `is_admin=true`.
 5. Список admin email для bootstrap задаётся через `ADMIN_EMAILS`.
 6. Нижняя навигация показывает `Оператор` только для admin-аккаунта.
+
+## 16. Payment rules
+
+1. Онлайн-оплата создаётся только backend через YooKassa API; frontend не хранит и не использует YooKassa secret.
+2. `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY` и `YOOKASSA_RETURN_URL` задаются только через runtime env.
+3. Заказ хранит `payment_status`, `yookassa_payment_id` и `yookassa_confirmation_url`.
+4. Frontend после создания брони вызывает backend endpoint платежа и переходит только на confirmation URL, полученный от backend.
+5. Источник истины по успешной оплате — YooKassa webhook или backend-проверка платежа, а не query-параметры frontend redirect.
+6. Наличная оплата помечается как `not_required` и не создаёт YooKassa payment.
+7. Админка и личный кабинет должны показывать статус оплаты отдельно от статуса аренды.
