@@ -1,60 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PROKATilo Frontend
 
-## Getting Started
+Это frontend для проекта ПРОКАТило. Он работает на Next.js App Router и ходит в backend через `NEXT_PUBLIC_API_URL`.
 
-First, run the development server:
+## Стек
+
+- Next.js 16.2.4
+- React 19.2.4
+- TypeScript
+- Tailwind CSS 4
+
+## Запуск
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+По умолчанию frontend ожидает backend на `/api`. В production этот путь проксируется Caddy в backend.
 
-## Backend catalog API
+## Локальная настройка
 
-Frontend reads the backend base URL from `NEXT_PUBLIC_API_URL`.
-Use `.env.local.example` as the local template:
+Создай `frontend/.env.local` по шаблону:
 
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-If the backend is running and the catalog is empty, create a test item:
+Для VPS production:
 
 ```bash
-curl -X POST http://localhost:8000/items/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "PlayStation 5",
-    "description": "Игровая приставка для аренды",
-    "price_per_3h": 990,
-    "price_per_6h": 1490,
-    "price_per_24h": 2490,
-    "is_available": true
-  }'
+NEXT_PUBLIC_API_URL=/api
 ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Что важно знать
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Фронтенд не создает товары напрямую, для этого используется админский API `POST /admin/items/`
+- Основные пользовательские потоки идут через `/auth/*`, `/items/*`, `/orders/*`, `/payments/*`
+- При работе через домен frontend вызывает backend через `/api/*`, чтобы не открывать отдельный публичный backend URL
+- Если backend пустой, сначала создай хотя бы один товар через админку или admin API
 
-## Learn More
+## Полезные endpoint'ы backend
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+GET /health
+POST /auth/register
+POST /auth/login
+GET /auth/me
+GET /items/
+GET /items/available/
+GET /items/search/?q=
+POST /orders/
+POST /orders/{order_id}/payment
+GET /me/orders
+```

@@ -1,16 +1,39 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-prokatilo}"
+      POSTGRES_USER: "${POSTGRES_USER:-prokatilo}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-change-me-local-postgres-password}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-prokatilo} -d ${POSTGRES_DB:-prokatilo}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
     env_file:
       - ./backend/.env
     environment:
+      DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-prokatilo}:${POSTGRES_PASSWORD:-change-me-local-postgres-password}@postgres:5432/${POSTGRES_DB:-prokatilo}"
       ENVIRONMENT: production
       CREATE_TABLES_ON_STARTUP: "false"
-      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001}"
-      YOOKASSA_RETURN_URL: "${YOOKASSA_RETURN_URL:-http://localhost:3000}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://193.233.246.61,http://193.233.246.61:3000,https://prokatilo.com,https://www.prokatilo.com}"
+      YOOKASSA_RETURN_URL: "${YOOKASSA_RETURN_URL:-https://prokatilo.com}"
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -28,13 +51,34 @@ services:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
+        NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-/api}"
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
+      NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-/api}"
     ports:
       - "3000:3000"
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

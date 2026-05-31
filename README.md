@@ -1,15 +1,29 @@
 # ПРОКАТило
 
-ПРОКАТило — mobile-first B2C PWA для централизованной аренды вещей и техники с доставкой за 15 минут и без залога.
+ПРОКАТило — mobile-first B2C PWA для аренды вещей и техники с доставкой.
 
-## Стек
+## Что входит в проект
 
-- Frontend: Next.js App Router, React, TypeScript, Tailwind CSS.
-- Backend: FastAPI, async SQLAlchemy, Pydantic.
-- Database migrations: Alembic.
-- Runtime packaging: Docker и Docker Compose.
+- Frontend: Next.js 16.2.4, React 19.2.4, TypeScript
+- Backend: FastAPI, async SQLAlchemy, Pydantic
+- Миграции: Alembic
+- Платежи: YooKassa
+- База данных: локальный PostgreSQL в Docker Compose через `DATABASE_URL`
+- Запуск: Docker Compose
 
-## Локальный Запуск Без Docker
+## Текущее production-окружение на VPS
+
+- Сервер доступен по `193.233.246.61`
+- Frontend открыт на `http://193.233.246.61:3000`
+- Backend открыт на `http://193.233.246.61:8000`
+- Reverse proxy готовит вход через `http://193.233.246.61` и `https://prokatilo.com`
+- `prokatilo.com` должен иметь A-запись на `193.233.246.61`
+- PostgreSQL запускается локально в compose-сервисе `postgres`
+- `CREATE_TABLES_ON_STARTUP=false`
+- `ENVIRONMENT=production`
+- `ADMIN_API_KEY` не используется, доступ администратора идёт через аккаунты из `ADMIN_EMAILS`
+
+## Локальный запуск без Docker
 
 Backend:
 
@@ -30,76 +44,55 @@ npm install
 npm run dev
 ```
 
-Frontend по умолчанию ходит к `http://localhost:8000`. Для переопределения используй `frontend/.env.local` по шаблону `frontend/.env.local.example`.
+Frontend по умолчанию обращается к `http://localhost:8000`. Для переопределения используй `frontend/.env.local` по шаблону `frontend/.env.local.example`.
 
-Email-авторизация:
+## Docker Compose
 
-```bash
-curl -X POST http://localhost:8000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "secret123",
-    "name": "Александр",
-    "phone": "+79990000000"
-  }'
-```
-
-```bash
-curl -X POST http://localhost:8000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"secret123"}'
-```
-
-## Production-Like Запуск Через Docker Compose
-
-Подготовь env:
+Подготовь env-файлы:
 
 ```bash
 cp -n backend/.env.example backend/.env
 cp -n frontend/.env.local.example frontend/.env.local
 ```
 
-Заполни реальный `DATABASE_URL` в `backend/.env`, затем:
+Заполни `backend/.env` и root `.env`, затем запусти:
 
 ```bash
 docker compose build
 docker compose up
 ```
 
-Backend будет доступен на `http://localhost:8000`, frontend — на `http://localhost:3000`.
-
-Для production/VPS можно переопределить публичные URL перед сборкой:
-
-```bash
-NEXT_PUBLIC_API_URL=http://193.233.246.61:8000 \
-YOOKASSA_RETURN_URL=http://193.233.246.61:3000 \
-CORS_ORIGINS=http://193.233.246.61:3000 \
-docker compose build
-```
-
-## Управление Каталогом
-
-Каталог товаров управляется через операторский UI, а не через правку frontend-кода. Админка доступна только аккаунтам с `is_admin=true`.
-
-Для локального dev первый админ создаётся регистрацией email из `ADMIN_EMAILS`. По умолчанию это:
-
-```env
-ADMIN_EMAILS=admin@prokatilo.local
-```
-
-Открой приложение, выбери регистрацию, создай аккаунт `admin@prokatilo.local` с выбранным паролем. После входа нижняя навигация покажет пункт `Оператор`.
-
-`ADMIN_API_KEY` и `X-Admin-Token` оставлены только как совместимый fallback для внутренних запросов. Новый frontend использует `Authorization: Bearer <token>` от email/password входа.
-
-Основные действия оператора:
+Основные compose-сервисы:
 
 ```text
-Добавить товар -> заполнить форму -> Создать товар
-Редактировать -> изменить поля -> Сохранить изменения
-Скрыть -> товар получает is_active=false и исчезает из публичного каталога
-Доступен/Недоступен -> меняет текущую доступность аренды
+postgres  - локальная PostgreSQL БД
+backend   - FastAPI API
+frontend  - Next.js frontend
+caddy     - reverse proxy для /api и frontend
 ```
+
+Для production root `.env` должен содержать как минимум:
+
+```env
+POSTGRES_DB=prokatilo
+POSTGRES_USER=prokatilo
+POSTGRES_PASSWORD=change-me
+NEXT_PUBLIC_API_URL=/api
+CORS_ORIGINS=http://193.233.246.61,http://193.233.246.61:3000,https://prokatilo.com,https://www.prokatilo.com
+YOOKASSA_RETURN_URL=https://prokatilo.com
+```
+
+`backend/.env` хранит секреты приложения: `AUTH_SECRET`, `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `ADMIN_EMAILS`. Секреты не коммитятся.
+
+## Аутентификация
+
+- Регистрация: `POST /auth/register`
+- Вход: `POST /auth/login`
+- Текущий пользователь: `GET /auth/me`
+
+Для production первый админ создаётся через email из `ADMIN_EMAILS`. По умолчанию это `admin@prokatilo.local`.
+
+## Каталог
 
 Public endpoints:
 
@@ -121,58 +114,18 @@ PATCH /admin/items/{item_id}/archive
 DELETE /admin/items/{item_id}
 ```
 
-## Бронирования И Заявки
+## Заказы
 
-Бронь считается созданной только после успешного `POST /orders/`. Frontend больше не создаёт фиктивные локальные брони, если backend недоступен.
-
-Цена заказа рассчитывается на backend из сохранённых цен товара по выбранному тарифу. Поле `total_price` в клиентском payload остаётся совместимым с текущим API, но не является источником истины.
-
-Клиентский flow:
-
-```bash
-curl -X POST http://localhost:8000/orders/ \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{
-    "item_id": 1,
-    "customer_name": "Александр",
-    "customer_phone": "+79990000000",
-    "delivery_address": "ул. Ленина, 10",
-    "payment_method": "cash",
-    "tariff_type": "3h",
-    "total_price": 990,
-    "rental_date": "2026-05-27",
-    "rental_time": "12:00"
-  }'
-```
-
-Посмотреть брони клиента:
-
-```bash
-curl http://localhost:8000/me/orders \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-Операторский flow:
-
-```bash
-curl http://localhost:8000/admin/orders/ \
-  -H "Authorization: Bearer $ADMIN_ACCESS_TOKEN"
-```
-
-```bash
-curl -X PATCH "http://localhost:8000/admin/orders/1/status?new_status=confirmed" \
-  -H "Authorization: Bearer $ADMIN_ACCESS_TOKEN"
-```
-
-Public order endpoints:
+Public and user endpoints:
 
 ```text
 POST /orders/
+GET /orders/{order_id}?customer_phone=
+GET /orders/my?customer_phone=
 GET /me/orders
 ```
 
-Admin order endpoints:
+Admin endpoints:
 
 ```text
 GET /admin/orders/
@@ -183,108 +136,12 @@ PATCH /admin/orders/{order_id}/status?new_status=
 
 ## Оплата YooKassa
 
-Онлайн-оплата создаётся на backend. Frontend после создания брони вызывает `POST /orders/{order_id}/payment` и переходит на `confirmation_url`, который вернула YooKassa.
+- Инициация оплаты: `POST /orders/{order_id}/payment`
+- Webhook: `POST /payments/yookassa/webhook`
+- `cash` получает статус `not_required`
+- `sbp` и `card` создают платёж YooKassa, если секреты настроены
 
-Env для backend:
+## Важное
 
-```env
-YOOKASSA_SHOP_ID=your-shop-id
-YOOKASSA_SECRET_KEY=your-secret-key
-YOOKASSA_RETURN_URL=http://localhost:3000
-```
-
-Создать платёж:
-
-```bash
-curl -X POST http://localhost:8000/orders/1/payment \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-```
-
-Webhook для YooKassa:
-
-```text
-POST /payments/yookassa/webhook
-```
-
-Статус оплаты хранится отдельно от статуса аренды:
-
-```text
-pending
-waiting_for_capture
-succeeded
-canceled
-not_required
-```
-
-`cash` не создаёт YooKassa payment и получает статус `not_required`. Для `sbp` и `card` backend создаёт YooKassa payment по цене заказа из БД.
-
-## Миграции
-
-Применить миграции:
-
-```bash
-cd backend
-source .venv/bin/activate
-alembic upgrade head
-```
-
-Создать новую миграцию после изменения моделей:
-
-```bash
-cd backend
-source .venv/bin/activate
-alembic revision --autogenerate -m "describe schema change"
-```
-
-Откатить одну миграцию:
-
-```bash
-cd backend
-source .venv/bin/activate
-alembic downgrade -1
-```
-
-## Healthcheck
-
-```bash
-curl http://localhost:8000/health
-```
-
-Ожидаемый ответ:
-
-```json
-{"status":"ok","service":"prokatilo-api"}
-```
-
-## Production Notes
-
-- Секреты не коммитятся; реальные значения держим в env на сервере.
-- На VPS нужен reverse proxy и HTTPS.
-- `Base.metadata.create_all` выключен по умолчанию.
-- Схема production базы меняется через Alembic migrations.
-- Перед запуском новой версии применяй `alembic upgrade head`.
-
-## Roadmap До Production MVP
-
-Sprint 2 — email-авторизация и личный кабинет:
-
-```text
-User model
-email/password регистрация и вход
-password hashing
-/auth/me
-/me/orders
-is_admin или простая role-модель
-заказы клиента без доступа по customer_phone query
-```
-
-Sprint 3 — YooKassa и VPS release candidate:
-
-```text
-создание платежа на backend
-YooKassa payment id и payment_status
-redirect/confirmation flow
-webhook succeeded/canceled
-статус оплаты в админке и личном кабинете
-reverse proxy, HTTPS, production env checklist
-```
+- В корне проекта есть рабочий `README.md`, но фронтенд-README сейчас необходимо полностью заменить, потому что он был шаблоном Next.js и не описывал реальный проект
+- Не коммить секреты из `backend/.env`

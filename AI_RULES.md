@@ -95,6 +95,9 @@
 5. Dockerfiles и `docker-compose.yml` должны быть поддерживаемыми артефактами, а не одноразовыми черновиками.
 6. Public frontend env переменные начинаются с `NEXT_PUBLIC_`; секреты туда не помещаются.
 7. README должен обновляться при изменении команд запуска, миграций или deployment flow.
+8. Production VPS использует локальный PostgreSQL в Docker Compose, а не внешний Supabase pooler.
+9. Production HTTP(S) вход идёт через Caddy reverse proxy: frontend на `/`, backend на `/api/*`.
+10. `prokatilo.com` и `www.prokatilo.com` должны указывать A-записями на production VPS `193.233.246.61`.
 
 ## 13. Admin/catalog management rules
 

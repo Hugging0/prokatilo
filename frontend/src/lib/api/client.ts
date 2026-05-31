@@ -8,7 +8,16 @@ function buildUrl(
   path: string,
   query?: ApiRequestOptions["query"],
 ): string {
-  const url = new URL(`${API_BASE_URL}${path}`);
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const basePath = API_BASE_URL.startsWith("/")
+    ? API_BASE_URL
+    : `${API_BASE_URL}/`;
+  const url = API_BASE_URL.startsWith("/")
+    ? new URL(
+        `${basePath}${normalizedPath}`.replace(/\/{2,}/g, "/"),
+        window.location.origin,
+      )
+    : new URL(normalizedPath, basePath);
 
   if (query) {
     Object.entries(query).forEach(([key, value]) => {

@@ -1,0 +1,23 @@
+{
+	email admin@prokatilo.com
+}
+
+prokatilo.com, www.prokatilo.com {
+	handle_path /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
+
+http://193.233.246.61 {
+	handle_path /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
