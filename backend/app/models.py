@@ -80,6 +80,8 @@ class OrderModel(Base):
     comment: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     rental_date: Mapped[str] = mapped_column(String(20))
     rental_time: Mapped[str] = mapped_column(String(20))
+    rental_start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    rental_end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 

@@ -141,6 +141,16 @@ class OrderStatusUpdate(BaseModel):
     new_status: OrderStatus
 
 
+class BookingRead(BaseModel):
+    order_id: int
+    item_id: int
+    rental_start_at: datetime
+    rental_end_at: datetime
+    status: OrderStatus
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class OrderRead(OrderBase):
     id: int
     user_id: int | None
@@ -149,6 +159,8 @@ class OrderRead(OrderBase):
     payment_status: PaymentStatus
     yookassa_payment_id: str | None
     yookassa_confirmation_url: str | None
+    rental_start_at: datetime
+    rental_end_at: datetime
     created_at: datetime
     updated_at: datetime
     item: AdminItemRead

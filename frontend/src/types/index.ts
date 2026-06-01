@@ -72,6 +72,8 @@ export interface AppOrder {
   tariff: TariffType;
   date: string;
   time: string;
+  rentalStartAt: string;
+  rentalEndAt: string;
   price: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
@@ -149,9 +151,27 @@ export interface BackendOrderDto {
   comment: string | null;
   rental_date: string;
   rental_time: string;
+  rental_start_at: string;
+  rental_end_at: string;
   created_at: string;
   updated_at: string;
   item: BackendItemDto;
+}
+
+export interface BackendBookingDto {
+  order_id: number;
+  item_id: number;
+  rental_start_at: string;
+  rental_end_at: string;
+  status: OrderStatus;
+}
+
+export interface BookingSlot {
+  orderId: number;
+  itemId: number;
+  rentalStartAt: string;
+  rentalEndAt: string;
+  status: OrderStatus;
 }
 
 export interface CreateOrderPayload {

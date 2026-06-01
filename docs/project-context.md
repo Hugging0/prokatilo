@@ -48,6 +48,16 @@
 - Orders: `/orders/`, `/orders/{order_id}`, `/orders/my`, `/me/orders`
 - Admin orders: `/admin/orders/`, `/admin/orders/{order_id}`, `/admin/orders/{order_id}/status`
 - Payments: `/orders/{order_id}/payment`, `/payments/yookassa/webhook`
+- Booking calendar: `/items/{item_id}/bookings?rental_date=YYYY-MM-DD`
+
+## Спринт 2: логика бронирования
+
+- Заказы получили реальные интервалы `rental_start_at` и `rental_end_at`.
+- Backend проверяет пересечения по одному товару для активных статусов: `pending`, `confirmed`, `delivery`, `active`.
+- `returned` и `cancelled` больше не блокируют слот.
+- Создание заказа больше не переключает `item.is_available=false`.
+- `is_available` остаётся ручным операторским флагом технической доступности.
+- Публичный каталог должен загружать активные товары через `/items/`, а не только `/items/available/`.
 
 ## Что в документации уже не совпадает с кодом
 

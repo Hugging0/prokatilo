@@ -49,6 +49,7 @@ GET /auth/me
 GET /items/
 GET /items/available/
 GET /items/search/?q=
+GET /items/{item_id}/bookings?rental_date=YYYY-MM-DD
 POST /orders/
 POST /orders/{order_id}/payment
 GET /me/orders

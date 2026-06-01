@@ -1,3 +1,6 @@
+from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
+
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -5,6 +8,77 @@ from fastapi import HTTPException, status
 
 from app import models, schemas
 from app.auth import hash_password, verify_password
+
+
+APP_TIMEZONE = ZoneInfo("Europe/Moscow")
+BOOKING_BLOCKING_STATUSES = (
+    schemas.OrderStatus.PENDING.value,
+    schemas.OrderStatus.CONFIRMED.value,
+    schemas.OrderStatus.DELIVERY.value,
+    schemas.OrderStatus.ACTIVE.value,
+)
+TARIFF_DURATIONS = {
+    schemas.TariffType.THREE_HOURS: timedelta(hours=3),
+    schemas.TariffType.SIX_HOURS: timedelta(hours=6),
+    schemas.TariffType.TWENTY_FOUR_HOURS: timedelta(hours=24),
+}
+
+
+def get_tariff_duration(tariff_type: schemas.TariffType) -> timedelta:
+    return TARIFF_DURATIONS[tariff_type]
+
+
+def build_rental_interval(
+    rental_date: str,
+    rental_time: str,
+    tariff_type: schemas.TariffType,
+) -> tuple[datetime, datetime]:
+    try:
+        rental_day = datetime.strptime(rental_date, "%Y-%m-%d").date()
+        rental_clock = time.fromisoformat(rental_time)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Выберите корректные дату и время аренды",
+        ) from exc
+
+    start_at = datetime.combine(
+        rental_day,
+        rental_clock,
+        tzinfo=APP_TIMEZONE,
+    )
+    end_at = start_at + get_tariff_duration(tariff_type)
+
+    return start_at, end_at
+
+
+async def ensure_booking_slot_is_free(
+    db: AsyncSession,
+    item_id: int,
+    rental_start_at: datetime,
+    rental_end_at: datetime,
+    exclude_order_id: int | None = None,
+) -> None:
+    stmt = select(func.count(models.OrderModel.id)).where(
+        models.OrderModel.item_id == item_id,
+        models.OrderModel.status.in_(BOOKING_BLOCKING_STATUSES),
+        models.OrderModel.rental_start_at < rental_end_at,
+        models.OrderModel.rental_end_at > rental_start_at,
+    )
+
+    if exclude_order_id is not None:
+        stmt = stmt.where(models.OrderModel.id != exclude_order_id)
+
+    result = await db.execute(stmt)
+
+    if result.scalar_one() > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "На выбранное время вещь уже забронирована. "
+                "Выберите другой слот."
+            ),
+        )
 
 
 async def get_items(
@@ -38,6 +112,42 @@ async def get_available_items(db: AsyncSession) -> list[models.ItemModel]:
             models.ItemModel.created_at.desc(),
         )
     )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_item_bookings(
+    db: AsyncSession,
+    item_id: int,
+    rental_date: str | None = None,
+) -> list[models.OrderModel]:
+    await get_public_item_by_id(db, item_id)
+
+    stmt = (
+        select(models.OrderModel)
+        .where(
+            models.OrderModel.item_id == item_id,
+            models.OrderModel.status.in_(BOOKING_BLOCKING_STATUSES),
+        )
+        .order_by(models.OrderModel.rental_start_at.asc())
+    )
+
+    if rental_date:
+        try:
+            day = datetime.strptime(rental_date, "%Y-%m-%d").date()
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Выберите корректную дату",
+            ) from exc
+
+        day_start = datetime.combine(day, time.min, tzinfo=APP_TIMEZONE)
+        day_end = day_start + timedelta(days=1)
+        stmt = stmt.where(
+            models.OrderModel.rental_start_at < day_end,
+            models.OrderModel.rental_end_at > day_start,
+        )
+
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
@@ -306,6 +416,18 @@ async def create_order(
             detail="Товар недоступен для заказа",
         )
 
+    rental_start_at, rental_end_at = build_rental_interval(
+        rental_date=order_data.rental_date,
+        rental_time=order_data.rental_time,
+        tariff_type=order_data.tariff_type,
+    )
+    await ensure_booking_slot_is_free(
+        db=db,
+        item_id=order_data.item_id,
+        rental_start_at=rental_start_at,
+        rental_end_at=rental_end_at,
+    )
+
     db_order = models.OrderModel(
         item_id=order_data.item_id,
         user_id=user.id,
@@ -324,11 +446,11 @@ async def create_order(
         total_price=get_tariff_price(item, order_data.tariff_type),
         rental_date=order_data.rental_date,
         rental_time=order_data.rental_time,
+        rental_start_at=rental_start_at,
+        rental_end_at=rental_end_at,
         comment=order_data.comment,
         status=schemas.OrderStatus.PENDING.value,
     )
-
-    item.is_available = False
 
     db.add(db_order)
     await db.commit()
@@ -402,6 +524,35 @@ async def update_order(
 ) -> models.OrderModel:
     order = await get_order_by_id(db, order_id)
     update_data = order_data.model_dump(exclude_unset=True)
+    next_rental_date = update_data.get("rental_date", order.rental_date)
+    next_rental_time = update_data.get("rental_time", order.rental_time)
+    next_tariff_type = update_data.get(
+        "tariff_type",
+        schemas.TariffType(order.tariff_type),
+    )
+
+    if isinstance(next_tariff_type, str):
+        next_tariff_type = schemas.TariffType(next_tariff_type)
+
+    should_update_interval = any(
+        key in update_data for key in {"rental_date", "rental_time", "tariff_type"}
+    )
+
+    if should_update_interval:
+        rental_start_at, rental_end_at = build_rental_interval(
+            rental_date=next_rental_date,
+            rental_time=next_rental_time,
+            tariff_type=next_tariff_type,
+        )
+        await ensure_booking_slot_is_free(
+            db=db,
+            item_id=order.item_id,
+            rental_start_at=rental_start_at,
+            rental_end_at=rental_end_at,
+            exclude_order_id=order.id,
+        )
+        order.rental_start_at = rental_start_at
+        order.rental_end_at = rental_end_at
 
     for key, value in update_data.items():
         if key in {"payment_method", "tariff_type"} and value is not None:
@@ -432,15 +583,6 @@ async def update_order_status(
         )
 
     order.status = new_status.value
-
-    if new_status in {
-        schemas.OrderStatus.RETURNED,
-        schemas.OrderStatus.CANCELLED,
-    }:
-        item = await db.get(models.ItemModel, order.item_id)
-
-        if item:
-            item.is_available = True
 
     await db.commit()
     return await get_order_by_id(db, order_id)
@@ -488,10 +630,6 @@ async def update_order_payment_status(
 
     if payment_status == schemas.PaymentStatus.CANCELED:
         order.status = schemas.OrderStatus.CANCELLED.value
-        item = await db.get(models.ItemModel, order.item_id)
-
-        if item:
-            item.is_available = True
 
     await db.commit()
     return await get_order_by_id(db, order.id)

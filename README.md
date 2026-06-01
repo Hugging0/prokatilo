@@ -101,6 +101,7 @@ GET /items/
 GET /items/available/
 GET /items/search/?q=
 GET /items/{item_id}
+GET /items/{item_id}/bookings?rental_date=YYYY-MM-DD
 ```
 
 Admin endpoints:
@@ -124,6 +125,9 @@ GET /orders/{order_id}?customer_phone=
 GET /orders/my?customer_phone=
 GET /me/orders
 ```
+
+Бронь хранит строковые поля `rental_date`/`rental_time` для UI и реальные интервалы `rental_start_at`/`rental_end_at` для проверки пересечений.
+Товар остаётся в каталоге после бронирования; занятость отображается как временной слот.
 
 Admin endpoints:
 

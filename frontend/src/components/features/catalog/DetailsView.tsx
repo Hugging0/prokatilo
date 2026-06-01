@@ -1,13 +1,16 @@
 import { ArrowLeft, Calendar as CalendarIcon, Timer } from "lucide-react";
 
 import { getTariffPrice, TARIFFS } from "@/lib/tariffs";
-import type { AppItem, TariffType } from "@/types";
+import type { AppItem, BookingSlot, TariffType } from "@/types";
 
 interface DetailsViewProps {
   item: AppItem;
   selectedTariff: TariffType;
   selectedDate: string;
   selectedTime: string;
+  bookingSlots: BookingSlot[];
+  isBookingsLoading: boolean;
+  bookingsError: string | null;
   onBack: () => void;
   onCheckout: () => void;
   onTariffChange: (tariff: TariffType) => void;
@@ -20,12 +23,22 @@ export function DetailsView({
   selectedTariff,
   selectedDate,
   selectedTime,
+  bookingSlots,
+  isBookingsLoading,
+  bookingsError,
   onBack,
   onCheckout,
   onTariffChange,
   onDateChange,
   onTimeChange,
 }: DetailsViewProps) {
+  const formatBookingTime = (value: string) =>
+    new Intl.DateTimeFormat("ru-RU", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Moscow",
+    }).format(new Date(value));
+
   return (
     <main className="min-h-screen bg-white pb-32">
       <section
@@ -87,6 +100,43 @@ export function DetailsView({
                 onChange={(event) => onTimeChange(event.target.value)}
                 className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 px-4 text-sm font-bold focus:ring-2 ring-rose-500 outline-none"
               />
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                Занято на эту дату
+              </p>
+
+              {isBookingsLoading && (
+                <p className="mt-2 text-sm font-bold text-slate-400">
+                  Проверяем календарь…
+                </p>
+              )}
+
+              {!isBookingsLoading && bookingsError && (
+                <p className="mt-2 text-sm font-bold text-rose-500">
+                  {bookingsError}
+                </p>
+              )}
+
+              {!isBookingsLoading && !bookingsError && bookingSlots.length === 0 && (
+                <p className="mt-2 text-sm font-bold text-emerald-600">
+                  Пока свободно, можно бронировать
+                </p>
+              )}
+
+              {!isBookingsLoading && !bookingsError && bookingSlots.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {bookingSlots.map((slot) => (
+                    <span
+                      key={slot.orderId}
+                      className="rounded-xl bg-white px-3 py-2 text-xs font-black text-slate-600 shadow-sm"
+                    >
+                      {formatBookingTime(slot.rentalStartAt)}–{formatBookingTime(slot.rentalEndAt)}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

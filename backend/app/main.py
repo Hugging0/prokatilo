@@ -208,6 +208,33 @@ async def search_items(
 
 
 @app.get(
+    "/items/{item_id}/bookings",
+    response_model=list[schemas.BookingRead],
+    tags=["Items"],
+)
+async def read_item_bookings(
+    item_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    rental_date: str | None = Query(default=None),
+) -> list[schemas.BookingRead]:
+    bookings = await crud.get_item_bookings(
+        db=db,
+        item_id=item_id,
+        rental_date=rental_date,
+    )
+    return [
+        schemas.BookingRead(
+            order_id=booking.id,
+            item_id=booking.item_id,
+            rental_start_at=booking.rental_start_at,
+            rental_end_at=booking.rental_end_at,
+            status=schemas.OrderStatus(booking.status),
+        )
+        for booking in bookings
+    ]
+
+
+@app.get(
     "/items/{item_id}",
     response_model=schemas.ItemRead,
     tags=["Items"],

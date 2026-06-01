@@ -37,6 +37,8 @@ export function mapBackendOrderToAppOrder(
     tariff: order.tariff_type,
     date: order.rental_date,
     time: order.rental_time,
+    rentalStartAt: order.rental_start_at,
+    rentalEndAt: order.rental_end_at,
     price: Number(order.total_price),
     paymentMethod: order.payment_method,
     paymentStatus: order.payment_status,

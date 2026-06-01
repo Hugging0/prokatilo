@@ -14,6 +14,7 @@ import { AppNavigation } from "@/components/layout/AppNavigation";
 import { Toast } from "@/components/ui/Toast";
 import { useItems } from "@/hooks/use-items";
 import { getCurrentUser, loginUser, registerUser } from "@/lib/api/auth";
+import { getItemBookings } from "@/lib/api/items";
 import {
   createOrder,
   createOrderPayment,
@@ -27,6 +28,7 @@ import type {
   AppItem,
   AppOrder,
   AppView,
+  BookingSlot,
   PaymentMethod,
   TariffType,
   User,
@@ -67,6 +69,9 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState("Все вещи");
   const [toast, setToast] = useState<string | null>(null);
   const [orders, setOrders] = useState<AppOrder[]>([]);
+  const [bookingSlots, setBookingSlots] = useState<BookingSlot[]>([]);
+  const [isBookingsLoading, setIsBookingsLoading] = useState(false);
+  const [bookingsError, setBookingsError] = useState<string | null>(null);
   const [isOrdersLoading, setIsOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
@@ -156,6 +161,56 @@ export default function App() {
       isMounted = false;
     };
   }, [authToken, items]);
+
+  useEffect(() => {
+    if (!selectedItem) {
+      setBookingSlots([]);
+      setBookingsError(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsBookingsLoading(true);
+    setBookingsError(null);
+
+    void getItemBookings(selectedItem.id, selectedDate)
+      .then((backendBookings) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setBookingSlots(
+          backendBookings.map((booking) => ({
+            orderId: booking.order_id,
+            itemId: booking.item_id,
+            rentalStartAt: booking.rental_start_at,
+            rentalEndAt: booking.rental_end_at,
+            status: booking.status,
+          })),
+        );
+      })
+      .catch((error) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setBookingSlots([]);
+        setBookingsError(
+          error instanceof Error
+            ? error.message
+            : "Не удалось загрузить занятость",
+        );
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsBookingsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedItem, selectedDate]);
 
   const handleAuth = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -249,6 +304,21 @@ export default function App() {
       );
 
       await reloadCatalog();
+      if (selectedItem) {
+        const backendBookings = await getItemBookings(
+          selectedItem.id,
+          selectedDate,
+        );
+        setBookingSlots(
+          backendBookings.map((booking) => ({
+            orderId: booking.order_id,
+            itemId: booking.item_id,
+            rentalStartAt: booking.rental_start_at,
+            rentalEndAt: booking.rental_end_at,
+            status: booking.status,
+          })),
+        );
+      }
       await reloadOrders(authToken);
       setDeliveryAddress("");
 
@@ -359,6 +429,9 @@ export default function App() {
           selectedTariff={selectedTariff}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
+          bookingSlots={bookingSlots}
+          isBookingsLoading={isBookingsLoading}
+          bookingsError={bookingsError}
           onBack={() => setView("home")}
           onCheckout={() => setView("checkout")}
           onTariffChange={setSelectedTariff}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { getAvailableItems } from "@/lib/api/items";
+import { getItems } from "@/lib/api/items";
 import { INITIAL_ITEMS } from "@/lib/mock-data";
 import { mapBackendItemsToAppItems } from "@/lib/mappers/items";
 import type { AppItem } from "@/types";
@@ -32,7 +32,7 @@ export function useItems(): UseItemsResult {
     }
 
     try {
-      const backendItems = await getAvailableItems();
+      const backendItems = await getItems();
       const appItems = mapBackendItemsToAppItems(backendItems);
 
       if (!shouldApply()) {
@@ -64,7 +64,7 @@ export function useItems(): UseItemsResult {
   useEffect(() => {
     let isMounted = true;
 
-    void getAvailableItems()
+    void getItems()
       .then((backendItems) => {
         if (!isMounted) {
           return;
