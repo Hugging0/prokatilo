@@ -30,7 +30,7 @@ services:
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://193.233.246.61,http://193.233.246.61:3000,https://prokatilo.com,https://www.prokatilo.com}"
       YOOKASSA_RETURN_URL: "${YOOKASSA_RETURN_URL:-https://prokatilo.com}"
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,7 +56,7 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-/api}"
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       backend:
         condition: service_healthy

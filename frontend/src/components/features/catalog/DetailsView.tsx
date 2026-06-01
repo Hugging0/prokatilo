@@ -3,6 +3,34 @@ import { ArrowLeft, Calendar as CalendarIcon, Timer } from "lucide-react";
 import { getTariffPrice, TARIFFS } from "@/lib/tariffs";
 import type { AppItem, BookingSlot, TariffType } from "@/types";
 
+const APP_TIME_ZONE = "Europe/Moscow";
+const APP_TIME_ZONE_OFFSET = "+03:00";
+const TARIFF_DURATION_MS: Record<TariffType, number> = {
+  "3h": 3 * 60 * 60 * 1000,
+  "6h": 6 * 60 * 60 * 1000,
+  "24h": 24 * 60 * 60 * 1000,
+};
+
+const timeFormatter = new Intl.DateTimeFormat("ru-RU", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: APP_TIME_ZONE,
+});
+
+const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "long",
+  timeZone: APP_TIME_ZONE,
+});
+
+const dateTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "long",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: APP_TIME_ZONE,
+});
+
 interface DetailsViewProps {
   item: AppItem;
   selectedTariff: TariffType;
@@ -32,12 +60,34 @@ export function DetailsView({
   onDateChange,
   onTimeChange,
 }: DetailsViewProps) {
-  const formatBookingTime = (value: string) =>
-    new Intl.DateTimeFormat("ru-RU", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Europe/Moscow",
-    }).format(new Date(value));
+  const selectedInterval = getSelectedInterval(
+    selectedDate,
+    selectedTime,
+    selectedTariff,
+  );
+  const selectedDayInterval = getSelectedDayInterval(selectedDate);
+  const visibleBookingSlots = selectedDayInterval
+    ? bookingSlots.filter((slot) =>
+        intervalsOverlap(
+          selectedDayInterval.startAt,
+          selectedDayInterval.endAt,
+          new Date(slot.rentalStartAt),
+          new Date(slot.rentalEndAt),
+        ),
+      )
+    : bookingSlots;
+  const conflictingBookingSlots = selectedInterval
+    ? bookingSlots.filter((slot) =>
+        intervalsOverlap(
+          selectedInterval.startAt,
+          selectedInterval.endAt,
+          new Date(slot.rentalStartAt),
+          new Date(slot.rentalEndAt),
+        ),
+      )
+    : [];
+  const isSelectedSlotBusy = conflictingBookingSlots.length > 0;
+  const canContinue = item.available && !isSelectedSlotBusy;
 
   return (
     <main className="min-h-screen bg-white pb-32">
@@ -104,7 +154,27 @@ export function DetailsView({
 
             <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                Занято на эту дату
+                Выбранный период
+              </p>
+
+              <p className="mt-2 text-sm font-black text-slate-900">
+                {selectedInterval
+                  ? formatBookingPeriod(
+                      selectedInterval.startAt,
+                      selectedInterval.endAt,
+                    )
+                  : "Выберите дату и время"}
+              </p>
+
+              {isSelectedSlotBusy && (
+                <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-600">
+                  Это время пересекается с бронью. Выберите другой старт или
+                  длительность.
+                </p>
+              )}
+
+              <p className="mt-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                Занято в этот день
               </p>
 
               {isBookingsLoading && (
@@ -119,20 +189,33 @@ export function DetailsView({
                 </p>
               )}
 
-              {!isBookingsLoading && !bookingsError && bookingSlots.length === 0 && (
+              {!isBookingsLoading &&
+                !bookingsError &&
+                visibleBookingSlots.length === 0 && (
                 <p className="mt-2 text-sm font-bold text-emerald-600">
                   Пока свободно, можно бронировать
                 </p>
               )}
 
-              {!isBookingsLoading && !bookingsError && bookingSlots.length > 0 && (
+              {!isBookingsLoading &&
+                !bookingsError &&
+                visibleBookingSlots.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {bookingSlots.map((slot) => (
+                  {visibleBookingSlots.map((slot) => (
                     <span
                       key={slot.orderId}
-                      className="rounded-xl bg-white px-3 py-2 text-xs font-black text-slate-600 shadow-sm"
+                      className={`rounded-xl px-3 py-2 text-xs font-black shadow-sm ${
+                        conflictingBookingSlots.some(
+                          (conflict) => conflict.orderId === slot.orderId,
+                        )
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-white text-slate-600"
+                      }`}
                     >
-                      {formatBookingTime(slot.rentalStartAt)}–{formatBookingTime(slot.rentalEndAt)}
+                      {formatBookingPeriod(
+                        new Date(slot.rentalStartAt),
+                        new Date(slot.rentalEndAt),
+                      )}
                     </span>
                   ))}
                 </div>
@@ -178,13 +261,82 @@ export function DetailsView({
           <button
             type="button"
             onClick={onCheckout}
-            disabled={!item.available}
+            disabled={!canContinue}
             className="mt-8 w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-slate-300 active:scale-95 transition-transform disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
           >
-            {item.available ? "Далее к оформлению" : "Сейчас недоступно"}
+            {canContinue
+              ? "Далее к оформлению"
+              : isSelectedSlotBusy
+                ? "Выберите свободное время"
+                : "Сейчас недоступно"}
           </button>
         </div>
       </section>
     </main>
   );
+}
+
+function getSelectedInterval(
+  selectedDate: string,
+  selectedTime: string,
+  selectedTariff: TariffType,
+) {
+  if (!selectedDate || !selectedTime) {
+    return null;
+  }
+
+  const normalizedTime =
+    selectedTime.length === 5 ? `${selectedTime}:00` : selectedTime;
+  const startAt = new Date(
+    `${selectedDate}T${normalizedTime}${APP_TIME_ZONE_OFFSET}`,
+  );
+
+  if (Number.isNaN(startAt.getTime())) {
+    return null;
+  }
+
+  return {
+    startAt,
+    endAt: new Date(startAt.getTime() + TARIFF_DURATION_MS[selectedTariff]),
+  };
+}
+
+function getSelectedDayInterval(selectedDate: string) {
+  if (!selectedDate) {
+    return null;
+  }
+
+  const startAt = new Date(`${selectedDate}T00:00:00${APP_TIME_ZONE_OFFSET}`);
+
+  if (Number.isNaN(startAt.getTime())) {
+    return null;
+  }
+
+  return {
+    startAt,
+    endAt: new Date(startAt.getTime() + 24 * 60 * 60 * 1000),
+  };
+}
+
+function intervalsOverlap(
+  firstStartAt: Date,
+  firstEndAt: Date,
+  secondStartAt: Date,
+  secondEndAt: Date,
+) {
+  return firstStartAt < secondEndAt && firstEndAt > secondStartAt;
+}
+
+function formatBookingPeriod(startAt: Date, endAt: Date) {
+  const isSameDay = dateFormatter.format(startAt) === dateFormatter.format(endAt);
+
+  if (isSameDay) {
+    return `${dateFormatter.format(startAt)}, ${timeFormatter.format(
+      startAt,
+    )}–${timeFormatter.format(endAt)}`;
+  }
+
+  return `${dateTimeFormatter.format(startAt)} → ${dateTimeFormatter.format(
+    endAt,
+  )}`;
 }

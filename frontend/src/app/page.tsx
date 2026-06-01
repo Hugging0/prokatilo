@@ -173,7 +173,7 @@ export default function App() {
     setIsBookingsLoading(true);
     setBookingsError(null);
 
-    void getItemBookings(selectedItem.id, selectedDate)
+    void getItemBookings(selectedItem.id)
       .then((backendBookings) => {
         if (!isMounted) {
           return;
@@ -210,7 +210,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [selectedItem, selectedDate]);
+  }, [selectedItem]);
 
   const handleAuth = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -305,10 +305,7 @@ export default function App() {
 
       await reloadCatalog();
       if (selectedItem) {
-        const backendBookings = await getItemBookings(
-          selectedItem.id,
-          selectedDate,
-        );
+        const backendBookings = await getItemBookings(selectedItem.id);
         setBookingSlots(
           backendBookings.map((booking) => ({
             orderId: booking.order_id,
