@@ -9,15 +9,13 @@ function buildUrl(
   query?: ApiRequestOptions["query"],
 ): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const basePath = API_BASE_URL.startsWith("/")
-    ? API_BASE_URL
-    : `${API_BASE_URL}/`;
-  const url = API_BASE_URL.startsWith("/")
+  const normalizedBase = API_BASE_URL.replace(/\/$/, "");
+  const url = normalizedBase.startsWith("/")
     ? new URL(
-        `${basePath}${normalizedPath}`.replace(/\/{2,}/g, "/"),
+        `${normalizedBase}${normalizedPath}`.replace(/\/{2,}/g, "/"),
         window.location.origin,
       )
-    : new URL(normalizedPath, basePath);
+    : new URL(`${normalizedBase}${normalizedPath}`);
 
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
