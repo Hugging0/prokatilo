@@ -1,35 +1,13 @@
 import { ArrowLeft, Calendar as CalendarIcon, Timer } from "lucide-react";
 
+import {
+  formatRentalPeriod,
+  getDayInterval,
+  getSelectedRentalInterval,
+  intervalsOverlap,
+} from "@/lib/booking-time";
 import { getTariffPrice, TARIFFS } from "@/lib/tariffs";
 import type { AppItem, BookingSlot, TariffType } from "@/types";
-
-const APP_TIME_ZONE = "Europe/Moscow";
-const APP_TIME_ZONE_OFFSET = "+03:00";
-const TARIFF_DURATION_MS: Record<TariffType, number> = {
-  "3h": 3 * 60 * 60 * 1000,
-  "6h": 6 * 60 * 60 * 1000,
-  "24h": 24 * 60 * 60 * 1000,
-};
-
-const timeFormatter = new Intl.DateTimeFormat("ru-RU", {
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: APP_TIME_ZONE,
-});
-
-const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "numeric",
-  month: "long",
-  timeZone: APP_TIME_ZONE,
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "numeric",
-  month: "long",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: APP_TIME_ZONE,
-});
 
 interface DetailsViewProps {
   item: AppItem;
@@ -60,12 +38,12 @@ export function DetailsView({
   onDateChange,
   onTimeChange,
 }: DetailsViewProps) {
-  const selectedInterval = getSelectedInterval(
+  const selectedInterval = getSelectedRentalInterval(
     selectedDate,
     selectedTime,
     selectedTariff,
   );
-  const selectedDayInterval = getSelectedDayInterval(selectedDate);
+  const selectedDayInterval = getDayInterval(selectedDate);
   const visibleBookingSlots = selectedDayInterval
     ? bookingSlots.filter((slot) =>
         intervalsOverlap(
@@ -159,7 +137,7 @@ export function DetailsView({
 
               <p className="mt-2 text-sm font-black text-slate-900">
                 {selectedInterval
-                  ? formatBookingPeriod(
+                  ? formatRentalPeriod(
                       selectedInterval.startAt,
                       selectedInterval.endAt,
                     )
@@ -212,9 +190,9 @@ export function DetailsView({
                           : "bg-white text-slate-600"
                       }`}
                     >
-                      {formatBookingPeriod(
-                        new Date(slot.rentalStartAt),
-                        new Date(slot.rentalEndAt),
+                      {formatRentalPeriod(
+                        slot.rentalStartAt,
+                        slot.rentalEndAt,
                       )}
                     </span>
                   ))}
@@ -274,69 +252,4 @@ export function DetailsView({
       </section>
     </main>
   );
-}
-
-function getSelectedInterval(
-  selectedDate: string,
-  selectedTime: string,
-  selectedTariff: TariffType,
-) {
-  if (!selectedDate || !selectedTime) {
-    return null;
-  }
-
-  const normalizedTime =
-    selectedTime.length === 5 ? `${selectedTime}:00` : selectedTime;
-  const startAt = new Date(
-    `${selectedDate}T${normalizedTime}${APP_TIME_ZONE_OFFSET}`,
-  );
-
-  if (Number.isNaN(startAt.getTime())) {
-    return null;
-  }
-
-  return {
-    startAt,
-    endAt: new Date(startAt.getTime() + TARIFF_DURATION_MS[selectedTariff]),
-  };
-}
-
-function getSelectedDayInterval(selectedDate: string) {
-  if (!selectedDate) {
-    return null;
-  }
-
-  const startAt = new Date(`${selectedDate}T00:00:00${APP_TIME_ZONE_OFFSET}`);
-
-  if (Number.isNaN(startAt.getTime())) {
-    return null;
-  }
-
-  return {
-    startAt,
-    endAt: new Date(startAt.getTime() + 24 * 60 * 60 * 1000),
-  };
-}
-
-function intervalsOverlap(
-  firstStartAt: Date,
-  firstEndAt: Date,
-  secondStartAt: Date,
-  secondEndAt: Date,
-) {
-  return firstStartAt < secondEndAt && firstEndAt > secondStartAt;
-}
-
-function formatBookingPeriod(startAt: Date, endAt: Date) {
-  const isSameDay = dateFormatter.format(startAt) === dateFormatter.format(endAt);
-
-  if (isSameDay) {
-    return `${dateFormatter.format(startAt)}, ${timeFormatter.format(
-      startAt,
-    )}–${timeFormatter.format(endAt)}`;
-  }
-
-  return `${dateTimeFormatter.format(startAt)} → ${dateTimeFormatter.format(
-    endAt,
-  )}`;
 }

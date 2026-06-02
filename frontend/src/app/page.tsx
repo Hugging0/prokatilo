@@ -21,6 +21,7 @@ import {
   getMyOrders,
 } from "@/lib/api/orders";
 import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/auth-session";
+import { getTodayDateInputValue } from "@/lib/booking-time";
 import { UI_COPY } from "@/lib/copy";
 import { mapAppCheckoutToOrderCreatePayload, mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
 import { getTariffPrice } from "@/lib/tariffs";
@@ -60,7 +61,7 @@ export default function App() {
   const [selectedItem, setSelectedItem] = useState<AppItem | null>(null);
   const [selectedTariff, setSelectedTariff] = useState<TariffType>("24h");
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0],
+    getTodayDateInputValue,
   );
   const [selectedTime, setSelectedTime] = useState("12:00");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("sbp");
@@ -367,6 +368,35 @@ export default function App() {
     showNotification(UI_COPY.toast.reviewThanks);
   };
 
+  const handlePayForOrder = async (order: AppOrder) => {
+    if (!authToken) {
+      setView("auth");
+      showNotification(UI_COPY.toast.loginRequired);
+      return;
+    }
+
+    if (order.paymentConfirmationUrl) {
+      window.location.href = order.paymentConfirmationUrl;
+      return;
+    }
+
+    try {
+      const payment = await createOrderPayment(authToken, order.id);
+
+      if (payment.confirmation_url) {
+        window.location.href = payment.confirmation_url;
+        return;
+      }
+
+      await reloadOrders(authToken);
+      showNotification("Оплата по этой брони уже не требуется");
+    } catch (error) {
+      showNotification(
+        error instanceof Error ? error.message : "Не удалось создать оплату",
+      );
+    }
+  };
+
   const handleLogout = () => {
     clearAuthToken();
     setAuthTokenState(null);
@@ -459,6 +489,7 @@ export default function App() {
           isLoading={isOrdersLoading}
           error={ordersError}
           onRefresh={() => void reloadOrders()}
+          onPay={(order) => void handlePayForOrder(order)}
           onLeaveReview={leaveReview}
         />
       )}

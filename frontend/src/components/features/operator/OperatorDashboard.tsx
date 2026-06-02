@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LayoutDashboard } from "lucide-react";
+import {
+  CalendarClock,
+  LayoutDashboard,
+  MapPin,
+  Phone,
+  RefreshCw,
+} from "lucide-react";
 
 import { CatalogManagement } from "@/components/features/operator/CatalogManagement";
 import { getAdminOrders, updateAdminOrderStatus } from "@/lib/api/admin-orders";
+import { formatRentalPeriod, isTodayInAppTimeZone } from "@/lib/booking-time";
 import { UI_COPY } from "@/lib/copy";
 import { mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
 import {
@@ -24,6 +31,7 @@ interface OperatorDashboardProps {
 }
 
 type OperatorTab = "orders" | "catalog" | "settings";
+type OrderQueue = "attention" | "today" | "active" | "returns" | "all";
 
 export function OperatorDashboard({
   authToken,
@@ -34,6 +42,10 @@ export function OperatorDashboard({
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [isOrdersLoading, setIsOrdersLoading] = useState(true);
   const [ordersMessage, setOrdersMessage] = useState<string | null>(null);
+  const [activeQueue, setActiveQueue] = useState<OrderQueue>("attention");
+
+  const queueCounts = getQueueCounts(orders);
+  const filteredOrders = filterOrdersByQueue(orders, activeQueue);
 
   async function refreshOrders() {
     setIsOrdersLoading(true);
@@ -146,7 +158,87 @@ export function OperatorDashboard({
 
       {activeTab === "orders" && (
         <>
-          <h3 className="font-black mb-4">{UI_COPY.operator.title}</h3>
+          <section className="mb-5 grid grid-cols-3 gap-3">
+            <div className="rounded-[1.5rem] bg-white/10 p-4">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                Новые
+              </p>
+              <p className="mt-1 text-2xl font-black">
+                {queueCounts.attention}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-white/10 p-4">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                Сегодня
+              </p>
+              <p className="mt-1 text-2xl font-black">
+                {queueCounts.today}
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] bg-white/10 p-4">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                Активные
+              </p>
+              <p className="mt-1 text-2xl font-black">
+                {queueCounts.active}
+              </p>
+            </div>
+          </section>
+
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="font-black">{UI_COPY.operator.title}</h3>
+            <button
+              type="button"
+              onClick={() => void refreshOrders()}
+              className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 text-[10px] font-black text-white/60"
+            >
+              <RefreshCw size={14} />
+              Обновить
+            </button>
+          </div>
+
+          <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+            {[
+              {
+                queue: "attention" as const,
+                label: "Новые",
+                count: queueCounts.attention,
+              },
+              {
+                queue: "today" as const,
+                label: "Сегодня",
+                count: queueCounts.today,
+              },
+              {
+                queue: "active" as const,
+                label: "Активные",
+                count: queueCounts.active,
+              },
+              {
+                queue: "returns" as const,
+                label: "Возвраты",
+                count: queueCounts.returns,
+              },
+              {
+                queue: "all" as const,
+                label: "Все",
+                count: queueCounts.all,
+              },
+            ].map(({ queue, label, count }) => (
+              <button
+                key={queue}
+                type="button"
+                onClick={() => setActiveQueue(queue)}
+                className={`rounded-2xl px-4 py-3 text-[10px] font-black ${
+                  activeQueue === queue
+                    ? "bg-white text-slate-900"
+                    : "bg-white/10 text-white/50"
+                }`}
+              >
+                {label} · {count}
+              </button>
+            ))}
+          </div>
 
           {isOrdersLoading && (
             <div className="mb-4 rounded-[2rem] bg-white/5 p-4 text-sm font-bold text-white/60">
@@ -161,12 +253,12 @@ export function OperatorDashboard({
           )}
 
           <div className="space-y-4">
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <article
                 key={order.id}
                 className="bg-white text-slate-900 rounded-[2rem] p-5"
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   <div
                     className={`w-14 h-14 rounded-2xl ${order.bg} ${order.color} flex items-center justify-center`}
                   >
@@ -174,16 +266,32 @@ export function OperatorDashboard({
                   </div>
 
                   <div className="min-w-0">
-                    <h4 className="font-black">{order.title}</h4>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="font-black">{order.title}</h4>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-black uppercase text-slate-500">
+                        #{order.id}
+                      </span>
+                    </div>
                     <p className="text-xs font-bold text-slate-400">
                       {UI_COPY.operator.clientLabel}: {order.customerName}
                     </p>
-                    <p className="text-xs font-bold text-slate-400">
-                      {order.customerPhone} • {order.deliveryAddress}
-                    </p>
-                    <p className="text-xs font-bold text-slate-400">
-                      {order.price}₽ • {order.date} • {order.time}
-                    </p>
+                    <div className="mt-3 grid gap-2 text-xs font-bold text-slate-500">
+                      <p className="flex items-start gap-2">
+                        <Phone size={14} className="mt-0.5 shrink-0" />
+                        {order.customerPhone}
+                      </p>
+                      <p className="flex items-start gap-2">
+                        <MapPin size={14} className="mt-0.5 shrink-0" />
+                        {order.deliveryAddress}
+                      </p>
+                      <p className="flex items-start gap-2">
+                        <CalendarClock size={14} className="mt-0.5 shrink-0" />
+                        {formatRentalPeriod(
+                          order.rentalStartAt,
+                          order.rentalEndAt,
+                        )}
+                      </p>
+                    </div>
                     <p className="mt-2">
                       <span
                         className={`rounded-full px-2.5 py-1 text-[9px] font-black ${PAYMENT_STATUS_CLASSES[order.paymentStatus]}`}
@@ -197,6 +305,13 @@ export function OperatorDashboard({
                 <p className="mt-3 text-sm font-bold text-slate-500">
                   {ORDER_STATUSES[order.status].description}
                 </p>
+
+                <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs font-black text-slate-500">
+                  <span className="text-slate-400">Итого:</span>{" "}
+                  {order.price}₽ ·{" "}
+                  <span className="text-slate-400">следующий шаг:</span>{" "}
+                  {getOperatorNextStep(order)}
+                </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   <span className="rounded-xl bg-slate-900 px-3 py-2 text-[9px] font-black uppercase text-white shadow-md">
@@ -221,7 +336,7 @@ export function OperatorDashboard({
               </article>
             ))}
 
-            {!isOrdersLoading && orders.length === 0 && (
+            {!isOrdersLoading && filteredOrders.length === 0 && (
               <div className="bg-white/5 rounded-[2rem] p-8 text-center text-white/40 font-bold">
                 {UI_COPY.operator.empty}
               </div>
@@ -244,4 +359,66 @@ export function OperatorDashboard({
       )}
     </main>
   );
+}
+
+function getQueueCounts(orders: AppOrder[]) {
+  return {
+    attention: filterOrdersByQueue(orders, "attention").length,
+    today: filterOrdersByQueue(orders, "today").length,
+    active: filterOrdersByQueue(orders, "active").length,
+    returns: filterOrdersByQueue(orders, "returns").length,
+    all: orders.length,
+  };
+}
+
+function filterOrdersByQueue(orders: AppOrder[], queue: OrderQueue) {
+  switch (queue) {
+    case "attention":
+      return orders.filter(
+        (order) =>
+          order.status === "pending" ||
+          (order.status === "confirmed" &&
+            order.paymentMethod !== "cash" &&
+            order.paymentStatus === "pending"),
+      );
+    case "today":
+      return orders.filter((order) =>
+        isTodayInAppTimeZone(order.rentalStartAt),
+      );
+    case "active":
+      return orders.filter((order) =>
+        ["confirmed", "delivery", "active"].includes(order.status),
+      );
+    case "returns":
+      return orders.filter((order) => order.status === "active");
+    case "all":
+      return orders;
+  }
+}
+
+function getOperatorNextStep(order: AppOrder) {
+  if (order.status === "pending") {
+    return "подтвердить или отменить заявку";
+  }
+
+  if (
+    order.status === "confirmed" &&
+    order.paymentMethod !== "cash" &&
+    order.paymentStatus === "pending"
+  ) {
+    return "дождаться оплаты или связаться с клиентом";
+  }
+
+  switch (order.status) {
+    case "confirmed":
+      return "передать в доставку или отметить выдачу";
+    case "delivery":
+      return "отметить, что вещь у клиента";
+    case "active":
+      return "принять возврат и закрыть аренду";
+    case "returned":
+      return "заявка закрыта";
+    case "cancelled":
+      return "заявка отменена";
+  }
 }

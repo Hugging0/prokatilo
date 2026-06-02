@@ -1,8 +1,9 @@
-import { ArrowLeft, CheckCircle2, Wallet } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, MapPin, Wallet } from "lucide-react";
 
 import { BRAND_GRADIENT } from "@/lib/brand";
+import { formatRentalPeriod, getSelectedRentalInterval } from "@/lib/booking-time";
 import { PAYMENT_METHOD_OPTIONS, UI_COPY } from "@/lib/copy";
-import { getTariffPrice } from "@/lib/tariffs";
+import { getTariffLabel, getTariffPrice } from "@/lib/tariffs";
 import type { AppItem, PaymentMethod, TariffType } from "@/types";
 
 interface CheckoutViewProps {
@@ -32,6 +33,13 @@ export function CheckoutView({
   onDeliveryAddressChange,
   onSubmit,
 }: CheckoutViewProps) {
+  const selectedInterval = getSelectedRentalInterval(
+    selectedDate,
+    selectedTime,
+    selectedTariff,
+  );
+  const totalPrice = getTariffPrice(selectedItem, selectedTariff);
+
   return (
     <main className="min-h-screen bg-slate-50 px-6 pt-12 pb-32">
       <button
@@ -70,8 +78,28 @@ export function CheckoutView({
               {selectedItem.title}
             </h3>
             <p className="text-sm text-slate-400 font-bold">
-              {selectedDate} в {selectedTime}
+              {getTariffLabel(selectedTariff)} · {totalPrice}₽
             </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 text-sm font-black text-slate-600">
+          <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+            <Clock size={18} className="mt-0.5 shrink-0 text-rose-500" />
+            <span>
+              {selectedInterval
+                ? formatRentalPeriod(
+                    selectedInterval.startAt,
+                    selectedInterval.endAt,
+                  )
+                : `${selectedDate} в ${selectedTime}`}
+            </span>
+          </div>
+          <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
+            <MapPin size={18} className="mt-0.5 shrink-0 text-rose-500" />
+            <span>
+              Доставку подтвердит оператор после проверки времени и наличия.
+            </span>
           </div>
         </div>
       </section>
@@ -157,7 +185,7 @@ export function CheckoutView({
         className={`mt-8 w-full ${BRAND_GRADIENT} text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-rose-200 active:scale-95 transition-transform`}
       >
         {isSubmitting ? "Создаём бронь…" : UI_COPY.checkout.submitButton} ·{" "}
-        {getTariffPrice(selectedItem, selectedTariff)}₽
+        {totalPrice}₽
       </button>
     </main>
   );

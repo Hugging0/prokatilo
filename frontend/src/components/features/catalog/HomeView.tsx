@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { CalendarCheck, Search, ShieldCheck, Truck } from "lucide-react";
 
 import { BRAND_GRADIENT, BRAND_LOGO_CLASS } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
@@ -63,6 +63,22 @@ export function HomeView({
             placeholder={UI_COPY.home.searchPlaceholder}
           />
         </div>
+
+        <div className="mt-5 grid grid-cols-3 gap-2 text-[10px] font-black uppercase leading-tight text-white/90">
+          {[
+            { Icon: CalendarCheck, label: "Бронь по времени" },
+            { Icon: Truck, label: "Доставка после подтверждения" },
+            { Icon: ShieldCheck, label: "Без залога" },
+          ].map(({ Icon, label }) => (
+            <div
+              key={label}
+              className="rounded-2xl bg-white/15 px-3 py-3 backdrop-blur-sm"
+            >
+              <Icon size={16} className="mb-2" />
+              {label}
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="px-6 -mt-8 relative z-40">
@@ -122,7 +138,9 @@ export function HomeView({
                   {item.title}
                 </h2>
                 <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-tight italic mt-1">
-                  {item.available ? "В наличии" : "Недоступно"}
+                  {item.available
+                    ? "Выберите время в карточке"
+                    : "Временно недоступно"}
                 </p>
               </div>
 
@@ -132,6 +150,9 @@ export function HomeView({
                 </p>
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter opacity-60 mt-1">
                   за 3 часа
+                </p>
+                <p className="mt-2 rounded-full bg-slate-50 px-2 py-1 text-[9px] font-black uppercase text-slate-400">
+                  от {item.price24h}₽/сутки
                 </p>
               </div>
             </button>
