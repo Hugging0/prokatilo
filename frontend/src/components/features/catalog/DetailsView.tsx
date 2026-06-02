@@ -1,12 +1,14 @@
-import { ArrowLeft, Calendar as CalendarIcon, Timer } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon } from "lucide-react";
 
 import {
   formatRentalPeriod,
   getDayInterval,
+  getPresetEndInputValues,
+  getRentalDurationLabel,
   getSelectedRentalInterval,
   intervalsOverlap,
 } from "@/lib/booking-time";
-import { getTariffPrice, TARIFFS } from "@/lib/tariffs";
+import { getRentalTotalPrice, getTariffPrice, TARIFFS } from "@/lib/tariffs";
 import type { AppItem, BookingSlot, TariffType } from "@/types";
 
 interface DetailsViewProps {
@@ -14,6 +16,8 @@ interface DetailsViewProps {
   selectedTariff: TariffType;
   selectedDate: string;
   selectedTime: string;
+  selectedEndDate: string;
+  selectedEndTime: string;
   bookingSlots: BookingSlot[];
   isBookingsLoading: boolean;
   bookingsError: string | null;
@@ -22,6 +26,8 @@ interface DetailsViewProps {
   onTariffChange: (tariff: TariffType) => void;
   onDateChange: (date: string) => void;
   onTimeChange: (time: string) => void;
+  onEndDateChange: (date: string) => void;
+  onEndTimeChange: (time: string) => void;
 }
 
 export function DetailsView({
@@ -29,6 +35,8 @@ export function DetailsView({
   selectedTariff,
   selectedDate,
   selectedTime,
+  selectedEndDate,
+  selectedEndTime,
   bookingSlots,
   isBookingsLoading,
   bookingsError,
@@ -37,11 +45,14 @@ export function DetailsView({
   onTariffChange,
   onDateChange,
   onTimeChange,
+  onEndDateChange,
+  onEndTimeChange,
 }: DetailsViewProps) {
   const selectedInterval = getSelectedRentalInterval(
     selectedDate,
     selectedTime,
-    selectedTariff,
+    selectedEndDate,
+    selectedEndTime,
   );
   const selectedDayInterval = getDayInterval(selectedDate);
   const visibleBookingSlots = selectedDayInterval
@@ -65,94 +76,182 @@ export function DetailsView({
       )
     : [];
   const isSelectedSlotBusy = conflictingBookingSlots.length > 0;
-  const canContinue = item.available && !isSelectedSlotBusy;
+  const isPeriodValid =
+    Boolean(selectedInterval) &&
+    selectedInterval !== null &&
+    selectedInterval.endAt > selectedInterval.startAt;
+  const totalPrice = getRentalTotalPrice(
+    item,
+    selectedTariff,
+    selectedInterval?.startAt ?? null,
+    selectedInterval?.endAt ?? null,
+  );
+  const canContinue = item.available && isPeriodValid && !isSelectedSlotBusy;
+
+  const applyTariffPreset = (
+    tariff: TariffType,
+    startDate = selectedDate,
+    startTime = selectedTime,
+  ) => {
+    onTariffChange(tariff);
+    const presetEnd = getPresetEndInputValues(startDate, startTime, tariff);
+
+    if (presetEnd) {
+      onEndDateChange(presetEnd.endDate);
+      onEndTimeChange(presetEnd.endTime);
+    }
+  };
+
+  const handleStartDateChange = (value: string) => {
+    onDateChange(value);
+    const presetEnd = getPresetEndInputValues(
+      value,
+      selectedTime,
+      selectedTariff,
+    );
+
+    if (presetEnd) {
+      onEndDateChange(presetEnd.endDate);
+      onEndTimeChange(presetEnd.endTime);
+    }
+  };
+
+  const handleStartTimeChange = (value: string) => {
+    onTimeChange(value);
+    const presetEnd = getPresetEndInputValues(
+      selectedDate,
+      value,
+      selectedTariff,
+    );
+
+    if (presetEnd) {
+      onEndDateChange(presetEnd.endDate);
+      onEndTimeChange(presetEnd.endTime);
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-white pb-32">
-      <section
-        className={`relative ${item.bg} min-h-[330px] rounded-b-[3rem] flex items-center justify-center`}
-      >
+    <main className="min-h-screen bg-slate-50 pb-32">
+      <section className="relative min-h-[300px] bg-white">
         <button
           type="button"
           onClick={onBack}
-          className="absolute top-12 left-6 z-20 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl active:scale-90 transition-transform"
+          className="absolute top-12 left-6 z-20 rounded-2xl bg-white/95 p-3 shadow-lg active:scale-95"
         >
           <ArrowLeft size={22} />
         </button>
 
         {item.imageUrl ? (
-          <div className="h-full min-h-[330px] w-full overflow-hidden rounded-b-[3rem]">
+          <div className="h-[330px] w-full overflow-hidden rounded-b-[2.5rem] bg-slate-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.imageUrl}
               alt={item.title}
-              className="h-full min-h-[330px] w-full object-cover"
+              className="h-full w-full object-cover"
             />
-            <div className="absolute inset-0 rounded-b-[3rem] bg-gradient-to-t from-black/30 via-transparent to-white/10" />
           </div>
         ) : (
-          <item.icon size={96} strokeWidth={1.3} className={item.color} />
+          <div
+            className={`flex h-[330px] w-full items-center justify-center rounded-b-[2.5rem] ${item.bg}`}
+          >
+            <item.icon size={92} strokeWidth={1.3} className={item.color} />
+          </div>
         )}
       </section>
 
-      <section className="px-6 -mt-10 relative z-10">
-        <div className="bg-white rounded-[2.5rem] p-6 shadow-xl shadow-slate-100 border border-slate-100">
-          <p className="bg-slate-100 text-slate-500 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-2 inline-block italic">
+      <section className="relative z-10 -mt-8 px-6">
+        <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/60">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
             {item.category}
           </p>
-
-          <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mt-4">
+          <h2 className="mt-3 text-3xl font-black leading-none tracking-tight text-slate-900">
             {item.title}
           </h2>
-
-          <p className="text-slate-500 font-medium mt-4 leading-relaxed">
+          <p className="mt-4 text-sm font-medium leading-relaxed text-slate-500">
             {item.desc}
           </p>
 
-          <div className="mt-8">
-            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-1 flex items-center gap-2 mb-3">
-              <CalendarIcon size={16} />
-              Дата и время
-            </h3>
+          <div className="mt-7">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Стоимость
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {TARIFFS.map((tariff) => (
+                <button
+                  key={tariff.id}
+                  type="button"
+                  onClick={() => applyTariffPreset(tariff.id)}
+                  className={`rounded-2xl border px-3 py-3 text-left transition ${
+                    selectedTariff === tariff.id
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : "border-slate-100 bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  <span className="block text-[10px] font-black uppercase tracking-wide opacity-70">
+                    {tariff.label}
+                  </span>
+                  <span className="mt-1 block text-lg font-black leading-none">
+                    {getTariffPrice(item, tariff.id)}₽
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(event) => onDateChange(event.target.value)}
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 px-4 text-sm font-bold focus:ring-2 ring-rose-500 outline-none"
-              />
-              <input
-                type="time"
-                value={selectedTime}
-                onChange={(event) => onTimeChange(event.target.value)}
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 px-4 text-sm font-bold focus:ring-2 ring-rose-500 outline-none"
-              />
+          <div className="mt-7 rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <CalendarIcon size={15} />
+                Период и занятость
+              </p>
+              <span className="text-xs font-black text-slate-500">
+                {getRentalDurationLabel(
+                  selectedInterval?.startAt ?? null,
+                  selectedInterval?.endAt ?? null,
+                )}
+              </span>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                Выбранный период
-              </p>
+            <div className="grid gap-3">
+              <div className="grid grid-cols-[56px_1fr_96px] items-center gap-2">
+                <span className="text-xs font-black text-slate-400">
+                  Начало
+                </span>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(event) => handleStartDateChange(event.target.value)}
+                  className="min-w-0 rounded-2xl border border-slate-100 bg-white px-3 py-3 text-sm font-bold text-slate-700 outline-none focus:border-slate-300"
+                />
+                <input
+                  type="time"
+                  value={selectedTime}
+                  onChange={(event) => handleStartTimeChange(event.target.value)}
+                  className="min-w-0 rounded-2xl border border-slate-100 bg-white px-3 py-3 text-sm font-bold text-slate-700 outline-none focus:border-slate-300"
+                />
+              </div>
+              <div className="grid grid-cols-[56px_1fr_96px] items-center gap-2">
+                <span className="text-xs font-black text-slate-400">
+                  Конец
+                </span>
+                <input
+                  type="date"
+                  value={selectedEndDate}
+                  onChange={(event) => onEndDateChange(event.target.value)}
+                  className="min-w-0 rounded-2xl border border-slate-100 bg-white px-3 py-3 text-sm font-bold text-slate-700 outline-none focus:border-slate-300"
+                />
+                <input
+                  type="time"
+                  value={selectedEndTime}
+                  onChange={(event) => onEndTimeChange(event.target.value)}
+                  className="min-w-0 rounded-2xl border border-slate-100 bg-white px-3 py-3 text-sm font-bold text-slate-700 outline-none focus:border-slate-300"
+                />
+              </div>
+            </div>
 
-              <p className="mt-2 text-sm font-black text-slate-900">
-                {selectedInterval
-                  ? formatRentalPeriod(
-                      selectedInterval.startAt,
-                      selectedInterval.endAt,
-                    )
-                  : "Выберите дату и время"}
-              </p>
-
-              {isSelectedSlotBusy && (
-                <p className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-600">
-                  Это время пересекается с бронью. Выберите другой старт или
-                  длительность.
-                </p>
-              )}
-
-              <p className="mt-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                Занято в этот день
+            <div className="mt-5 border-t border-slate-200/70 pt-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Занято рядом
               </p>
 
               {isBookingsLoading && (
@@ -170,84 +269,71 @@ export function DetailsView({
               {!isBookingsLoading &&
                 !bookingsError &&
                 visibleBookingSlots.length === 0 && (
-                <p className="mt-2 text-sm font-bold text-emerald-600">
-                  Пока свободно, можно бронировать
-                </p>
-              )}
+                  <p className="mt-2 text-sm font-bold text-emerald-600">
+                    На выбранный день броней нет
+                  </p>
+                )}
 
               {!isBookingsLoading &&
                 !bookingsError &&
                 visibleBookingSlots.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {visibleBookingSlots.map((slot) => (
-                    <span
-                      key={slot.orderId}
-                      className={`rounded-xl px-3 py-2 text-xs font-black shadow-sm ${
-                        conflictingBookingSlots.some(
-                          (conflict) => conflict.orderId === slot.orderId,
-                        )
-                          ? "bg-rose-100 text-rose-700"
-                          : "bg-white text-slate-600"
-                      }`}
-                    >
-                      {formatRentalPeriod(
-                        slot.rentalStartAt,
-                        slot.rentalEndAt,
-                      )}
-                    </span>
-                  ))}
-                </div>
-              )}
+                  <div className="mt-3 grid gap-2">
+                    {visibleBookingSlots.map((slot) => {
+                      const isConflict = conflictingBookingSlots.some(
+                        (conflict) => conflict.orderId === slot.orderId,
+                      );
+
+                      return (
+                        <div
+                          key={slot.orderId}
+                          className={`rounded-2xl px-3 py-2 text-xs font-black ${
+                            isConflict
+                              ? "bg-rose-100 text-rose-700"
+                              : "bg-white text-slate-500"
+                          }`}
+                        >
+                          {formatRentalPeriod(
+                            slot.rentalStartAt,
+                            slot.rentalEndAt,
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
             </div>
           </div>
 
-          <div className="mt-8">
-            <h3 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-1 flex items-center gap-2 mb-3">
-              <Timer size={16} />
-              Длительность
-            </h3>
+          {selectedInterval && !isPeriodValid && (
+            <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-600">
+              Конец аренды должен быть позже начала.
+            </p>
+          )}
 
-            <div className="grid grid-cols-3 gap-3">
-              {TARIFFS.map((tariff) => (
-                <button
-                  key={tariff.id}
-                  type="button"
-                  onClick={() => onTariffChange(tariff.id)}
-                  className={`p-4 rounded-[1.5rem] border-2 text-center transition-all cursor-pointer ${
-                    selectedTariff === tariff.id
-                      ? "border-rose-500 bg-rose-50 text-rose-600 shadow-md scale-105 font-bold"
-                      : "border-slate-50 bg-slate-50 opacity-70"
-                  }`}
-                >
-                  <span
-                    className={`block text-[9px] font-black uppercase tracking-tighter mb-1 ${
-                      selectedTariff === tariff.id
-                        ? "text-rose-400"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    {tariff.label}
-                  </span>
-                  <span className="block text-lg font-black leading-none">
-                    {getTariffPrice(item, tariff.id)}₽
-                  </span>
-                </button>
-              ))}
+          {isSelectedSlotBusy && (
+            <p className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-600">
+              Выбранный период пересекается с бронью.
+            </p>
+          )}
+
+          <div className="mt-7 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Итого
+              </p>
+              <p className="mt-1 text-2xl font-black text-slate-900">
+                {totalPrice}₽
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={onCheckout}
+              disabled={!canContinue}
+              className="rounded-2xl bg-slate-900 px-6 py-4 text-sm font-black text-white shadow-lg shadow-slate-200 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            >
+              Оформить
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={onCheckout}
-            disabled={!canContinue}
-            className="mt-8 w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-slate-300 active:scale-95 transition-transform disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
-          >
-            {canContinue
-              ? "Далее к оформлению"
-              : isSelectedSlotBusy
-                ? "Выберите свободное время"
-                : "Сейчас недоступно"}
-          </button>
         </div>
       </section>
     </main>

@@ -9,6 +9,7 @@ class TariffType(StrEnum):
     THREE_HOURS = "3h"
     SIX_HOURS = "6h"
     TWENTY_FOUR_HOURS = "24h"
+    SEVEN_DAYS = "7d"
 
 
 class PaymentMethod(StrEnum):
@@ -117,6 +118,8 @@ class OrderBase(BaseModel):
     total_price: Decimal = Field(..., ge=0)
     rental_date: str = Field(..., min_length=1, max_length=20)
     rental_time: str = Field(..., min_length=1, max_length=20)
+    rental_end_date: str | None = Field(None, min_length=1, max_length=20)
+    rental_end_time: str | None = Field(None, min_length=1, max_length=20)
     comment: str | None = Field(None, max_length=1000)
 
 
@@ -134,6 +137,8 @@ class OrderUpdate(BaseModel):
     total_price: Decimal | None = Field(None, ge=0)
     rental_date: str | None = Field(None, min_length=1, max_length=20)
     rental_time: str | None = Field(None, min_length=1, max_length=20)
+    rental_end_date: str | None = Field(None, min_length=1, max_length=20)
+    rental_end_time: str | None = Field(None, min_length=1, max_length=20)
     comment: str | None = Field(None, max_length=1000)
 
 

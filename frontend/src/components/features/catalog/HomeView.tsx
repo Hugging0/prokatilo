@@ -1,4 +1,4 @@
-import { CalendarCheck, Search, ShieldCheck, Truck } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { BRAND_GRADIENT, BRAND_LOGO_CLASS } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
@@ -64,21 +64,6 @@ export function HomeView({
           />
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-2 text-[10px] font-black uppercase leading-tight text-white/90">
-          {[
-            { Icon: CalendarCheck, label: "Бронь по времени" },
-            { Icon: Truck, label: "Доставка после подтверждения" },
-            { Icon: ShieldCheck, label: "Без залога" },
-          ].map(({ Icon, label }) => (
-            <div
-              key={label}
-              className="rounded-2xl bg-white/15 px-3 py-3 backdrop-blur-sm"
-            >
-              <Icon size={16} className="mb-2" />
-              {label}
-            </div>
-          ))}
-        </div>
       </section>
 
       <section className="px-6 -mt-8 relative z-40">
@@ -137,22 +122,17 @@ export function HomeView({
                 <h2 className="font-bold text-slate-800 text-base leading-tight tracking-tight">
                   {item.title}
                 </h2>
-                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-tight italic mt-1">
-                  {item.available
-                    ? "Выберите время в карточке"
-                    : "Временно недоступно"}
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                  {item.category}
                 </p>
               </div>
 
               <div className="text-right">
-                <p className="text-xl font-black text-slate-900 tracking-tighter leading-none">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                  от
+                </p>
+                <p className="mt-1 text-xl font-black leading-none tracking-tight text-slate-900">
                   {item.price3h}₽
-                </p>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter opacity-60 mt-1">
-                  за 3 часа
-                </p>
-                <p className="mt-2 rounded-full bg-slate-50 px-2 py-1 text-[9px] font-black uppercase text-slate-400">
-                  от {item.price24h}₽/сутки
                 </p>
               </div>
             </button>

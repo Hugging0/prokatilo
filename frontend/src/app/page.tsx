@@ -21,10 +21,14 @@ import {
   getMyOrders,
 } from "@/lib/api/orders";
 import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/auth-session";
-import { getTodayDateInputValue } from "@/lib/booking-time";
+import {
+  getPresetEndInputValues,
+  getSelectedRentalInterval,
+  getTodayDateInputValue,
+} from "@/lib/booking-time";
 import { UI_COPY } from "@/lib/copy";
 import { mapAppCheckoutToOrderCreatePayload, mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
-import { getTariffPrice } from "@/lib/tariffs";
+import { getRentalTotalPrice } from "@/lib/tariffs";
 import type {
   AppItem,
   AppOrder,
@@ -64,6 +68,10 @@ export default function App() {
     getTodayDateInputValue,
   );
   const [selectedTime, setSelectedTime] = useState("12:00");
+  const [selectedEndDate, setSelectedEndDate] = useState(
+    getTodayDateInputValue,
+  );
+  const [selectedEndTime, setSelectedEndTime] = useState("15:00");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("sbp");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -272,6 +280,11 @@ export default function App() {
   const handleOpenDetails = (item: AppItem) => {
     setSelectedItem(item);
     setSelectedTariff("24h");
+    const presetEnd = getPresetEndInputValues(selectedDate, selectedTime, "24h");
+    if (presetEnd) {
+      setSelectedEndDate(presetEnd.endDate);
+      setSelectedEndTime(presetEnd.endTime);
+    }
     setView("details");
   };
 
@@ -290,6 +303,12 @@ export default function App() {
     setIsBookingSubmitting(true);
 
     try {
+      const selectedInterval = getSelectedRentalInterval(
+        selectedDate,
+        selectedTime,
+        selectedEndDate,
+        selectedEndTime,
+      );
       const createdOrder = await createOrder(
         authToken,
         mapAppCheckoutToOrderCreatePayload({
@@ -300,7 +319,14 @@ export default function App() {
           deliveryAddress,
           selectedDate,
           selectedTime,
-          totalPrice: getTariffPrice(selectedItem, selectedTariff),
+          selectedEndDate,
+          selectedEndTime,
+          totalPrice: getRentalTotalPrice(
+            selectedItem,
+            selectedTariff,
+            selectedInterval?.startAt ?? null,
+            selectedInterval?.endAt ?? null,
+          ),
         }),
       );
 
@@ -456,6 +482,8 @@ export default function App() {
           selectedTariff={selectedTariff}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
+          selectedEndDate={selectedEndDate}
+          selectedEndTime={selectedEndTime}
           bookingSlots={bookingSlots}
           isBookingsLoading={isBookingsLoading}
           bookingsError={bookingsError}
@@ -464,6 +492,8 @@ export default function App() {
           onTariffChange={setSelectedTariff}
           onDateChange={setSelectedDate}
           onTimeChange={setSelectedTime}
+          onEndDateChange={setSelectedEndDate}
+          onEndTimeChange={setSelectedEndTime}
         />
       )}
 
@@ -473,6 +503,8 @@ export default function App() {
           selectedTariff={selectedTariff}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
+          selectedEndDate={selectedEndDate}
+          selectedEndTime={selectedEndTime}
           paymentMethod={paymentMethod}
           deliveryAddress={deliveryAddress}
           isSubmitting={isBookingSubmitting}

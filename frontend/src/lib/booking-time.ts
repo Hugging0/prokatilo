@@ -1,13 +1,8 @@
+import { getTariffDurationMs } from "@/lib/tariffs";
 import type { TariffType } from "@/types";
 
 export const APP_TIME_ZONE = "Europe/Moscow";
 const APP_TIME_ZONE_OFFSET = "+03:00";
-
-const TARIFF_DURATION_MS: Record<TariffType, number> = {
-  "3h": 3 * 60 * 60 * 1000,
-  "6h": 6 * 60 * 60 * 1000,
-  "24h": 24 * 60 * 60 * 1000,
-};
 
 const dateInputFormatter = new Intl.DateTimeFormat("en-CA", {
   year: "numeric",
@@ -40,28 +35,64 @@ export function getTodayDateInputValue() {
   return dateInputFormatter.format(new Date());
 }
 
-export function getSelectedRentalInterval(
-  selectedDate: string,
-  selectedTime: string,
-  selectedTariff: TariffType,
-) {
+export function formatDateInputValue(value: Date) {
+  return dateInputFormatter.format(value);
+}
+
+export function formatTimeInputValue(value: Date) {
+  return timeFormatter.format(value);
+}
+
+export function getDateTimeFromInputs(selectedDate: string, selectedTime: string) {
   if (!selectedDate || !selectedTime) {
     return null;
   }
 
   const normalizedTime =
     selectedTime.length === 5 ? `${selectedTime}:00` : selectedTime;
-  const startAt = new Date(
+  const date = new Date(
     `${selectedDate}T${normalizedTime}${APP_TIME_ZONE_OFFSET}`,
   );
 
-  if (Number.isNaN(startAt.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     return null;
   }
 
+  return date;
+}
+
+export function getSelectedRentalInterval(
+  selectedStartDate: string,
+  selectedStartTime: string,
+  selectedEndDate: string,
+  selectedEndTime: string,
+) {
+  const startAt = getDateTimeFromInputs(selectedStartDate, selectedStartTime);
+  const endAt = getDateTimeFromInputs(selectedEndDate, selectedEndTime);
+
+  if (!startAt || !endAt) {
+    return null;
+  }
+
+  return { startAt, endAt };
+}
+
+export function getPresetEndInputValues(
+  selectedStartDate: string,
+  selectedStartTime: string,
+  tariff: TariffType,
+) {
+  const startAt = getDateTimeFromInputs(selectedStartDate, selectedStartTime);
+
+  if (!startAt) {
+    return null;
+  }
+
+  const endAt = new Date(startAt.getTime() + getTariffDurationMs(tariff));
+
   return {
-    startAt,
-    endAt: new Date(startAt.getTime() + TARIFF_DURATION_MS[selectedTariff]),
+    endDate: formatDateInputValue(endAt),
+    endTime: formatTimeInputValue(endAt),
   };
 }
 
@@ -125,4 +156,21 @@ export function isTodayInAppTimeZone(value: string | Date) {
   }
 
   return dateInputFormatter.format(date) === getTodayDateInputValue();
+}
+
+export function getRentalDurationLabel(startAt: Date | null, endAt: Date | null) {
+  if (!startAt || !endAt || endAt <= startAt) {
+    return "Срок не выбран";
+  }
+
+  const durationHours = Math.ceil(
+    (endAt.getTime() - startAt.getTime()) / (60 * 60 * 1000),
+  );
+
+  if (durationHours < 24) {
+    return `${durationHours} ч`;
+  }
+
+  const durationDays = Math.ceil(durationHours / 24);
+  return `${durationDays} дн`;
 }

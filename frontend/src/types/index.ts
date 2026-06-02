@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type TariffType = "3h" | "6h" | "24h";
+export type TariffType = "3h" | "6h" | "24h" | "7d";
 
 export type OrderStatus =
   | "pending"
@@ -185,6 +185,8 @@ export interface CreateOrderPayload {
   total_price: number;
   rental_date: string;
   rental_time: string;
+  rental_end_date?: string | null;
+  rental_end_time?: string | null;
   comment?: string | null;
 }
 
@@ -198,6 +200,8 @@ export interface AdminOrderUpdatePayload {
   total_price?: number;
   rental_date?: string;
   rental_time?: string;
+  rental_end_date?: string | null;
+  rental_end_time?: string | null;
   comment?: string | null;
 }
 

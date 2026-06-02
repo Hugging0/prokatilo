@@ -80,6 +80,8 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
   deliveryAddress: string;
   selectedDate: string;
   selectedTime: string;
+  selectedEndDate: string;
+  selectedEndTime: string;
   totalPrice: number;
 }): CreateOrderPayload {
   return {
@@ -94,6 +96,8 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
     total_price: input.totalPrice,
     rental_date: input.selectedDate,
     rental_time: input.selectedTime,
+    rental_end_date: input.selectedEndDate,
+    rental_end_time: input.selectedEndTime,
     comment: null,
   };
 }

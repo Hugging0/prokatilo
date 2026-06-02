@@ -1,4 +1,5 @@
 from datetime import datetime, time, timedelta
+from decimal import Decimal, ROUND_CEILING
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, or_, select
@@ -21,6 +22,7 @@ TARIFF_DURATIONS = {
     schemas.TariffType.THREE_HOURS: timedelta(hours=3),
     schemas.TariffType.SIX_HOURS: timedelta(hours=6),
     schemas.TariffType.TWENTY_FOUR_HOURS: timedelta(hours=24),
+    schemas.TariffType.SEVEN_DAYS: timedelta(days=7),
 }
 
 
@@ -32,10 +34,18 @@ def build_rental_interval(
     rental_date: str,
     rental_time: str,
     tariff_type: schemas.TariffType,
+    rental_end_date: str | None = None,
+    rental_end_time: str | None = None,
 ) -> tuple[datetime, datetime]:
     try:
         rental_day = datetime.strptime(rental_date, "%Y-%m-%d").date()
         rental_clock = time.fromisoformat(rental_time)
+        end_day = (
+            datetime.strptime(rental_end_date, "%Y-%m-%d").date()
+            if rental_end_date
+            else None
+        )
+        end_clock = time.fromisoformat(rental_end_time) if rental_end_time else None
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -47,7 +57,17 @@ def build_rental_interval(
         rental_clock,
         tzinfo=APP_TIMEZONE,
     )
-    end_at = start_at + get_tariff_duration(tariff_type)
+
+    if end_day and end_clock:
+        end_at = datetime.combine(end_day, end_clock, tzinfo=APP_TIMEZONE)
+    else:
+        end_at = start_at + get_tariff_duration(tariff_type)
+
+    if end_at <= start_at:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Окончание аренды должно быть позже начала",
+        )
 
     return start_at, end_at
 
@@ -387,14 +407,33 @@ async def delete_item(
 def get_tariff_price(
     item: models.ItemModel,
     tariff_type: schemas.TariffType,
+    rental_start_at: datetime | None = None,
+    rental_end_at: datetime | None = None,
 ):
     match tariff_type:
         case schemas.TariffType.THREE_HOURS:
-            return item.price_per_3h
+            unit_price = item.price_per_3h
         case schemas.TariffType.SIX_HOURS:
-            return item.price_per_6h
+            unit_price = item.price_per_6h
         case schemas.TariffType.TWENTY_FOUR_HOURS:
-            return item.price_per_24h
+            unit_price = item.price_per_24h
+        case schemas.TariffType.SEVEN_DAYS:
+            unit_price = item.price_per_24h * Decimal("7")
+
+    if rental_start_at is None or rental_end_at is None:
+        return unit_price
+
+    duration_seconds = Decimal(
+        str((rental_end_at - rental_start_at).total_seconds()),
+    )
+    unit_seconds = Decimal(str(get_tariff_duration(tariff_type).total_seconds()))
+    units_count = max(
+        Decimal("1"),
+        (duration_seconds / unit_seconds).to_integral_value(
+            rounding=ROUND_CEILING,
+        ),
+    )
+    return unit_price * units_count
 
 
 async def create_order(
@@ -420,6 +459,8 @@ async def create_order(
         rental_date=order_data.rental_date,
         rental_time=order_data.rental_time,
         tariff_type=order_data.tariff_type,
+        rental_end_date=order_data.rental_end_date,
+        rental_end_time=order_data.rental_end_time,
     )
     await ensure_booking_slot_is_free(
         db=db,
@@ -443,7 +484,12 @@ async def create_order(
             else schemas.PaymentStatus.PENDING.value
         ),
         tariff_type=order_data.tariff_type.value,
-        total_price=get_tariff_price(item, order_data.tariff_type),
+        total_price=get_tariff_price(
+            item,
+            order_data.tariff_type,
+            rental_start_at,
+            rental_end_at,
+        ),
         rental_date=order_data.rental_date,
         rental_time=order_data.rental_time,
         rental_start_at=rental_start_at,
@@ -526,6 +572,8 @@ async def update_order(
     update_data = order_data.model_dump(exclude_unset=True)
     next_rental_date = update_data.get("rental_date", order.rental_date)
     next_rental_time = update_data.get("rental_time", order.rental_time)
+    next_rental_end_date = update_data.get("rental_end_date")
+    next_rental_end_time = update_data.get("rental_end_time")
     next_tariff_type = update_data.get(
         "tariff_type",
         schemas.TariffType(order.tariff_type),
@@ -535,7 +583,14 @@ async def update_order(
         next_tariff_type = schemas.TariffType(next_tariff_type)
 
     should_update_interval = any(
-        key in update_data for key in {"rental_date", "rental_time", "tariff_type"}
+        key in update_data
+        for key in {
+            "rental_date",
+            "rental_time",
+            "rental_end_date",
+            "rental_end_time",
+            "tariff_type",
+        }
     )
 
     if should_update_interval:
@@ -543,6 +598,8 @@ async def update_order(
             rental_date=next_rental_date,
             rental_time=next_rental_time,
             tariff_type=next_tariff_type,
+            rental_end_date=next_rental_end_date,
+            rental_end_time=next_rental_end_time,
         )
         await ensure_booking_slot_is_free(
             db=db,
@@ -553,8 +610,17 @@ async def update_order(
         )
         order.rental_start_at = rental_start_at
         order.rental_end_at = rental_end_at
+        order.total_price = get_tariff_price(
+            order.item,
+            next_tariff_type,
+            rental_start_at,
+            rental_end_at,
+        )
 
     for key, value in update_data.items():
+        if key in {"rental_end_date", "rental_end_time"}:
+            continue
+
         if key in {"payment_method", "tariff_type"} and value is not None:
             setattr(order, key, value.value)
             continue
