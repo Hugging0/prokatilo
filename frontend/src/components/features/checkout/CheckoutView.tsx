@@ -161,13 +161,17 @@ export function CheckoutView({
     }
   };
 
-  const deliverySummary = selectedInterval
-    ? `${getRentalDurationLabel(selectedInterval.startAt, selectedInterval.endAt)} · ${formatDeliveryDateLabel(
+  const rentalDurationSummary = getRentalDurationLabel(
+    selectedInterval?.startAt ?? null,
+    selectedInterval?.endAt ?? null,
+  );
+  const deliveryIntervalSummary = selectedInterval
+    ? `${formatDeliveryDateLabel(
         selectedInterval.startAt,
       )}, ${formatDeliveryIntervalLabel(selectedTime)}`
-    : "Выберите период аренды";
+    : "Выберите интервал доставки";
   const bottomSummary = selectedInterval
-    ? deliverySummary
+    ? `Доставка: ${deliveryIntervalSummary} · аренда: ${rentalDurationSummary}`
     : "Выберите период аренды";
 
   return (
@@ -374,18 +378,20 @@ export function CheckoutView({
                       {selectedItem.title}
                     </h3>
                     <p className="mt-1 text-sm font-bold text-slate-400">
-                      {getRentalDurationLabel(
-                        selectedInterval?.startAt ?? null,
-                        selectedInterval?.endAt ?? null,
-                      )} · {totalPrice} ₽
+                      {rentalDurationSummary} · {totalPrice} ₽
                     </p>
                   </div>
                 </div>
               </Panel>
 
               <ReviewRow
-                title="Дата и срок"
-                value={selectedInterval ? deliverySummary : "Не выбрано"}
+                title="Интервал доставки"
+                value={selectedInterval ? deliveryIntervalSummary : "Не выбрано"}
+                onEdit={() => setStep(1)}
+              />
+              <ReviewRow
+                title="Длительность аренды"
+                value={selectedInterval ? rentalDurationSummary : "Не выбрано"}
                 onEdit={() => setStep(1)}
               />
               <ReviewRow

@@ -559,19 +559,21 @@ export default function App() {
         />
       )}
 
-      <AppNavigation
-        view={view}
-        isAdmin={Boolean(user?.isAdmin)}
-        onNavigate={(nextView) => {
-          if (nextView === "admin-dashboard" && !user?.isAdmin) {
-            setView("profile");
-            return;
-          }
+      {view !== "checkout" && (
+        <AppNavigation
+          view={view}
+          isAdmin={Boolean(user?.isAdmin)}
+          onNavigate={(nextView) => {
+            if (nextView === "admin-dashboard" && !user?.isAdmin) {
+              setView("profile");
+              return;
+            }
 
-          setView(nextView);
-        }}
-        onBonusClick={() => showNotification(UI_COPY.bonus.comingSoon)}
-      />
+            setView(nextView);
+          }}
+          onBonusClick={() => showNotification(UI_COPY.bonus.comingSoon)}
+        />
+      )}
     </div>
   );
 }
