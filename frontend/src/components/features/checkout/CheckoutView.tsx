@@ -131,6 +131,10 @@ export function CheckoutView({
   };
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
+  useEffect(() => {
     if (
       step !== 1 ||
       isBookingsLoading ||
@@ -374,7 +378,7 @@ export function CheckoutView({
                       {selectedItem.title}
                     </h3>
                     <p className="mt-1 text-base font-bold text-slate-500">
-                      {selectedItem.category} · аренда {rentalDurationSummary}
+                      {selectedItem.category}
                     </p>
                   </div>
                 </div>
