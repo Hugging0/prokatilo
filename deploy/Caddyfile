@@ -1,17 +1,19 @@
 {
-	email admin@prokatilo.com
+email admin@prokatilo.com
 }
 
 prokatilo.com, www.prokatilo.com {
-	handle_path /api/* {
-		reverse_proxy backend:8000
-	}
+handle_path /api/* {
+reverse_proxy backend:8000
+}
 
-	handle {
-		reverse_proxy frontend:3000
-	}
+handle {
+@html not path /_next/static/* /favicon.ico /manifest.webmanifest
+header @html >Cache-Control "no-store, max-age=0, must-revalidate"
+reverse_proxy frontend:3000
+}
 }
 
 http://193.233.246.61 {
-	redir https://prokatilo.com{uri} permanent
+redir https://prokatilo.com{uri} permanent
 }
