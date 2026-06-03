@@ -481,10 +481,8 @@ export default function App() {
       {view === "details" && selectedItem && (
         <DetailsView
           item={selectedItem}
-          selectedTariff={selectedTariff}
           onBack={() => setView("home")}
           onCheckout={() => setView("checkout")}
-          onTariffChange={handleSelectTariff}
         />
       )}
 

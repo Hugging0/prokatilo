@@ -1,22 +1,18 @@
 import { ArrowLeft } from "lucide-react";
 
 import { getTariffPrice, TARIFFS } from "@/lib/tariffs";
-import type { AppItem, TariffType } from "@/types";
+import type { AppItem } from "@/types";
 
 interface DetailsViewProps {
   item: AppItem;
-  selectedTariff: TariffType;
   onBack: () => void;
   onCheckout: () => void;
-  onTariffChange: (tariff: TariffType) => void;
 }
 
 export function DetailsView({
   item,
-  selectedTariff,
   onBack,
   onCheckout,
-  onTariffChange,
 }: DetailsViewProps) {
   return (
     <main className="min-h-screen bg-slate-50 pb-28">
@@ -62,15 +58,9 @@ export function DetailsView({
 
           <div className="mt-7 grid grid-cols-3 gap-2">
             {TARIFFS.map((tariff) => (
-              <button
+              <div
                 key={tariff.id}
-                type="button"
-                onClick={() => onTariffChange(tariff.id)}
-                className={`rounded-2xl border px-3 py-3 text-left transition ${
-                  selectedTariff === tariff.id
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-100 bg-slate-50 text-slate-700"
-                }`}
+                className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-3 text-left text-slate-700"
               >
                 <span className="block text-[10px] font-black uppercase tracking-wide opacity-70">
                   {tariff.id === "24h" ? "1 день" : tariff.label}
@@ -78,7 +68,7 @@ export function DetailsView({
                 <span className="mt-1 block text-lg font-black leading-none">
                   {getTariffPrice(item, tariff.id)} ₽
                 </span>
-              </button>
+              </div>
             ))}
           </div>
 

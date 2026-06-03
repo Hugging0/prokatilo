@@ -1,10 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { ArrowLeft, CalendarDays, ChevronRight, Clock3, type LucideIcon, MapPin, PackageCheck } from "lucide-react";
 
 import { BRAND_GRADIENT } from "@/lib/brand";
 import {
   formatDateInputValue,
-  formatRentalPeriod,
   getDateTimeFromInputs,
   getPresetEndInputValues,
   getRentalDurationLabel,
@@ -50,6 +49,11 @@ const DELIVERY_INTERVALS = [
 ] as const;
 
 const DELIVERY_INTERVAL_HOURS = 2;
+const checkoutDateFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "long",
+  timeZone: "Europe/Moscow",
+});
 
 export function CheckoutView({
   selectedItem,
@@ -111,6 +115,9 @@ export function CheckoutView({
       bookingSlots,
     ),
   );
+  const isSelectedTimeAvailable = availableIntervals.includes(
+    selectedTime as (typeof DELIVERY_INTERVALS)[number],
+  );
 
   const updateStart = (nextDate: string, nextTime = selectedTime, nextTariff = selectedTariff) => {
     onDateChange(nextDate);
@@ -123,6 +130,27 @@ export function CheckoutView({
     }
   };
 
+  useEffect(() => {
+    if (
+      step !== 1 ||
+      isBookingsLoading ||
+      bookingsError ||
+      availableIntervals.length === 0 ||
+      isSelectedTimeAvailable
+    ) {
+      return;
+    }
+
+    updateStart(selectedDate, availableIntervals[0]);
+  }, [
+    availableIntervals,
+    bookingsError,
+    isBookingsLoading,
+    isSelectedTimeAvailable,
+    selectedDate,
+    step,
+  ]);
+
   const selectTariff = (tariff: TariffType) => {
     onTariffChange(tariff);
     const presetEnd = getPresetEndInputValues(selectedDate, selectedTime, tariff);
@@ -133,11 +161,13 @@ export function CheckoutView({
     }
   };
 
-  const bottomSummary = selectedInterval
-    ? `${getRentalDurationLabel(selectedInterval.startAt, selectedInterval.endAt)} · ${formatRentalPeriod(
+  const deliverySummary = selectedInterval
+    ? `${getRentalDurationLabel(selectedInterval.startAt, selectedInterval.endAt)} · ${formatDeliveryDateLabel(
         selectedInterval.startAt,
-        selectedInterval.endAt,
-      )}`
+      )}, ${formatDeliveryIntervalLabel(selectedTime)}`
+    : "Выберите период аренды";
+  const bottomSummary = selectedInterval
+    ? deliverySummary
     : "Выберите период аренды";
 
   return (
@@ -190,11 +220,9 @@ export function CheckoutView({
                       {option.label}
                     </button>
                   ))}
-                  <input
-                    type="date"
+                  <DatePickerButton
                     value={selectedDate}
-                    onChange={(event) => updateStart(event.target.value)}
-                    className="min-w-[148px] rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-black text-slate-700 outline-none focus:border-slate-300"
+                    onChange={(value) => updateStart(value)}
                   />
                 </div>
               </Panel>
@@ -258,24 +286,6 @@ export function CheckoutView({
                       </span>
                     </button>
                   ))}
-                </div>
-
-                <div className="mt-4 grid grid-cols-[64px_1fr_96px] items-center gap-2 rounded-2xl bg-slate-50 p-2">
-                  <span className="pl-2 text-xs font-black text-slate-400">
-                    Вернуть
-                  </span>
-                  <input
-                    type="date"
-                    value={selectedEndDate}
-                    onChange={(event) => onEndDateChange(event.target.value)}
-                    className="min-w-0 rounded-xl border border-slate-100 bg-white px-3 py-3 text-sm font-bold text-slate-700 outline-none focus:border-slate-300"
-                  />
-                  <input
-                    type="time"
-                    value={selectedEndTime}
-                    onChange={(event) => onEndTimeChange(event.target.value)}
-                    className="min-w-0 rounded-xl border border-slate-100 bg-white px-3 py-3 text-sm font-bold text-slate-700 outline-none focus:border-slate-300"
-                  />
                 </div>
               </Panel>
 
@@ -375,7 +385,7 @@ export function CheckoutView({
 
               <ReviewRow
                 title="Дата и срок"
-                value={selectedInterval ? formatRentalPeriod(selectedInterval.startAt, selectedInterval.endAt) : "Не выбрано"}
+                value={selectedInterval ? deliverySummary : "Не выбрано"}
                 onEdit={() => setStep(1)}
               />
               <ReviewRow
@@ -454,7 +464,7 @@ export function CheckoutView({
             }}
             disabled={
               isSubmitting ||
-              (step === 1 && !canGoNextFromTiming) ||
+              (step === 1 && (!canGoNextFromTiming || availableIntervals.length === 0)) ||
               (step === 2 && !canGoNextFromAddress)
             }
             className={`flex shrink-0 items-center gap-2 rounded-2xl ${BRAND_GRADIENT} px-5 py-4 text-sm font-black text-white shadow-xl shadow-rose-200 active:scale-95 disabled:opacity-50`}
@@ -470,6 +480,34 @@ export function CheckoutView({
 
 function useCheckoutStep() {
   return useState(1);
+}
+
+function DatePickerButton({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const inputId = useId();
+
+  return (
+    <label
+      htmlFor={inputId}
+      className="relative flex shrink-0 cursor-pointer items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-black text-slate-700"
+    >
+      <CalendarDays size={16} />
+      <span>Календарь</span>
+      <input
+        id={inputId}
+        type="date"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="absolute inset-0 cursor-pointer opacity-0"
+        aria-label="Выбрать дату"
+      />
+    </label>
+  );
 }
 
 function getQuickDateOptions() {
@@ -497,6 +535,10 @@ function formatDeliveryIntervalLabel(startTime: string) {
   const startHour = Number(hourValue);
   const endHour = startHour + DELIVERY_INTERVAL_HOURS;
   return `${startTime}–${String(endHour).padStart(2, "0")}:00`;
+}
+
+function formatDeliveryDateLabel(value: Date) {
+  return checkoutDateFormatter.format(value);
 }
 
 function isDeliveryIntervalAvailable(
