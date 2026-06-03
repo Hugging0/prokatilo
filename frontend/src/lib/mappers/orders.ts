@@ -78,6 +78,7 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
   tariff: TariffType;
   paymentMethod: PaymentMethod;
   deliveryAddress: string;
+  courierComment: string;
   selectedDate: string;
   selectedTime: string;
   selectedEndDate: string;
@@ -98,6 +99,6 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
     rental_time: input.selectedTime,
     rental_end_date: input.selectedEndDate,
     rental_end_time: input.selectedEndTime,
-    comment: null,
+    comment: input.courierComment.trim() || null,
   };
 }

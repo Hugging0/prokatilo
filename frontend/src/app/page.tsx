@@ -72,8 +72,10 @@ export default function App() {
     getTodayDateInputValue,
   );
   const [selectedEndTime, setSelectedEndTime] = useState("15:00");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("sbp");
+  const [paymentMethod] = useState<PaymentMethod>("cash");
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [courierComment, setCourierComment] = useState("");
+  const [clarifyAddress, setClarifyAddress] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Все вещи");
   const [toast, setToast] = useState<string | null>(null);
@@ -288,6 +290,16 @@ export default function App() {
     setView("details");
   };
 
+  const handleSelectTariff = (tariff: TariffType) => {
+    setSelectedTariff(tariff);
+    const presetEnd = getPresetEndInputValues(selectedDate, selectedTime, tariff);
+
+    if (presetEnd) {
+      setSelectedEndDate(presetEnd.endDate);
+      setSelectedEndTime(presetEnd.endTime);
+    }
+  };
+
   const handleBook = async () => {
     if (!selectedItem) {
       showNotification(UI_COPY.toast.selectItemFirst);
@@ -309,7 +321,7 @@ export default function App() {
         selectedEndDate,
         selectedEndTime,
       );
-      const createdOrder = await createOrder(
+      await createOrder(
         authToken,
         mapAppCheckoutToOrderCreatePayload({
           user,
@@ -317,6 +329,7 @@ export default function App() {
           tariff: selectedTariff,
           paymentMethod,
           deliveryAddress,
+          courierComment,
           selectedDate,
           selectedTime,
           selectedEndDate,
@@ -345,19 +358,8 @@ export default function App() {
       }
       await reloadOrders(authToken);
       setDeliveryAddress("");
-
-      if (paymentMethod !== "cash") {
-        const payment = await createOrderPayment(
-          authToken,
-          createdOrder.id,
-        );
-
-        if (payment.confirmation_url) {
-          showNotification(UI_COPY.toast.paymentCreated);
-          window.location.href = payment.confirmation_url;
-          return;
-        }
-      }
+      setCourierComment("");
+      setClarifyAddress(false);
 
       setView("orders");
       showNotification(UI_COPY.toast.bookingCreated);
@@ -480,20 +482,9 @@ export default function App() {
         <DetailsView
           item={selectedItem}
           selectedTariff={selectedTariff}
-          selectedDate={selectedDate}
-          selectedTime={selectedTime}
-          selectedEndDate={selectedEndDate}
-          selectedEndTime={selectedEndTime}
-          bookingSlots={bookingSlots}
-          isBookingsLoading={isBookingsLoading}
-          bookingsError={bookingsError}
           onBack={() => setView("home")}
           onCheckout={() => setView("checkout")}
-          onTariffChange={setSelectedTariff}
-          onDateChange={setSelectedDate}
-          onTimeChange={setSelectedTime}
-          onEndDateChange={setSelectedEndDate}
-          onEndTimeChange={setSelectedEndTime}
+          onTariffChange={handleSelectTariff}
         />
       )}
 
@@ -505,12 +496,22 @@ export default function App() {
           selectedTime={selectedTime}
           selectedEndDate={selectedEndDate}
           selectedEndTime={selectedEndTime}
-          paymentMethod={paymentMethod}
           deliveryAddress={deliveryAddress}
+          courierComment={courierComment}
+          clarifyAddress={clarifyAddress}
+          bookingSlots={bookingSlots}
+          isBookingsLoading={isBookingsLoading}
+          bookingsError={bookingsError}
           isSubmitting={isBookingSubmitting}
           onBack={() => setView("details")}
-          onPaymentMethodChange={setPaymentMethod}
+          onTariffChange={handleSelectTariff}
+          onDateChange={setSelectedDate}
+          onTimeChange={setSelectedTime}
+          onEndDateChange={setSelectedEndDate}
+          onEndTimeChange={setSelectedEndTime}
           onDeliveryAddressChange={setDeliveryAddress}
+          onCourierCommentChange={setCourierComment}
+          onClarifyAddressChange={setClarifyAddress}
           onSubmit={() => void handleBook()}
         />
       )}
