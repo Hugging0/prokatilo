@@ -21,11 +21,26 @@ services:
   backend:
     build:
       context: ./backend
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--proxy-headers",
+        "--forwarded-allow-ips",
+        "*",
+        "--root-path",
+        "/api",
+      ]
     env_file:
       - ./backend/.env
     environment:
       DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-prokatilo}:${POSTGRES_PASSWORD:-change-me-local-postgres-password}@postgres:5432/${POSTGRES_DB:-prokatilo}"
       ENVIRONMENT: production
+      API_ROOT_PATH: "/api"
       CREATE_TABLES_ON_STARTUP: "false"
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://193.233.246.61,http://193.233.246.61:3000,https://prokatilo.com,https://www.prokatilo.com}"
       YOOKASSA_RETURN_URL: "${YOOKASSA_RETURN_URL:-https://prokatilo.com}"

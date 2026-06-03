@@ -86,6 +86,7 @@ app = FastAPI(
         "с доставкой за 15 минут и без залога."
     ),
     version="1.0.0",
+    root_path=settings.api_root_path,
 )
 
 app.add_middleware(

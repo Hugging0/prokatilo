@@ -27,6 +27,7 @@ class Settings(BaseSettings):
         default=False,
         alias="CREATE_TABLES_ON_STARTUP",
     )
+    api_root_path: str = Field(default="", alias="API_ROOT_PATH")
     yookassa_shop_id: str | None = Field(default=None, alias="YOOKASSA_SHOP_ID")
     yookassa_secret_key: str | None = Field(
         default=None,
