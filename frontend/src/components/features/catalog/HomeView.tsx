@@ -127,14 +127,11 @@ export function HomeView({
                 </p>
               </div>
 
-              <div className="ml-4 shrink-0 rounded-2xl bg-slate-900 px-4 py-3 text-right text-white shadow-lg shadow-slate-200">
-                <p className="text-[9px] font-black uppercase tracking-widest text-white/55">
-                  от
-                </p>
-                <p className="mt-1 text-xl font-black leading-none tracking-tight">
+              <div className="text-right">
+                <p className="text-xl font-black text-slate-900 tracking-tighter leading-none">
                   {item.price3h}₽
                 </p>
-                <p className="mt-1 text-[9px] font-black uppercase tracking-wide text-white/55">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter opacity-60 mt-1">
                   за 3 часа
                 </p>
               </div>
