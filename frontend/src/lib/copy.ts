@@ -32,7 +32,7 @@ export const UI_COPY = {
     addressFallback: "Адрес уточнит оператор после подтверждения",
     paymentTitle: "Способ оплаты",
     paymentDisclaimer:
-      "Онлайн-оплата проходит через YooKassa. Наличные можно оплатить курьеру при получении.",
+      "Оплата сейчас только курьеру при получении. В приложении деньги не списываются.",
     submitButton: "Создать бронь",
     paymentRedirect: "Переходим к оплате…",
   },
@@ -134,18 +134,8 @@ export const PAYMENT_METHOD_OPTIONS: Array<{
   note: string;
 }> = [
   {
-    id: "sbp",
-    label: "СБП / Т-Банк / Сбер",
-    note: "Быстрое подтверждение после проверки брони",
-  },
-  {
-    id: "card",
-    label: "Картой",
-    note: "Оплата после подтверждения оператором",
-  },
-  {
     id: "cash",
-    label: "Наличными",
+    label: "Курьеру при получении",
     note: "При получении вещи от курьера",
   },
 ];
@@ -153,10 +143,8 @@ export const PAYMENT_METHOD_OPTIONS: Array<{
 export function getPaymentMethodLabel(method: PaymentMethod): string {
   switch (method) {
     case "sbp":
-      return "СБП / Т-Банк / Сбер";
     case "card":
-      return "Картой";
     case "cash":
-      return "Наличными";
+      return "Курьеру при получении";
   }
 }

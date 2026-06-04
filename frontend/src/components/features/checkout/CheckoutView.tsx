@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { ArrowLeft, CalendarDays, Clock3, type LucideIcon, MapPin, PackageCheck } from "lucide-react";
 
 import { BRAND_GRADIENT } from "@/lib/brand";
@@ -119,16 +119,30 @@ export function CheckoutView({
     selectedTime as (typeof DELIVERY_INTERVALS)[number],
   );
 
-  const updateStart = (nextDate: string, nextTime = selectedTime, nextTariff = selectedTariff) => {
-    onDateChange(nextDate);
-    onTimeChange(nextTime);
-    const presetEnd = getPresetEndInputValues(nextDate, nextTime, nextTariff);
+  const updateStart = useCallback(
+    (
+      nextDate: string,
+      nextTime = selectedTime,
+      nextTariff = selectedTariff,
+    ) => {
+      onDateChange(nextDate);
+      onTimeChange(nextTime);
+      const presetEnd = getPresetEndInputValues(nextDate, nextTime, nextTariff);
 
-    if (presetEnd) {
-      onEndDateChange(presetEnd.endDate);
-      onEndTimeChange(presetEnd.endTime);
-    }
-  };
+      if (presetEnd) {
+        onEndDateChange(presetEnd.endDate);
+        onEndTimeChange(presetEnd.endTime);
+      }
+    },
+    [
+      onDateChange,
+      onEndDateChange,
+      onEndTimeChange,
+      onTimeChange,
+      selectedTariff,
+      selectedTime,
+    ],
+  );
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -153,6 +167,7 @@ export function CheckoutView({
     isSelectedTimeAvailable,
     selectedDate,
     step,
+    updateStart,
   ]);
 
   const selectTariff = (tariff: TariffType) => {

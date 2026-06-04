@@ -17,7 +17,6 @@ import { getCurrentUser, loginUser, registerUser } from "@/lib/api/auth";
 import { getItemBookings } from "@/lib/api/items";
 import {
   createOrder,
-  createOrderPayment,
   getMyOrders,
 } from "@/lib/api/orders";
 import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/auth-session";
@@ -175,18 +174,27 @@ export default function App() {
 
   useEffect(() => {
     if (!selectedItem) {
-      setBookingSlots([]);
-      setBookingsError(null);
       return;
     }
 
     let isMounted = true;
-    setIsBookingsLoading(true);
-    setBookingsError(null);
 
-    void getItemBookings(selectedItem.id)
+    void Promise.resolve()
+      .then(() => {
+        if (!isMounted) {
+          return null;
+        }
+
+        setIsBookingsLoading(true);
+        setBookingsError(null);
+        return getItemBookings(selectedItem.id);
+      })
       .then((backendBookings) => {
         if (!isMounted) {
+          return;
+        }
+
+        if (!backendBookings) {
           return;
         }
 
@@ -396,35 +404,6 @@ export default function App() {
     showNotification(UI_COPY.toast.reviewThanks);
   };
 
-  const handlePayForOrder = async (order: AppOrder) => {
-    if (!authToken) {
-      setView("auth");
-      showNotification(UI_COPY.toast.loginRequired);
-      return;
-    }
-
-    if (order.paymentConfirmationUrl) {
-      window.location.href = order.paymentConfirmationUrl;
-      return;
-    }
-
-    try {
-      const payment = await createOrderPayment(authToken, order.id);
-
-      if (payment.confirmation_url) {
-        window.location.href = payment.confirmation_url;
-        return;
-      }
-
-      await reloadOrders(authToken);
-      showNotification("Оплата по этой брони уже не требуется");
-    } catch (error) {
-      showNotification(
-        error instanceof Error ? error.message : "Не удалось создать оплату",
-      );
-    }
-  };
-
   const handleLogout = () => {
     clearAuthToken();
     setAuthTokenState(null);
@@ -520,7 +499,7 @@ export default function App() {
           isLoading={isOrdersLoading}
           error={ordersError}
           onRefresh={() => void reloadOrders()}
-          onPay={(order) => void handlePayForOrder(order)}
+          onOpenCatalog={() => setView("home")}
           onLeaveReview={leaveReview}
         />
       )}

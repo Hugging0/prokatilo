@@ -1,24 +1,35 @@
-import { CreditCard, MessageCircle, RefreshCw, Star } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronRight,
+  Clock3,
+  MapPin,
+  MessageCircle,
+  MoreVertical,
+  PackageOpen,
+  Phone,
+  RefreshCw,
+  RotateCw,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react";
 
-import { formatRentalPeriod } from "@/lib/booking-time";
-import {
-  getPaymentMethodLabel,
-  UI_COPY,
-} from "@/lib/copy";
+import { formatRentalPeriod, getRentalDurationLabel } from "@/lib/booking-time";
+import { BRAND_GRADIENT } from "@/lib/brand";
+import { UI_COPY } from "@/lib/copy";
 import { ORDER_STATUSES } from "@/lib/order-statuses";
-import {
-  PAYMENT_STATUS_CLASSES,
-  PAYMENT_STATUS_LABELS,
-} from "@/lib/payment-statuses";
 import { getTariffLabel } from "@/lib/tariffs";
-import type { AppOrder } from "@/types";
+import type { AppOrder, OrderStatus } from "@/types";
+
+type OrdersTab = "active" | "completed" | "all";
 
 interface MyOrdersViewProps {
   orders: AppOrder[];
   isLoading: boolean;
   error: string | null;
   onRefresh: () => void;
-  onPay: (order: AppOrder) => void;
+  onOpenCatalog: () => void;
   onLeaveReview: (
     orderId: number,
     rating: number,
@@ -26,233 +37,692 @@ interface MyOrdersViewProps {
   ) => void;
 }
 
+const TABS: Array<{ id: OrdersTab; label: string }> = [
+  { id: "active", label: "Активные" },
+  { id: "completed", label: "Завершённые" },
+  { id: "all", label: "Все" },
+];
+
+const ACTIVE_STATUSES: OrderStatus[] = [
+  "pending",
+  "confirmed",
+  "delivery",
+  "active",
+];
+
 export function MyOrdersView({
   orders,
   isLoading,
   error,
   onRefresh,
-  onPay,
+  onOpenCatalog,
   onLeaveReview,
 }: MyOrdersViewProps) {
-  const activeOrders = orders.filter(
-    (order) => order.status !== "cancelled" && order.status !== "returned",
+  const [activeTab, setActiveTab] = useState<OrdersTab>("active");
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const sortedOrders = useMemo(() => sortOrders(orders), [orders]);
+  const selectedOrder = sortedOrders.find((order) => order.id === selectedOrderId);
+  const activeOrders = sortedOrders.filter((order) =>
+    ACTIVE_STATUSES.includes(order.status),
   );
-  const completedOrders = orders.filter(
-    (order) => order.status === "returned" || order.status === "cancelled",
+  const completedOrders = sortedOrders.filter((order) =>
+    ["returned", "cancelled"].includes(order.status),
   );
+  const visibleOrders =
+    activeTab === "active"
+      ? activeOrders
+      : activeTab === "completed"
+        ? completedOrders
+        : sortedOrders;
+  const nextOrder = activeOrders[0] ?? null;
+  const restOrders = visibleOrders.filter((order) => order.id !== nextOrder?.id);
+
+  if (selectedOrder) {
+    return (
+      <OrderDetailsView
+        order={selectedOrder}
+        onBack={() => setSelectedOrderId(null)}
+        onLeaveReview={onLeaveReview}
+      />
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 pt-12 pb-32">
-      <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none mb-6">
-        {UI_COPY.orders.title}
-      </h2>
-
-      {orders.length > 0 && (
-        <section className="mb-5 grid grid-cols-2 gap-3">
-          <div className="rounded-[2rem] bg-white p-4 shadow-sm border border-slate-100">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Активные
+    <main className="min-h-screen bg-slate-50 px-5 pt-11 pb-32">
+      <div className="mx-auto flex max-w-2xl flex-col gap-6">
+        <header className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-400">
+              ПРОКАТИЛО
             </p>
-            <p className="mt-1 text-3xl font-black text-slate-900">
-              {activeOrders.length}
-            </p>
+            <h1 className="mt-2 text-[30px] font-black leading-tight tracking-tight text-slate-950">
+              {UI_COPY.orders.title}
+            </h1>
           </div>
-          <div className="rounded-[2rem] bg-white p-4 shadow-sm border border-slate-100">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Завершены
-            </p>
-            <p className="mt-1 text-3xl font-black text-slate-900">
-              {completedOrders.length}
-            </p>
-          </div>
-        </section>
-      )}
-
-      {isLoading && (
-        <div className="mb-4 rounded-[2rem] bg-white p-4 text-sm font-bold text-slate-400">
-          {UI_COPY.orders.loading}
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4 rounded-[2rem] bg-rose-50 p-4 text-sm font-bold text-rose-500">
-          {error}
           <button
             type="button"
             onClick={onRefresh}
-            className="mt-3 block text-left text-xs font-black uppercase tracking-widest"
+            className="flex size-12 items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-600 shadow-sm active:scale-95"
+            aria-label="Обновить брони"
           >
-            Обновить
+            <RefreshCw size={20} />
           </button>
-        </div>
-      )}
+        </header>
 
-      <div className="space-y-4">
-        {orders.map((order) => {
-          const status = ORDER_STATUSES[order.status];
-          const canPay =
-            order.paymentMethod !== "cash" &&
-            order.paymentStatus === "pending" &&
-            order.status !== "cancelled";
-
-          return (
-            <article
-              key={order.id}
-              className="bg-white rounded-[2rem] p-5 border border-slate-100 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-14 h-14 rounded-2xl ${order.bg} ${order.color} flex items-center justify-center`}
-                  >
-                    <order.icon size={24} />
-                  </div>
-
-                  <div>
-                    <h3 className="font-black text-slate-900 tracking-tight">
-                      {order.title}
-                    </h3>
-                    <p className="text-xs font-bold text-slate-400 mt-1">
-                      {formatRentalPeriod(
-                        order.rentalStartAt,
-                        order.rentalEndAt,
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ${status.color}`}
-                >
-                  <status.icon size={10} />
-                  {status.clientLabel}
-                </span>
-              </div>
-
-              <p className="mt-3 text-sm font-bold text-slate-500 leading-relaxed">
-                {status.description}
-              </p>
-
-              <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Что дальше
-                </p>
-                <p className="mt-2 text-sm font-bold text-slate-600">
-                  {getClientNextStep(order)}
-                </p>
-              </div>
-
-              <div className="mt-4 space-y-2 text-sm font-black text-slate-500">
-                <div className="flex items-center justify-between gap-4">
-                  <span>
-                    {UI_COPY.orders.tariffLabel}:{" "}
-                    {getTariffLabel(order.tariff)}
-                  </span>
-                  <span>
-                    {UI_COPY.orders.priceLabel}: {order.price}₽
-                  </span>
-                </div>
-                <p>
-                  {UI_COPY.orders.paymentLabel}:{" "}
-                  {getPaymentMethodLabel(order.paymentMethod)}
-                </p>
-                <p className="flex items-center justify-between gap-3">
-                  <span>{UI_COPY.orders.paymentStatusLabel}</span>
-                  <span
-                    className={`rounded-full px-3 py-1 text-[10px] font-black ${PAYMENT_STATUS_CLASSES[order.paymentStatus]}`}
-                  >
-                    {PAYMENT_STATUS_LABELS[order.paymentStatus]}
-                  </span>
-                </p>
-                <p>
-                  {UI_COPY.orders.deliveryLabel}:{" "}
-                  {order.deliveryAddress}
-                </p>
-              </div>
-
-              {order.status === "returned" && !order.review && (
-                <div className="mt-5 rounded-2xl bg-amber-50 p-4">
-                  <p className="text-xs font-black text-amber-700 mb-3">
-                    {UI_COPY.orders.reviewTitle}
-                  </p>
-
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() =>
-                          onLeaveReview(order.id, star, "")
-                        }
-                        className="text-amber-400 hover:scale-125 transition-transform"
-                      >
-                        <Star size={22} fill="currentColor" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {order.review && (
-                <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-xs font-black text-slate-500">
-                  {UI_COPY.orders.reviewThanks}: {order.review.rating} ⭐
-                </div>
-              )}
-
-              {canPay && (
-                <button
-                  type="button"
-                  onClick={() => onPay(order)}
-                  className="mt-5 w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-500 py-4 text-sm font-black text-white shadow-lg shadow-rose-100"
-                >
-                  <CreditCard size={18} />
-                  Оплатить бронь
-                </button>
-              )}
-
+        {orders.length > 0 && (
+          <div className="flex rounded-[1.35rem] border border-slate-100 bg-white p-1 shadow-sm">
+            {TABS.map((tab) => (
               <button
+                key={tab.id}
                 type="button"
-                className={`w-full flex items-center justify-center gap-2 bg-slate-900 text-white rounded-2xl py-4 text-sm font-black ${
-                  canPay ? "mt-3" : "mt-5"
+                onClick={() => setActiveTab(tab.id)}
+                className={`min-h-11 flex-1 rounded-[1.05rem] px-3 text-sm font-extrabold transition ${
+                  activeTab === tab.id
+                    ? "bg-slate-950 text-white shadow-sm"
+                    : "text-slate-500"
                 }`}
               >
-                <MessageCircle size={18} />
-                {UI_COPY.orders.supportButton}
+                {tab.label}
               </button>
-            </article>
-          );
-        })}
-
-        {orders.length === 0 && (
-          <div className="bg-white rounded-[2rem] p-8 text-center text-slate-400 font-bold">
-            <RefreshCw className="mx-auto mb-3 text-slate-300" size={28} />
-            {UI_COPY.orders.empty}
+            ))}
           </div>
+        )}
+
+        {isLoading && (
+          <NoticeCard>{UI_COPY.orders.loading}</NoticeCard>
+        )}
+
+        {error && (
+          <NoticeCard tone="danger">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={onRefresh}
+              className="mt-3 text-sm font-black text-rose-700"
+            >
+              Обновить
+            </button>
+          </NoticeCard>
+        )}
+
+        {!isLoading && !error && orders.length === 0 && (
+          <EmptyOrdersState onOpenCatalog={onOpenCatalog} />
+        )}
+
+        {orders.length > 0 && activeTab === "active" && nextOrder && (
+          <section className="flex flex-col gap-3">
+            <SectionHeader
+              title="Следующая бронь"
+              status={ORDER_STATUSES[nextOrder.status].clientLabel}
+            />
+            <FeaturedOrderCard
+              order={nextOrder}
+              onOpen={() => setSelectedOrderId(nextOrder.id)}
+            />
+          </section>
+        )}
+
+        {orders.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <SectionHeader
+              title={activeTab === "active" ? "Остальные брони" : "Брони"}
+              status={`${visibleOrders.length}`}
+            />
+            {restOrders.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {restOrders.map((order) => (
+                  <CompactOrderCard
+                    key={order.id}
+                    order={order}
+                    onOpen={() => setSelectedOrderId(order.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <NoticeCard>
+                {activeTab === "active"
+                  ? "Других активных броней пока нет."
+                  : "В этой вкладке пока нет броней."}
+              </NoticeCard>
+            )}
+          </section>
         )}
       </div>
     </main>
   );
 }
 
-function getClientNextStep(order: AppOrder) {
-  if (order.status === "cancelled") {
-    return "Бронь отменена. Можно выбрать новое время в каталоге.";
+function FeaturedOrderCard({
+  order,
+  onOpen,
+}: {
+  order: AppOrder;
+  onOpen: () => void;
+}) {
+  return (
+    <article className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm">
+      <OrderProductHeader order={order} />
+      <div className="mt-5 flex flex-col gap-4">
+        <OrderFact
+          icon={CalendarDays}
+          label="Когда"
+          value={formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
+        />
+        <OrderFact
+          icon={MapPin}
+          label="Доставка"
+          value={order.deliveryAddress}
+          hint="Курьер свяжется перед приездом"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={onOpen}
+        className={`mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl ${BRAND_GRADIENT} px-5 text-base font-black text-white shadow-xl shadow-rose-100 active:scale-95`}
+      >
+        Подробнее о брони
+        <ChevronRight size={19} />
+      </button>
+    </article>
+  );
+}
+
+function CompactOrderCard({
+  order,
+  onOpen,
+}: {
+  order: AppOrder;
+  onOpen: () => void;
+}) {
+  const status = ORDER_STATUSES[order.status];
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="w-full rounded-[1.5rem] border border-slate-100 bg-white p-4 text-left shadow-sm active:scale-[0.99]"
+    >
+      <div className="flex items-start gap-4">
+        <OrderIcon order={order} compact />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-black leading-snug text-slate-950">
+                {order.title}
+              </h3>
+              <p className="mt-1 text-sm font-bold text-slate-500">
+                {formatPricePerDay(order)}
+              </p>
+            </div>
+            <ChevronRight className="mt-1 shrink-0 text-slate-300" size={19} />
+          </div>
+          <div className="mt-3">
+            <StatusBadge status={order.status} />
+          </div>
+          <div className="mt-4 flex flex-col gap-2 text-sm font-bold text-slate-600">
+            <span className="flex items-start gap-2">
+              <CalendarDays className="mt-0.5 shrink-0 text-slate-400" size={17} />
+              {formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
+            </span>
+            <span className="flex items-start gap-2">
+              <MapPin className="mt-0.5 shrink-0 text-slate-400" size={17} />
+              <span>{order.deliveryAddress}</span>
+            </span>
+          </div>
+          <p className="mt-3 text-sm font-bold leading-relaxed text-slate-500">
+            {status.description}
+          </p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function OrderDetailsView({
+  order,
+  onBack,
+  onLeaveReview,
+}: {
+  order: AppOrder;
+  onBack: () => void;
+  onLeaveReview: MyOrdersViewProps["onLeaveReview"];
+}) {
+  const duration = getRentalDurationLabel(
+    new Date(order.rentalStartAt),
+    new Date(order.rentalEndAt),
+  );
+
+  return (
+    <main className="min-h-screen bg-slate-50 px-5 pt-7 pb-32">
+      <div className="mx-auto flex max-w-2xl flex-col gap-5">
+        <header className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex size-12 items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-800 shadow-sm active:scale-95"
+            aria-label="Назад к списку броней"
+          >
+            <ArrowLeft size={21} />
+          </button>
+          <button
+            type="button"
+            className="flex size-12 items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-500 shadow-sm"
+            aria-label="Дополнительные действия"
+          >
+            <MoreVertical size={21} />
+          </button>
+        </header>
+
+        <section className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm">
+          <StatusBadge status={order.status} />
+          <div className="mt-5">
+            <OrderProductHeader order={order} />
+          </div>
+        </section>
+
+        <section className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-5">
+            <DetailRow
+              icon={CalendarDays}
+              label={order.status === "returned" ? "Аренда была" : "Когда"}
+              value={formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
+              hint={`${getTariffLabel(order.tariff)} · ${duration}`}
+            />
+            <DetailRow
+              icon={MapPin}
+              label="Доставка"
+              value={order.deliveryAddress}
+              hint={getDeliveryHint(order.status)}
+            />
+            <DetailRow
+              icon={Phone}
+              label="Контакт"
+              value={order.customerPhone}
+              hint={order.customerName}
+            />
+            <DetailRow
+              icon={Clock3}
+              label="Оплата"
+              value="Курьеру при получении"
+              hint={getCourierPaymentHint(order.status)}
+            />
+            <DetailRow
+              icon={RefreshCw}
+              label="Сумма"
+              value={`${order.price} ₽`}
+              hint="Итог по выбранному периоду аренды"
+            />
+          </div>
+        </section>
+
+        <StatusInfoBlock order={order} />
+
+        {order.status === "returned" && (
+          <ReviewBlock
+            order={order}
+            onLeaveReview={onLeaveReview}
+          />
+        )}
+
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-black tracking-tight text-slate-950">
+            Что можно сделать
+          </h2>
+          {getActionsForOrder(order).map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className={`flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl border px-4 text-base font-black shadow-sm active:scale-[0.99] ${
+                action.tone === "danger"
+                  ? "border-rose-100 bg-rose-50 text-rose-700"
+                  : "border-slate-100 bg-white text-slate-800"
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <action.icon size={20} />
+                {action.label}
+              </span>
+              <ChevronRight size={19} className="text-slate-300" />
+            </button>
+          ))}
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function OrderProductHeader({ order }: { order: AppOrder }) {
+  return (
+    <div className="flex items-center gap-4">
+      <OrderIcon order={order} />
+      <div className="min-w-0">
+        <h2 className="text-lg font-black leading-snug tracking-tight text-slate-950">
+          {order.title}
+        </h2>
+        <p className="mt-1 text-base font-bold text-slate-500">
+          {formatPricePerDay(order)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function OrderIcon({
+  order,
+  compact = false,
+}: {
+  order: AppOrder;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-2xl ${order.bg} ${order.color} ${
+        compact ? "size-14" : "size-16"
+      }`}
+    >
+      <order.icon size={compact ? 24 : 30} />
+    </div>
+  );
+}
+
+function OrderFact({
+  icon: Icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <Icon className="mt-0.5 shrink-0 text-slate-400" size={19} />
+      <div>
+        <p className="text-sm font-extrabold text-slate-500">{label}</p>
+        <p className="mt-1 text-base font-bold leading-relaxed text-slate-800">
+          {value}
+        </p>
+        {hint && (
+          <p className="mt-1 text-sm font-bold leading-relaxed text-slate-400">
+            {hint}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DetailRow({
+  icon: Icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  hint?: string;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-slate-500">
+        <Icon size={19} />
+      </div>
+      <div>
+        <p className="text-sm font-extrabold text-slate-500">{label}</p>
+        <p className="mt-1 text-base font-black leading-relaxed text-slate-900">
+          {value}
+        </p>
+        {hint && (
+          <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">
+            {hint}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: OrderStatus }) {
+  const meta = ORDER_STATUSES[status];
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ${meta.color}`}
+    >
+      <meta.icon size={14} />
+      {meta.clientLabel}
+    </span>
+  );
+}
+
+function StatusInfoBlock({ order }: { order: AppOrder }) {
+  return (
+    <section className="rounded-[1.5rem] border border-slate-100 bg-white p-5 shadow-sm">
+      <p className="text-base font-black text-slate-950">
+        {getStatusInfoTitle(order.status)}
+      </p>
+      <p className="mt-2 text-base font-bold leading-relaxed text-slate-600">
+        {getStatusInfoText(order)}
+      </p>
+    </section>
+  );
+}
+
+function ReviewBlock({
+  order,
+  onLeaveReview,
+}: {
+  order: AppOrder;
+  onLeaveReview: MyOrdersViewProps["onLeaveReview"];
+}) {
+  if (order.review) {
+    return (
+      <section className="rounded-[1.5rem] border border-slate-100 bg-white p-5 text-center shadow-sm">
+        <p className="text-base font-black text-slate-950">
+          {UI_COPY.orders.reviewThanks}
+        </p>
+        <p className="mt-2 text-3xl font-black text-amber-400">
+          {"★".repeat(order.review.rating)}
+        </p>
+      </section>
+    );
   }
 
-  if (order.paymentMethod !== "cash" && order.paymentStatus === "pending") {
-    return "Оплатите бронь после подтверждения, чтобы оператор передал её в доставку.";
+  return (
+    <section className="rounded-[1.5rem] border border-amber-100 bg-amber-50 p-5 text-center shadow-sm">
+      <p className="text-base font-black text-amber-900">
+        {UI_COPY.orders.reviewTitle}
+      </p>
+      <div className="mt-4 flex justify-center gap-3">
+        {[1, 2, 3, 4, 5].map((rating) => (
+          <button
+            key={rating}
+            type="button"
+            onClick={() => onLeaveReview(order.id, rating, "")}
+            className="text-3xl leading-none text-amber-400 transition active:scale-95"
+            aria-label={`Оценить на ${rating}`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EmptyOrdersState({ onOpenCatalog }: { onOpenCatalog: () => void }) {
+  return (
+    <section className="flex min-h-[58vh] flex-col items-center justify-center rounded-[1.75rem] border border-slate-100 bg-white px-6 py-10 text-center shadow-sm">
+      <div className="flex size-20 items-center justify-center rounded-[1.5rem] bg-slate-50 text-slate-300">
+        <PackageOpen size={38} />
+      </div>
+      <h2 className="mt-6 text-2xl font-black tracking-tight text-slate-950">
+        {UI_COPY.orders.empty}
+      </h2>
+      <p className="mt-3 max-w-xs text-base font-bold leading-relaxed text-slate-500">
+        Выберите вещь из каталога, а мы привезём её после подтверждения.
+      </p>
+      <button
+        type="button"
+        onClick={onOpenCatalog}
+        className={`mt-6 min-h-14 rounded-2xl ${BRAND_GRADIENT} px-6 text-base font-black text-white shadow-xl shadow-rose-100`}
+      >
+        Перейти в каталог
+      </button>
+    </section>
+  );
+}
+
+function SectionHeader({
+  title,
+  status,
+}: {
+  title: string;
+  status: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <h2 className="text-lg font-black tracking-tight text-slate-950">
+        {title}
+      </h2>
+      <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-slate-500 shadow-sm">
+        {status}
+      </span>
+    </div>
+  );
+}
+
+function NoticeCard({
+  children,
+  tone = "default",
+}: {
+  children: ReactNode;
+  tone?: "default" | "danger";
+}) {
+  return (
+    <div
+      className={`rounded-[1.5rem] border p-5 text-base font-bold leading-relaxed shadow-sm ${
+        tone === "danger"
+          ? "border-rose-100 bg-rose-50 text-rose-600"
+          : "border-slate-100 bg-white text-slate-500"
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function sortOrders(orders: AppOrder[]) {
+  return [...orders].sort((first, second) => {
+    const firstTime = new Date(first.rentalStartAt).getTime();
+    const secondTime = new Date(second.rentalStartAt).getTime();
+    return firstTime - secondTime;
+  });
+}
+
+function formatPricePerDay(order: AppOrder) {
+  return `${order.price} ₽ · ${getTariffLabel(order.tariff)}`;
+}
+
+function getDeliveryHint(status: OrderStatus) {
+  switch (status) {
+    case "pending":
+      return "Адрес можно уточнить до подтверждения";
+    case "confirmed":
+      return "Доставим в выбранный интервал";
+    case "delivery":
+      return "Курьер уже в пути";
+    case "active":
+      return "Вещь передана по этому адресу";
+    case "returned":
+      return "Доставка и возврат завершены";
+    case "cancelled":
+      return "Бронь отменена";
+  }
+}
+
+function getCourierPaymentHint(status: OrderStatus) {
+  if (status === "returned") {
+    return "Оплата закрывается при получении или по договорённости с курьером";
   }
 
+  if (status === "cancelled") {
+    return "Деньги не списывались";
+  }
+
+  return "В приложении деньги сейчас не списываются";
+}
+
+function getStatusInfoTitle(status: OrderStatus) {
+  switch (status) {
+    case "pending":
+      return "Оператор проверит наличие";
+    case "confirmed":
+      return "Бронь подтверждена";
+    case "delivery":
+      return "Курьер готовит передачу";
+    case "active":
+      return "Пользуйтесь вещью";
+    case "returned":
+      return "Аренда завершена";
+    case "cancelled":
+      return "Бронь отменена";
+  }
+}
+
+function getStatusInfoText(order: AppOrder) {
   switch (order.status) {
     case "pending":
-      return "Оператор проверит доступность и подтвердит заявку.";
+      return "Мы свяжемся с вами в ближайшее время и подтвердим детали аренды.";
     case "confirmed":
-      return "Бронь подтверждена. Мы готовим вещь и свяжемся по доставке.";
+      return "Мы подготовим вещь и передадим её курьеру в выбранный интервал.";
     case "delivery":
-      return "Курьер в пути. Держите телефон рядом.";
+      return "Отслеживания доставки пока нет, но вся информация по брони здесь.";
     case "active":
-      return "Вещь у вас. Верните её к окончанию выбранного периода.";
+      return "Не забудьте вернуть вещь к окончанию выбранного периода аренды.";
     case "returned":
-      return "Аренда завершена. Можно оставить оценку или оформить новую бронь.";
+      return "Спасибо за аренду. Можно повторить бронь или оставить оценку.";
+    case "cancelled":
+      return "Эта заявка закрыта. Можно выбрать вещь и оформить новую бронь.";
+  }
+}
+
+function getActionsForOrder(order: AppOrder): Array<{
+  label: string;
+  icon: LucideIcon;
+  tone?: "danger";
+}> {
+  switch (order.status) {
+    case "pending":
+      return [
+        { label: UI_COPY.orders.supportButton, icon: MessageCircle },
+        { label: "Изменить адрес", icon: MapPin },
+        { label: "Отменить бронь", icon: Trash2, tone: "danger" },
+      ];
+    case "confirmed":
+    case "delivery":
+      return [
+        { label: UI_COPY.orders.supportButton, icon: MessageCircle },
+        { label: "Изменить адрес", icon: MapPin },
+      ];
+    case "active":
+      return [
+        { label: "Продлить аренду", icon: Clock3 },
+        { label: "Оформить возврат", icon: RotateCw },
+        { label: UI_COPY.orders.supportButton, icon: MessageCircle },
+      ];
+    case "returned":
+      return [
+        { label: "Повторить бронь", icon: RotateCw },
+        { label: UI_COPY.orders.supportButton, icon: MessageCircle },
+      ];
+    case "cancelled":
+      return [
+        { label: "Повторить бронь", icon: RotateCw },
+        { label: UI_COPY.orders.supportButton, icon: MessageCircle },
+      ];
   }
 }

@@ -1,11 +1,11 @@
 import type { PaymentStatus } from "@/types";
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  pending: "Ожидает оплаты",
-  waiting_for_capture: "Ожидает списания",
-  succeeded: "Оплачено",
+  pending: "Оплата курьеру",
+  waiting_for_capture: "Оплата курьеру",
+  succeeded: "Оплачено курьеру",
   canceled: "Отменено",
-  not_required: "Оплата при получении",
+  not_required: "Оплата курьеру",
 };
 
 export const PAYMENT_STATUS_CLASSES: Record<PaymentStatus, string> = {
