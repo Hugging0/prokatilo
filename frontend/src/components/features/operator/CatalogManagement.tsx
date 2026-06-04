@@ -3,6 +3,8 @@
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
+import { AppCard } from "@/components/ui/AppCard";
+import { AppNotice } from "@/components/ui/AppNotice";
 import {
   archiveAdminItem,
   createAdminItem,
@@ -327,7 +329,7 @@ export function CatalogManagement({
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[2rem] bg-white p-5 text-slate-900">
+      <AppCard className="text-slate-900">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-xl font-black">
@@ -343,7 +345,7 @@ export function CatalogManagement({
           <button
             type="button"
             onClick={handleSecondaryAction}
-            className="rounded-2xl bg-slate-100 px-4 py-3 text-[10px] font-black text-slate-500"
+            className="rounded-2xl bg-slate-100 px-4 py-3 text-xs font-black text-slate-500"
           >
             {editingItemId
               ? UI_COPY.operator.cancelEdit
@@ -352,7 +354,7 @@ export function CatalogManagement({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-3">
-          <label className="block text-[10px] font-black text-slate-400">
+          <label className="block text-xs font-black text-slate-500">
             {UI_COPY.operator.titleLabel}
             <input
               value={form.title}
@@ -364,7 +366,7 @@ export function CatalogManagement({
             />
           </label>
 
-          <label className="block text-[10px] font-black text-slate-400">
+          <label className="block text-xs font-black text-slate-500">
             {UI_COPY.operator.descriptionLabel}
             <textarea
               value={form.description}
@@ -377,7 +379,7 @@ export function CatalogManagement({
           </label>
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="block text-[10px] font-black text-slate-400">
+            <label className="block text-xs font-black text-slate-500">
               {UI_COPY.operator.categoryLabel}
               <input
                 value={form.category}
@@ -389,7 +391,7 @@ export function CatalogManagement({
               />
             </label>
 
-            <label className="block text-[10px] font-black text-slate-400">
+            <label className="block text-xs font-black text-slate-500">
               {UI_COPY.operator.iconLabel}
               <select
                 value={form.icon_key}
@@ -415,7 +417,7 @@ export function CatalogManagement({
             ].map(([field, label]) => (
               <label
                 key={field}
-                className="block text-[10px] font-black text-slate-400"
+                className="block text-xs font-black text-slate-500"
               >
                 {label}
                 <input
@@ -436,7 +438,7 @@ export function CatalogManagement({
             ))}
           </div>
 
-          <label className="block text-[10px] font-black text-slate-400">
+          <label className="block text-xs font-black text-slate-500">
             {UI_COPY.operator.imageUrlLabel}
             <input
               value={form.image_url}
@@ -448,7 +450,7 @@ export function CatalogManagement({
             />
           </label>
 
-          <label className="block text-[10px] font-black text-slate-400">
+          <label className="block text-xs font-black text-slate-500">
             {UI_COPY.operator.sortOrderLabel}
             <input
               type="number"
@@ -494,20 +496,17 @@ export function CatalogManagement({
               : UI_COPY.operator.createItem}
           </button>
         </form>
-      </div>
+      </AppCard>
 
       {message && (
-        <p className="rounded-2xl bg-white/10 p-4 text-xs font-black text-white/70">
+        <AppNotice tone="dark">
           {message}
-        </p>
+        </AppNotice>
       )}
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {items.map((item) => (
-          <article
-            key={item.id}
-            className="rounded-[2rem] bg-white p-5 text-slate-900"
-          >
+          <AppCard key={item.id} className="text-slate-900">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h4 className="font-black">{item.title}</h4>
@@ -515,7 +514,7 @@ export function CatalogManagement({
                   {item.category} • {item.price_per_3h}₽ / 3 часа
                 </p>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-black text-slate-400">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500">
                 {item.icon_key}
               </span>
             </div>
@@ -524,14 +523,14 @@ export function CatalogManagement({
               <button
                 type="button"
                 onClick={() => handleEdit(item)}
-                className="rounded-xl bg-slate-900 px-3 py-2 text-[10px] font-black text-white"
+                className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-black text-white"
               >
                 {UI_COPY.operator.editItem}
               </button>
               <button
                 type="button"
                 onClick={() => handleArchiveToggle(item)}
-                className="rounded-xl bg-slate-100 px-3 py-2 text-[10px] font-black text-slate-500"
+                className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-500"
               >
                 {item.is_active
                   ? UI_COPY.operator.hideItem
@@ -540,7 +539,7 @@ export function CatalogManagement({
               <button
                 type="button"
                 onClick={() => handleAvailabilityToggle(item)}
-                className={`rounded-xl px-3 py-2 text-[10px] font-black ${
+                className={`rounded-xl px-3 py-2 text-xs font-black ${
                   item.is_available
                     ? "bg-emerald-100 text-emerald-600"
                     : "bg-amber-100 text-amber-600"
@@ -551,12 +550,12 @@ export function CatalogManagement({
               <button
                 type="button"
                 onClick={() => handleDelete(item)}
-                className="rounded-xl bg-rose-100 px-3 py-2 text-[10px] font-black text-rose-500"
+                className="rounded-xl bg-rose-100 px-3 py-2 text-xs font-black text-rose-500"
               >
                 {UI_COPY.operator.deleteItem}
               </button>
             </div>
-          </article>
+          </AppCard>
         ))}
       </div>
     </section>

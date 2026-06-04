@@ -31,7 +31,7 @@ export function AppNavigation({
         <button
           type="button"
           onClick={() => onNavigate("home")}
-          className={`flex flex-col items-center gap-1 rounded-3xl py-3 text-[10px] font-black ${
+          className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
             view === "home" ? activeClass : "text-slate-400"
           }`}
         >
@@ -42,7 +42,7 @@ export function AppNavigation({
         <button
           type="button"
           onClick={() => onNavigate("orders")}
-          className={`flex flex-col items-center gap-1 rounded-3xl py-3 text-[10px] font-black ${
+          className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
             view === "orders" ? activeClass : "text-slate-400"
           }`}
         >
@@ -54,7 +54,7 @@ export function AppNavigation({
           <button
             type="button"
             onClick={() => onNavigate("admin-dashboard")}
-            className={`flex flex-col items-center gap-1 rounded-3xl py-3 text-[10px] font-black ${
+            className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
               view === "admin-dashboard"
                 ? activeClass
                 : "text-slate-400"
@@ -67,7 +67,7 @@ export function AppNavigation({
           <button
             type="button"
             onClick={onBonusClick}
-            className="flex flex-col items-center gap-1 rounded-3xl py-3 text-[10px] font-black text-slate-400"
+            className="flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black text-slate-400"
           >
             <Info size={20} />
             Бонусы
@@ -77,7 +77,7 @@ export function AppNavigation({
         <button
           type="button"
           onClick={() => onNavigate("profile")}
-          className={`flex flex-col items-center gap-1 rounded-3xl py-3 text-[10px] font-black ${
+          className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
             view === "profile" ? activeClass : "text-slate-400"
           }`}
         >

@@ -1,5 +1,8 @@
 import { Search } from "lucide-react";
 
+import { AppBadge } from "@/components/ui/AppBadge";
+import { AppEmptyState } from "@/components/ui/AppEmptyState";
+import { AppNotice } from "@/components/ui/AppNotice";
 import { BRAND_GRADIENT, BRAND_LOGO_CLASS } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
 import type { AppItem } from "@/types";
@@ -32,7 +35,7 @@ export function HomeView({
   return (
     <main className="min-h-screen bg-slate-50 pb-28">
       <section
-        className={`w-full ${BRAND_GRADIENT} rounded-b-[2.5rem] px-7 pt-16 pb-14 text-white shadow-lg relative z-30`}
+        className={`relative z-30 w-full ${BRAND_GRADIENT} rounded-b-[2rem] px-6 pt-16 pb-14 text-white shadow-lg`}
       >
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -41,12 +44,12 @@ export function HomeView({
             >
               ПРОКАТило
             </h1>
-            <p className="text-white/90 text-[10px] font-black uppercase tracking-[0.2em] mt-2 opacity-80 leading-none">
+            <p className="mt-2 text-xs font-black uppercase leading-none tracking-[0.18em] text-white/80">
               {UI_COPY.home.slogan}
             </p>
           </div>
 
-          <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/10 text-[10px] font-black uppercase">
+          <div className="rounded-xl border border-white/10 bg-white/20 p-2 text-xs font-black uppercase backdrop-blur-sm">
             {UI_COPY.home.serviceBadge}
           </div>
         </div>
@@ -66,17 +69,17 @@ export function HomeView({
 
       </section>
 
-      <section className="px-6 -mt-8 relative z-40">
+      <section className="relative z-40 -mt-8 px-5">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {categories.map((category) => (
             <button
               key={category}
               type="button"
               onClick={() => onCategoryChange(category)}
-              className={`px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all shadow-sm cursor-pointer ${
+              className={`whitespace-nowrap rounded-2xl px-5 py-2.5 text-xs font-black shadow-sm transition-all ${
                 activeCategory === category
                   ? "bg-slate-900 text-white shadow-lg scale-105 font-black"
-                  : "bg-white text-slate-400 border border-slate-100 hover:bg-slate-100 font-bold"
+                  : "border border-slate-100 bg-white text-slate-500 hover:bg-slate-100"
               }`}
             >
               {category}
@@ -85,11 +88,11 @@ export function HomeView({
         </div>
 
         {(isLoading || (catalogSource === "mock" && catalogError)) && (
-          <div className="mt-3 rounded-2xl border border-slate-100 bg-white/95 px-4 py-3 text-xs font-black text-slate-400 shadow-sm">
+          <AppNotice className="mt-3 px-4 py-3 text-sm">
             {isLoading
               ? UI_COPY.home.catalogLoading
               : UI_COPY.home.catalogFallback}
-          </div>
+          </AppNotice>
         )}
 
         <div className="grid gap-4 mt-4">
@@ -99,7 +102,7 @@ export function HomeView({
               type="button"
               onClick={() => onOpenDetails(item)}
               disabled={!item.available}
-              className="bg-white p-4 shadow-sm rounded-[2rem] cursor-pointer transition-all active:scale-[0.97] border border-slate-100 flex items-center hover:shadow-md group text-left disabled:cursor-not-allowed disabled:opacity-70"
+              className="flex w-full items-center rounded-[1.5rem] border border-slate-100 bg-white p-4 text-left shadow-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed"
             >
               {item.imageUrl ? (
                 <div className="mr-4 h-16 w-16 shrink-0 overflow-hidden rounded-[1.5rem] bg-slate-100">
@@ -119,19 +122,25 @@ export function HomeView({
               )}
 
               <div className="flex-1 min-w-0">
-                <h2 className="font-bold text-slate-800 text-base leading-tight tracking-tight">
+                <h2 className="text-base font-black leading-snug tracking-tight text-slate-950">
                   {item.title}
                 </h2>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                <p className="mt-1 text-xs font-black uppercase tracking-widest text-slate-500">
                   {item.category}
                 </p>
+                <AppBadge
+                  tone={item.available ? "success" : "warning"}
+                  className="mt-2"
+                >
+                  {item.available ? "В наличии" : "Сейчас занято"}
+                </AppBadge>
               </div>
 
               <div className="text-right">
                 <p className="text-xl font-black text-slate-900 tracking-tighter leading-none">
                   {item.price3h}₽
                 </p>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter opacity-60 mt-1">
+                <p className="mt-1 text-xs font-black uppercase text-slate-400">
                   за 3 часа
                 </p>
               </div>
@@ -139,9 +148,10 @@ export function HomeView({
           ))}
 
           {items.length === 0 && (
-            <div className="bg-white rounded-[2rem] p-8 text-center text-slate-400 font-bold">
-              {UI_COPY.home.emptyCatalog}
-            </div>
+            <AppEmptyState
+              title={UI_COPY.home.emptyCatalog}
+              description="Попробуйте изменить запрос или выбрать другую категорию."
+            />
           )}
         </div>
       </section>

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import { ArrowLeft, CalendarDays, Clock3, type LucideIcon, MapPin, PackageCheck } from "lucide-react";
 
+import { AppButton } from "@/components/ui/AppButton";
+import { AppCard } from "@/components/ui/AppCard";
+import { AppNotice } from "@/components/ui/AppNotice";
 import { BRAND_GRADIENT } from "@/lib/brand";
 import {
   formatDateInputValue,
@@ -410,7 +413,7 @@ export function CheckoutView({
                 onEdit={() => setStep(1)}
               />
               <ReviewRow
-                title="Доступность"
+                title="Наличие"
                 value="Предварительно доступно. Оператор подтвердит бронь."
               />
               <ReviewRow
@@ -464,14 +467,15 @@ export function CheckoutView({
       </div>
 
       <footer className="mx-auto mt-8 flex max-w-2xl gap-3 px-6">
-        <button
+        <AppButton
           type="button"
           onClick={step === 1 ? onBack : () => setStep((current) => current - 1)}
-          className="min-h-14 flex-1 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base font-black text-slate-700 shadow-sm active:scale-95"
+          variant="secondary"
+          className="flex-1"
         >
           Назад
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           type="button"
           onClick={() => {
             if (step === 4) {
@@ -485,10 +489,10 @@ export function CheckoutView({
             (step === 1 && (!canGoNextFromTiming || availableIntervals.length === 0)) ||
             (step === 2 && !canGoNextFromAddress)
           }
-          className={`min-h-14 flex-[1.4] rounded-2xl ${BRAND_GRADIENT} px-5 py-4 text-base font-black text-white shadow-xl shadow-rose-200 active:scale-95 disabled:opacity-50`}
+          className={`flex-[1.4] ${BRAND_GRADIENT} shadow-rose-200`}
         >
-          {isSubmitting ? "Создаём…" : getStepButtonLabel(step)}
-        </button>
+          {isSubmitting ? "Создаём бронь…" : getStepButtonLabel(step)}
+        </AppButton>
       </footer>
     </main>
   );
@@ -592,7 +596,7 @@ function getStepButtonLabel(step: number) {
     case 3:
       return "Далее";
     default:
-      return "Хорошо";
+      return "Создать бронь";
   }
 }
 
@@ -611,9 +615,9 @@ function StepTitle({ title, subtitle }: { title: string; subtitle: string }) {
 
 function Panel({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[1.5rem] border border-slate-100 bg-white p-5 shadow-sm">
+    <AppCard>
       {children}
-    </div>
+    </AppCard>
   );
 }
 
@@ -634,9 +638,9 @@ function PanelLabel({
 
 function InlineWarning({ text }: { text: string }) {
   return (
-    <p className="rounded-2xl bg-rose-50 px-4 py-3 text-base font-bold text-rose-600">
+    <AppNotice tone="danger" className="px-4 py-3">
       {text}
-    </p>
+    </AppNotice>
   );
 }
 
@@ -650,7 +654,7 @@ function ReviewRow({
   onEdit?: () => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-[1.5rem] border border-slate-100 bg-white p-5 shadow-sm">
+    <AppCard className="flex items-start justify-between gap-4">
       <div>
         <p className="text-xs font-black uppercase tracking-widest text-slate-500">
           {title}
@@ -663,12 +667,12 @@ function ReviewRow({
         <button
           type="button"
           onClick={onEdit}
-          className="shrink-0 rounded-full bg-slate-50 px-3 py-2 text-sm font-black text-slate-600"
+          className="shrink-0 rounded-xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-600"
         >
-          Изм.
+          Изменить
         </button>
       )}
-    </div>
+    </AppCard>
   );
 }
 

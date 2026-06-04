@@ -1,6 +1,8 @@
 import type { FormEvent } from "react";
 import { ChevronRight, Lock, Mail, Phone, ShoppingBag, User } from "lucide-react";
 
+import { AppButton } from "@/components/ui/AppButton";
+import { AppCard } from "@/components/ui/AppCard";
 import { BRAND_LOGO_CLASS } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
 
@@ -19,8 +21,8 @@ export function AuthView({
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex items-center justify-center p-6">
-      <section className="w-full max-w-sm bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-slate-200/70 border border-slate-100">
-        <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-rose-600 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shadow-rose-200 mb-8 rotate-3">
+      <AppCard variant="hero" className="w-full max-w-sm p-8">
+        <div className="mb-8 flex size-24 rotate-3 items-center justify-center rounded-[2rem] bg-gradient-to-br from-amber-400 to-rose-600 text-white shadow-2xl shadow-rose-200">
           <ShoppingBag size={42} strokeWidth={2.5} />
         </div>
 
@@ -30,7 +32,7 @@ export function AuthView({
           ПРОКАТило
         </h1>
 
-        <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-8">
+        <p className="mb-8 text-xs font-black uppercase tracking-widest text-slate-400">
           {UI_COPY.auth.subtitle}
         </p>
 
@@ -111,15 +113,16 @@ export function AuthView({
             </div>
           )}
 
-          <button
+          <AppButton
             type="submit"
-            className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black text-lg shadow-xl shadow-slate-200 active:scale-95 transition-transform flex items-center justify-center gap-3"
+            fullWidth
+            className="bg-slate-900 shadow-slate-200"
           >
             {isRegister ? UI_COPY.auth.registerButton : UI_COPY.auth.loginButton}
             <ChevronRight size={20} />
-          </button>
+          </AppButton>
         </form>
-      </section>
+      </AppCard>
     </main>
   );
 }

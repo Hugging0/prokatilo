@@ -15,6 +15,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { AppBadge } from "@/components/ui/AppBadge";
+import { AppButton } from "@/components/ui/AppButton";
+import { AppEmptyState } from "@/components/ui/AppEmptyState";
+import { AppNotice } from "@/components/ui/AppNotice";
+import { AppSectionHeader } from "@/components/ui/AppSectionHeader";
 import { formatRentalPeriod, getRentalDurationLabel } from "@/lib/booking-time";
 import { BRAND_GRADIENT } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
@@ -110,13 +115,13 @@ export function MyOrdersView({
         </header>
 
         {orders.length > 0 && (
-          <div className="flex rounded-[1.35rem] border border-slate-100 bg-white p-1 shadow-sm">
+          <div className="flex rounded-[1.5rem] border border-slate-100 bg-white p-1 shadow-sm">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`min-h-11 flex-1 rounded-[1.05rem] px-3 text-sm font-extrabold transition ${
+                className={`min-h-11 flex-1 rounded-2xl px-3 text-sm font-extrabold transition ${
                   activeTab === tab.id
                     ? "bg-slate-950 text-white shadow-sm"
                     : "text-slate-500"
@@ -129,11 +134,11 @@ export function MyOrdersView({
         )}
 
         {isLoading && (
-          <NoticeCard>{UI_COPY.orders.loading}</NoticeCard>
+          <AppNotice>{UI_COPY.orders.loading}</AppNotice>
         )}
 
         {error && (
-          <NoticeCard tone="danger">
+          <AppNotice tone="danger">
             <span>{error}</span>
             <button
               type="button"
@@ -142,7 +147,7 @@ export function MyOrdersView({
             >
               Обновить
             </button>
-          </NoticeCard>
+          </AppNotice>
         )}
 
         {!isLoading && !error && orders.length === 0 && (
@@ -151,10 +156,9 @@ export function MyOrdersView({
 
         {orders.length > 0 && activeTab === "active" && nextOrder && (
           <section className="flex flex-col gap-3">
-            <SectionHeader
-              title="Следующая бронь"
-              status={ORDER_STATUSES[nextOrder.status].clientLabel}
-            />
+            <SectionHeader title="Следующая бронь">
+              <StatusBadge status={nextOrder.status} />
+            </SectionHeader>
             <FeaturedOrderCard
               order={nextOrder}
               onOpen={() => setSelectedOrderId(nextOrder.id)}
@@ -164,10 +168,9 @@ export function MyOrdersView({
 
         {orders.length > 0 && (
           <section className="flex flex-col gap-3">
-            <SectionHeader
-              title={activeTab === "active" ? "Остальные брони" : "Брони"}
-              status={`${visibleOrders.length}`}
-            />
+            <SectionHeader title={activeTab === "active" ? "Остальные брони" : "Брони"}>
+              <AppBadge>{visibleOrders.length}</AppBadge>
+            </SectionHeader>
             {restOrders.length > 0 ? (
               <div className="flex flex-col gap-3">
                 {restOrders.map((order) => (
@@ -179,11 +182,11 @@ export function MyOrdersView({
                 ))}
               </div>
             ) : (
-              <NoticeCard>
+              <AppNotice>
                 {activeTab === "active"
                   ? "Других активных броней пока нет."
                   : "В этой вкладке пока нет броней."}
-              </NoticeCard>
+              </AppNotice>
             )}
           </section>
         )}
@@ -215,14 +218,15 @@ function FeaturedOrderCard({
           hint="Курьер свяжется перед приездом"
         />
       </div>
-      <button
+      <AppButton
         type="button"
         onClick={onOpen}
-        className={`mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl ${BRAND_GRADIENT} px-5 text-base font-black text-white shadow-xl shadow-rose-100 active:scale-95`}
+        fullWidth
+        className={`mt-5 ${BRAND_GRADIENT}`}
       >
         Подробнее о брони
         <ChevronRight size={19} />
-      </button>
+      </AppButton>
     </article>
   );
 }
@@ -308,6 +312,7 @@ function OrderDetailsView({
             type="button"
             className="flex size-12 items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-500 shadow-sm"
             aria-label="Дополнительные действия"
+            disabled
           >
             <MoreVertical size={21} />
           </button>
@@ -372,7 +377,8 @@ function OrderDetailsView({
             <button
               key={action.label}
               type="button"
-              className={`flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl border px-4 text-base font-black shadow-sm active:scale-[0.99] ${
+              disabled
+              className={`flex min-h-14 w-full cursor-not-allowed items-center justify-between gap-4 rounded-2xl border px-4 text-base font-black opacity-65 shadow-sm ${
                 action.tone === "danger"
                   ? "border-rose-100 bg-rose-50 text-rose-700"
                   : "border-slate-100 bg-white text-slate-800"
@@ -382,7 +388,7 @@ function OrderDetailsView({
                 <action.icon size={20} />
                 {action.label}
               </span>
-              <ChevronRight size={19} className="text-slate-300" />
+              <span className="text-xs font-black text-slate-400">Скоро</span>
             </button>
           ))}
         </section>
@@ -489,12 +495,10 @@ function StatusBadge({ status }: { status: OrderStatus }) {
   const meta = ORDER_STATUSES[status];
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ${meta.color}`}
-    >
+    <AppBadge className={meta.color}>
       <meta.icon size={14} />
       {meta.clientLabel}
-    </span>
+    </AppBadge>
   );
 }
 
@@ -555,63 +559,28 @@ function ReviewBlock({
 
 function EmptyOrdersState({ onOpenCatalog }: { onOpenCatalog: () => void }) {
   return (
-    <section className="flex min-h-[58vh] flex-col items-center justify-center rounded-[1.75rem] border border-slate-100 bg-white px-6 py-10 text-center shadow-sm">
-      <div className="flex size-20 items-center justify-center rounded-[1.5rem] bg-slate-50 text-slate-300">
-        <PackageOpen size={38} />
-      </div>
-      <h2 className="mt-6 text-2xl font-black tracking-tight text-slate-950">
-        {UI_COPY.orders.empty}
-      </h2>
-      <p className="mt-3 max-w-xs text-base font-bold leading-relaxed text-slate-500">
-        Выберите вещь из каталога, а мы привезём её после подтверждения.
-      </p>
-      <button
-        type="button"
-        onClick={onOpenCatalog}
-        className={`mt-6 min-h-14 rounded-2xl ${BRAND_GRADIENT} px-6 text-base font-black text-white shadow-xl shadow-rose-100`}
-      >
-        Перейти в каталог
-      </button>
-    </section>
+    <AppEmptyState
+      icon={PackageOpen}
+      title={UI_COPY.orders.empty}
+      description="Выберите вещь из каталога, а мы привезём её после подтверждения."
+      action={
+        <AppButton type="button" onClick={onOpenCatalog}>
+          Перейти в каталог
+        </AppButton>
+      }
+    />
   );
 }
 
 function SectionHeader({
   title,
-  status,
+  children,
 }: {
   title: string;
-  status: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <h2 className="text-lg font-black tracking-tight text-slate-950">
-        {title}
-      </h2>
-      <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-slate-500 shadow-sm">
-        {status}
-      </span>
-    </div>
-  );
-}
-
-function NoticeCard({
-  children,
-  tone = "default",
-}: {
   children: ReactNode;
-  tone?: "default" | "danger";
 }) {
   return (
-    <div
-      className={`rounded-[1.5rem] border p-5 text-base font-bold leading-relaxed shadow-sm ${
-        tone === "danger"
-          ? "border-rose-100 bg-rose-50 text-rose-600"
-          : "border-slate-100 bg-white text-slate-500"
-      }`}
-    >
-      {children}
-    </div>
+    <AppSectionHeader title={title} meta={children} />
   );
 }
 

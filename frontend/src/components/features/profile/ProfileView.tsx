@@ -1,5 +1,9 @@
 import { Bell, CreditCard, ShieldCheck, Star, User as UserIcon } from "lucide-react";
 
+import { AppBadge } from "@/components/ui/AppBadge";
+import { AppButton } from "@/components/ui/AppButton";
+import { AppCard } from "@/components/ui/AppCard";
+import { AppInfoRow } from "@/components/ui/AppInfoRow";
 import { BRAND_GRADIENT } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
 import type { User } from "@/types";
@@ -12,8 +16,8 @@ const PROFILE_STATS = [
   },
   {
     icon: CreditCard,
-    label: "Платежи",
-    val: "Привязаны",
+    label: "Оплата",
+    val: "Курьеру при получении",
   },
   {
     icon: Bell,
@@ -32,69 +36,68 @@ export function ProfileView({
   onLogout,
 }: ProfileViewProps) {
   return (
-    <main className="min-h-screen bg-slate-50 px-6 pt-12 pb-32">
-      <section className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
+    <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-32">
+      <div className="mx-auto flex max-w-2xl flex-col gap-5">
+      <AppCard variant="hero">
         <div
-          className={`w-20 h-20 rounded-[2rem] ${BRAND_GRADIENT} text-white flex items-center justify-center mb-5 shadow-xl shadow-rose-200`}
+          className={`mb-5 flex size-20 items-center justify-center rounded-[2rem] ${BRAND_GRADIENT} text-white shadow-xl shadow-rose-200`}
         >
           <UserIcon size={34} />
         </div>
 
-        <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-none">
+        <h1 className="text-3xl font-black leading-tight tracking-tight text-slate-950">
           {user.name}
-        </h2>
-        <p className="text-slate-400 font-bold mt-2">{user.email}</p>
-        {user.phone && (
-          <p className="text-slate-300 font-bold mt-1">{user.phone}</p>
-        )}
-      </section>
+        </h1>
+        <p className="mt-2 text-base font-bold leading-relaxed text-slate-500">
+          {user.email}
+        </p>
+        <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">
+          {user.phone ? user.phone : "Телефон не указан"}
+        </p>
+      </AppCard>
 
-      <div className="mt-5 w-full p-5 rounded-[2rem] flex justify-between items-center border-2 bg-white border-slate-50 shadow-sm">
-        <span className="flex items-center gap-3 font-black text-slate-900">
-          <ShieldCheck size={20} />
-          <span>
-            <span className="block">
-              {user.isAdmin
-                ? UI_COPY.profile.adminAccountTitle
-                : UI_COPY.profile.customerAccountTitle}
-            </span>
-            <span className="block text-[10px] font-bold text-slate-400 mt-1">
-              {user.isAdmin
-                ? UI_COPY.profile.adminAccountHint
-                : UI_COPY.profile.customerAccountHint}
-            </span>
-          </span>
-        </span>
-
-        <span className="text-xs font-black text-rose-500">
+      <AppCard className="flex items-center justify-between gap-4">
+        <AppInfoRow
+          icon={ShieldCheck}
+          label="Аккаунт"
+          value={
+            user.isAdmin
+              ? UI_COPY.profile.adminAccountTitle
+              : UI_COPY.profile.customerAccountTitle
+          }
+          hint={
+            user.isAdmin
+              ? UI_COPY.profile.adminAccountHint
+              : UI_COPY.profile.customerAccountHint
+          }
+        />
+        <AppBadge tone={user.isAdmin ? "dark" : "default"}>
           {user.isAdmin ? "Админ" : "Клиент"}
-        </span>
-      </div>
+        </AppBadge>
+      </AppCard>
 
-      <div className="mt-5 space-y-3">
+      <div className="flex flex-col gap-3">
         {PROFILE_STATS.map((item) => (
-          <div
+          <AppCard
             key={item.label}
-            className="bg-white rounded-[1.5rem] p-5 flex items-center justify-between border border-slate-100"
+            variant="compact"
+            className="flex items-center justify-between gap-4"
           >
-            <span className="flex items-center gap-3 font-black text-slate-900">
-              <item.icon size={20} className="text-slate-400" />
-              {item.label}
-            </span>
-            <span className="text-sm font-black text-slate-400">
-              {item.val}
-            </span>
-          </div>
+            <AppInfoRow icon={item.icon} label={item.label} value={item.val} />
+          </AppCard>
         ))}
       </div>
 
-      <button
+      <AppButton
         type="button"
         onClick={onLogout}
-        className="mt-12 w-full text-slate-300 text-[10px] font-black uppercase tracking-widest hover:text-rose-500 transition-colors py-4"
+        variant="ghost"
+        fullWidth
+        className="text-slate-400 hover:text-rose-500"
       >
         Выйти
-      </button>
+      </AppButton>
+      </div>
     </main>
   );
 }
