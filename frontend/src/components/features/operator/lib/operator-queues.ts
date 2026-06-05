@@ -1,7 +1,7 @@
 import { isTodayInAppTimeZone } from "@/lib/booking-time";
 import type { AppOrder } from "@/types";
 
-export type OperatorTab = "orders" | "catalog" | "settings";
+export type OperatorTab = "orders" | "catalog" | "promo-codes" | "settings";
 export type OrderQueue = "attention" | "today" | "active" | "returns" | "all";
 
 export const ORDER_QUEUE_CONFIG: Array<{

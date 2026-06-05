@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { CatalogManagement } from "@/components/features/operator/CatalogManagement";
+import { PromoCodesManagement } from "@/components/features/operator/PromoCodesManagement";
 import { AppEmptyState } from "@/components/ui/AppEmptyState";
 import { AppNotice } from "@/components/ui/AppNotice";
 import { UI_COPY } from "@/lib/copy";
@@ -110,6 +111,10 @@ export function OperatorDashboard({
           token={authToken}
           onCatalogChanged={onCatalogChanged}
         />
+      )}
+
+      {activeTab === "promo-codes" && (
+        <PromoCodesManagement authToken={authToken} />
       )}
 
       {activeTab === "settings" && <OperatorSettingsPanel />}

@@ -35,6 +35,20 @@ class OrderStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+class PromoCodeKind(StrEnum):
+    PERCENT_DISCOUNT = "percent_discount"
+    FIXED_DISCOUNT = "fixed_discount"
+    BONUS_CREDIT = "bonus_credit"
+
+
+class LoyaltyTransactionType(StrEnum):
+    EARNED = "earned"
+    SPENT = "spent"
+    PROMO_CREDIT = "promo_credit"
+    REFUND = "refund"
+    ADJUSTMENT = "adjustment"
+
+
 class ItemBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(None, max_length=2000)
@@ -124,7 +138,8 @@ class OrderBase(BaseModel):
 
 
 class OrderCreate(OrderBase):
-    pass
+    promo_code: str | None = Field(None, max_length=50)
+    bonus_spend_amount: Decimal | None = Field(None, ge=0)
 
 
 class OrderUpdate(BaseModel):
@@ -160,6 +175,111 @@ class BookingRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class LoyaltyAccountRead(BaseModel):
+    balance: Decimal
+    lifetime_earned: Decimal
+    lifetime_spent: Decimal
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LoyaltyTransactionRead(BaseModel):
+    id: int
+    type: LoyaltyTransactionType
+    amount: Decimal
+    description: str
+    order_id: int | None
+    promo_code_id: int | None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LoyaltySummaryRead(BaseModel):
+    account: LoyaltyAccountRead
+    recent_transactions: list[LoyaltyTransactionRead]
+    cashback_percent: int = 5
+    bonus_to_ruble_rate: int = 1
+    max_bonus_spend_percent: int = 30
+
+
+class PromoCodeCreate(BaseModel):
+    code: str = Field(..., min_length=1, max_length=50)
+    title: str = Field(..., min_length=1, max_length=255)
+    description: str | None = Field(None, max_length=500)
+    kind: PromoCodeKind
+    discount_percent: Decimal | None = Field(None, ge=0, le=100)
+    discount_amount: Decimal | None = Field(None, ge=0)
+    bonus_amount: Decimal | None = Field(None, ge=0)
+    min_order_amount: Decimal | None = Field(None, ge=0)
+    max_uses: int | None = Field(None, ge=1)
+    max_uses_per_user: int = Field(default=1, ge=1)
+    valid_from: datetime | None = None
+    valid_until: datetime | None = None
+    is_active: bool = True
+
+
+class PromoCodeUpdate(BaseModel):
+    title: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = Field(None, max_length=500)
+    discount_percent: Decimal | None = Field(None, ge=0, le=100)
+    discount_amount: Decimal | None = Field(None, ge=0)
+    bonus_amount: Decimal | None = Field(None, ge=0)
+    min_order_amount: Decimal | None = Field(None, ge=0)
+    max_uses: int | None = Field(None, ge=1)
+    max_uses_per_user: int | None = Field(None, ge=1)
+    valid_from: datetime | None = None
+    valid_until: datetime | None = None
+    is_active: bool | None = None
+
+
+class PromoCodeRead(BaseModel):
+    id: int
+    code: str
+    title: str
+    description: str | None
+    kind: PromoCodeKind
+    discount_percent: Decimal | None
+    discount_amount: Decimal | None
+    bonus_amount: Decimal | None
+    min_order_amount: Decimal | None
+    max_uses: int | None
+    used_count: int
+    max_uses_per_user: int
+    valid_from: datetime | None
+    valid_until: datetime | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PromoCodePreviewRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=50)
+    subtotal_price: Decimal = Field(..., ge=0)
+
+
+class PromoCodePreviewRead(BaseModel):
+    code: str
+    title: str
+    description: str | None
+    kind: PromoCodeKind
+    discount_amount: Decimal
+    bonus_amount: Decimal
+    message: str
+
+
+class PromoCodeActivateRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=50)
+
+
+class PromoCodeActivateRead(BaseModel):
+    balance: Decimal
+    credited_amount: Decimal
+    message: str
+
+
 class OrderRead(OrderBase):
     id: int
     user_id: int | None
@@ -168,6 +288,11 @@ class OrderRead(OrderBase):
     payment_status: PaymentStatus
     yookassa_payment_id: str | None
     yookassa_confirmation_url: str | None
+    subtotal_price: Decimal
+    promo_code: PromoCodeRead | None
+    promo_discount_amount: Decimal
+    bonus_spent_amount: Decimal
+    bonus_earned_amount: Decimal
     rental_start_at: datetime
     rental_end_at: datetime
     created_at: datetime

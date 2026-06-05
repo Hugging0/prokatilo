@@ -1,0 +1,79 @@
+"use client";
+
+import { RefreshCw } from "lucide-react";
+
+import { AppButton } from "@/components/ui/AppButton";
+import { AppEmptyState } from "@/components/ui/AppEmptyState";
+import { AppNotice } from "@/components/ui/AppNotice";
+import { UI_COPY } from "@/lib/copy";
+
+import { PromoCodeCard } from "./components/PromoCodeCard";
+import { PromoCodeForm } from "./components/PromoCodeForm";
+import { useAdminPromoCodes } from "./hooks/use-admin-promo-codes";
+
+export function PromoCodesManagement({ authToken }: { authToken: string }) {
+  const promoCodes = useAdminPromoCodes(authToken);
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="font-black">{UI_COPY.operator.promoCodesTitle}</h3>
+        <button
+          type="button"
+          onClick={() => void promoCodes.refresh()}
+          className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 text-xs font-black text-white/60"
+        >
+          <RefreshCw size={14} />
+          Обновить
+        </button>
+      </div>
+
+      <PromoCodeForm
+        key={promoCodes.selectedPromoCode?.id ?? "new"}
+        promoCode={promoCodes.selectedPromoCode}
+        isSubmitting={promoCodes.isSubmitting}
+        onSubmit={(payload) => void promoCodes.savePromoCode(payload)}
+        onCancel={() => promoCodes.setSelectedPromoCode(null)}
+      />
+
+      {promoCodes.isLoading && (
+        <AppNotice tone="dark" className="mb-4">
+          Загружаем промокоды…
+        </AppNotice>
+      )}
+
+      {promoCodes.message && (
+        <AppNotice tone="dark" className="mb-4">
+          {promoCodes.message}
+        </AppNotice>
+      )}
+
+      <div className="flex flex-col gap-4">
+        {promoCodes.promoCodes.map((promoCode) => (
+          <PromoCodeCard
+            key={promoCode.id}
+            promoCode={promoCode}
+            onEdit={() => promoCodes.setSelectedPromoCode(promoCode)}
+            onArchive={() => void promoCodes.archivePromoCode(promoCode.id)}
+          />
+        ))}
+
+        {!promoCodes.isLoading && promoCodes.promoCodes.length === 0 && (
+          <AppEmptyState
+            dark
+            title={UI_COPY.operator.promoCodesEmpty}
+            description="Создайте первый промокод для скидок или бонусов сервиса."
+            action={
+              <AppButton
+                type="button"
+                onClick={() => promoCodes.setSelectedPromoCode(null)}
+              >
+                {UI_COPY.operator.createPromoCode}
+              </AppButton>
+            }
+          />
+        )}
+      </div>
+    </section>
+  );
+}

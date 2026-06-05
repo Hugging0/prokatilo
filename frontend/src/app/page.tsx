@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { AuthView } from "@/components/features/auth/AuthView";
+import { BonusesView } from "@/components/features/bonuses/BonusesView";
 import { CheckoutView } from "@/components/features/checkout/CheckoutView";
 import { DetailsView } from "@/components/features/catalog/DetailsView";
 import { HomeView } from "@/components/features/catalog/HomeView";
@@ -87,6 +88,8 @@ export default function App() {
           paymentMethod,
           deliveryAddress: checkout.deliveryAddress,
           courierComment: checkout.courierComment,
+          promoCode: checkout.appliedPromoCode,
+          bonusSpendAmount: checkout.bonusSpendAmount,
           selectedDate: checkout.selectedDate,
           selectedTime: checkout.selectedTime,
           selectedEndDate: checkout.selectedEndDate,
@@ -164,6 +167,11 @@ export default function App() {
           deliveryAddress={checkout.deliveryAddress}
           courierComment={checkout.courierComment}
           clarifyAddress={checkout.clarifyAddress}
+          authToken={auth.authToken ?? ""}
+          promoCode={checkout.promoCode}
+          appliedPromoCode={checkout.appliedPromoCode}
+          promoDiscountPreview={checkout.promoDiscountPreview}
+          bonusSpendAmount={checkout.bonusSpendAmount}
           bookingSlots={bookingSlotsState.bookingSlots}
           isBookingsLoading={bookingSlotsState.isBookingsLoading}
           bookingsError={bookingSlotsState.bookingsError}
@@ -177,6 +185,13 @@ export default function App() {
           onDeliveryAddressChange={checkout.setDeliveryAddress}
           onCourierCommentChange={checkout.setCourierComment}
           onClarifyAddressChange={checkout.setClarifyAddress}
+          onNotify={showNotification}
+          onPromoCodeChange={checkout.setPromoCode}
+          onPromoApplied={(code, discountAmount) => {
+            checkout.setAppliedPromoCode(code);
+            checkout.setPromoDiscountPreview(discountAmount);
+          }}
+          onBonusSpendChange={checkout.setBonusSpendAmount}
           onSubmit={() => void handleBook()}
         />
       )}
@@ -193,6 +208,21 @@ export default function App() {
       )}
 
       {view === "orders" && !auth.user && (
+        <AuthView
+          mode={auth.authMode}
+          onModeChange={auth.setAuthMode}
+          onSubmit={(event) => void auth.handleAuth(event)}
+        />
+      )}
+
+      {view === "bonuses" && auth.user && auth.authToken && (
+        <BonusesView
+          authToken={auth.authToken}
+          onNotify={showNotification}
+        />
+      )}
+
+      {view === "bonuses" && !auth.user && (
         <AuthView
           mode={auth.authMode}
           onModeChange={auth.setAuthMode}
@@ -241,7 +271,6 @@ export default function App() {
 
             setView(nextView);
           }}
-          onBonusClick={() => showNotification(UI_COPY.bonus.comingSoon)}
         />
       )}
     </div>

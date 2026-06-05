@@ -473,6 +473,70 @@ async def read_account_orders(
     return await crud.get_orders_by_user(db=db, user_id=current_user.id)
 
 
+@app.get(
+    "/me/loyalty",
+    response_model=schemas.LoyaltySummaryRead,
+    tags=["Loyalty"],
+)
+async def read_loyalty_summary(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> schemas.LoyaltySummaryRead:
+    return await crud.get_loyalty_summary(db=db, user_id=current_user.id)
+
+
+@app.get(
+    "/me/loyalty/transactions",
+    response_model=list[schemas.LoyaltyTransactionRead],
+    tags=["Loyalty"],
+)
+async def read_loyalty_transactions(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+    limit: int = Query(default=50, ge=1, le=100),
+) -> list[models.LoyaltyTransactionModel]:
+    return await crud.list_loyalty_transactions(
+        db=db,
+        user_id=current_user.id,
+        limit=limit,
+    )
+
+
+@app.post(
+    "/me/promo-codes/preview",
+    response_model=schemas.PromoCodePreviewRead,
+    tags=["Promo Codes"],
+)
+async def preview_account_promo_code(
+    payload: schemas.PromoCodePreviewRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> schemas.PromoCodePreviewRead:
+    return await crud.preview_promo_code(
+        db=db,
+        user_id=current_user.id,
+        code=payload.code,
+        subtotal_price=payload.subtotal_price,
+    )
+
+
+@app.post(
+    "/me/promo-codes/activate",
+    response_model=schemas.PromoCodeActivateRead,
+    tags=["Promo Codes"],
+)
+async def activate_account_promo_code(
+    payload: schemas.PromoCodeActivateRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> schemas.PromoCodeActivateRead:
+    return await crud.redeem_bonus_credit_promo(
+        db=db,
+        user_id=current_user.id,
+        code=payload.code,
+    )
+
+
 @app.patch(
     "/me/orders/{order_id}/address",
     response_model=schemas.OrderRead,
@@ -563,6 +627,63 @@ async def read_admin_orders(
         db=db,
         status_filter=status_filter,
     )
+
+
+@app.get(
+    "/admin/promo-codes/",
+    response_model=list[schemas.PromoCodeRead],
+    tags=["Admin Promo Codes"],
+    dependencies=[Depends(verify_admin_access)],
+)
+async def read_admin_promo_codes(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[models.PromoCodeModel]:
+    return await crud.list_promo_codes(db=db)
+
+
+@app.post(
+    "/admin/promo-codes/",
+    response_model=schemas.PromoCodeRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Admin Promo Codes"],
+    dependencies=[Depends(verify_admin_access)],
+)
+async def create_admin_promo_code(
+    payload: schemas.PromoCodeCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.PromoCodeModel:
+    return await crud.create_promo_code(db=db, payload=payload)
+
+
+@app.patch(
+    "/admin/promo-codes/{promo_code_id}",
+    response_model=schemas.PromoCodeRead,
+    tags=["Admin Promo Codes"],
+    dependencies=[Depends(verify_admin_access)],
+)
+async def update_admin_promo_code(
+    promo_code_id: int,
+    payload: schemas.PromoCodeUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.PromoCodeModel:
+    return await crud.update_promo_code(
+        db=db,
+        promo_code_id=promo_code_id,
+        payload=payload,
+    )
+
+
+@app.patch(
+    "/admin/promo-codes/{promo_code_id}/archive",
+    response_model=schemas.PromoCodeRead,
+    tags=["Admin Promo Codes"],
+    dependencies=[Depends(verify_admin_access)],
+)
+async def archive_admin_promo_code(
+    promo_code_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.PromoCodeModel:
+    return await crud.archive_promo_code(db=db, promo_code_id=promo_code_id)
 
 
 @app.get(

@@ -6,6 +6,7 @@ import type { AppItem, BookingSlot, TariffType } from "@/types";
 import { AddressStep } from "./components/AddressStep";
 import { CheckoutFooter } from "./components/CheckoutFooter";
 import { CheckoutHeader } from "./components/CheckoutHeader";
+import { CheckoutLoyaltyCard } from "./components/CheckoutLoyaltyCard";
 import { NextStepsStep } from "./components/NextStepsStep";
 import { ReviewStep } from "./components/ReviewStep";
 import { TimingStep } from "./components/TimingStep";
@@ -22,6 +23,11 @@ interface CheckoutViewProps {
   deliveryAddress: string;
   courierComment: string;
   clarifyAddress: boolean;
+  authToken: string;
+  promoCode: string;
+  appliedPromoCode: string | null;
+  promoDiscountPreview: number;
+  bonusSpendAmount: number;
   bookingSlots: BookingSlot[];
   isBookingsLoading: boolean;
   bookingsError: string | null;
@@ -35,6 +41,10 @@ interface CheckoutViewProps {
   onDeliveryAddressChange: (address: string) => void;
   onCourierCommentChange: (comment: string) => void;
   onClarifyAddressChange: (value: boolean) => void;
+  onNotify: (message: string) => void;
+  onPromoCodeChange: (code: string) => void;
+  onPromoApplied: (code: string | null, discountAmount: number) => void;
+  onBonusSpendChange: (amount: number) => void;
   onSubmit: () => void;
 }
 
@@ -48,6 +58,11 @@ export function CheckoutView({
   deliveryAddress,
   courierComment,
   clarifyAddress,
+  authToken,
+  promoCode,
+  appliedPromoCode,
+  promoDiscountPreview,
+  bonusSpendAmount,
   bookingSlots,
   isBookingsLoading,
   bookingsError,
@@ -61,6 +76,10 @@ export function CheckoutView({
   onDeliveryAddressChange,
   onCourierCommentChange,
   onClarifyAddressChange,
+  onNotify,
+  onPromoCodeChange,
+  onPromoApplied,
+  onBonusSpendChange,
   onSubmit,
 }: CheckoutViewProps) {
   const [step, setStep] = useCheckoutStep();
@@ -183,17 +202,31 @@ export function CheckoutView({
         )}
 
         {step === 3 && (
-          <ReviewStep
-            selectedItem={selectedItem}
-            deliveryAddress={deliveryAddress}
-            clarifyAddress={clarifyAddress}
-            deliveryIntervalSummary={availability.deliveryIntervalSummary}
-            rentalDurationSummary={availability.rentalDurationSummary}
-            totalPrice={availability.totalPrice}
-            hasSelectedInterval={Boolean(availability.selectedInterval)}
-            onEditTiming={() => setStep(1)}
-            onEditAddress={() => setStep(2)}
-          />
+          <div className="space-y-4">
+            <ReviewStep
+              selectedItem={selectedItem}
+              deliveryAddress={deliveryAddress}
+              clarifyAddress={clarifyAddress}
+              deliveryIntervalSummary={availability.deliveryIntervalSummary}
+              rentalDurationSummary={availability.rentalDurationSummary}
+              totalPrice={availability.totalPrice}
+              hasSelectedInterval={Boolean(availability.selectedInterval)}
+              onEditTiming={() => setStep(1)}
+              onEditAddress={() => setStep(2)}
+            />
+            <CheckoutLoyaltyCard
+              authToken={authToken}
+              subtotalPrice={availability.totalPrice}
+              promoCode={promoCode}
+              appliedPromoCode={appliedPromoCode}
+              promoDiscountPreview={promoDiscountPreview}
+              bonusSpendAmount={bonusSpendAmount}
+              onNotify={onNotify}
+              onPromoCodeChange={onPromoCodeChange}
+              onPromoApplied={onPromoApplied}
+              onBonusSpendChange={onBonusSpendChange}
+            />
+          </div>
         )}
 
         {step === 4 && <NextStepsStep />}

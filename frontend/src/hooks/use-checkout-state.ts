@@ -16,6 +16,10 @@ export function useCheckoutState() {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [courierComment, setCourierComment] = useState("");
   const [clarifyAddress, setClarifyAddress] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
+  const [promoDiscountPreview, setPromoDiscountPreview] = useState(0);
+  const [bonusSpendAmount, setBonusSpendAmount] = useState(0);
 
   const applyPresetEnd = (
     date: string,
@@ -47,6 +51,10 @@ export function useCheckoutState() {
     setDeliveryAddress("");
     setCourierComment("");
     setClarifyAddress(false);
+    setPromoCode("");
+    setAppliedPromoCode(null);
+    setPromoDiscountPreview(0);
+    setBonusSpendAmount(0);
   };
 
   return {
@@ -59,6 +67,10 @@ export function useCheckoutState() {
     deliveryAddress,
     courierComment,
     clarifyAddress,
+    promoCode,
+    appliedPromoCode,
+    promoDiscountPreview,
+    bonusSpendAmount,
     setSelectedDate,
     setSelectedTime,
     setSelectedEndDate,
@@ -66,6 +78,10 @@ export function useCheckoutState() {
     setDeliveryAddress,
     setCourierComment,
     setClarifyAddress,
+    setPromoCode,
+    setAppliedPromoCode,
+    setPromoDiscountPreview,
+    setBonusSpendAmount,
     openDetails,
     selectTariff,
     resetCheckoutForm,

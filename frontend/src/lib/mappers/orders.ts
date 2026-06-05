@@ -2,6 +2,7 @@ import { Package } from "lucide-react";
 
 import { UI_COPY } from "@/lib/copy";
 import { mapBackendItemToAppItem } from "@/lib/mappers/items";
+import { mapBackendPromoCodeToAppPromoCode } from "@/lib/mappers/promo-codes";
 import type {
   AppItem,
   AppOrder,
@@ -39,6 +40,13 @@ export function mapBackendOrderToAppOrder(
     time: order.rental_time,
     rentalStartAt: order.rental_start_at,
     rentalEndAt: order.rental_end_at,
+    subtotalPrice: Number(order.subtotal_price),
+    promoDiscountAmount: Number(order.promo_discount_amount),
+    bonusSpentAmount: Number(order.bonus_spent_amount),
+    bonusEarnedAmount: Number(order.bonus_earned_amount),
+    promoCode: order.promo_code
+      ? mapBackendPromoCodeToAppPromoCode(order.promo_code)
+      : null,
     price: Number(order.total_price),
     paymentMethod: order.payment_method,
     paymentStatus: order.payment_status,
@@ -84,6 +92,8 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
   selectedEndDate: string;
   selectedEndTime: string;
   totalPrice: number;
+  promoCode?: string | null;
+  bonusSpendAmount?: number | null;
 }): CreateOrderPayload {
   return {
     item_id: input.item.id,
@@ -99,6 +109,8 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
     rental_time: input.selectedTime,
     rental_end_date: input.selectedEndDate,
     rental_end_time: input.selectedEndTime,
+    promo_code: input.promoCode || null,
+    bonus_spend_amount: input.bonusSpendAmount || null,
     comment: input.courierComment.trim() || null,
   };
 }

@@ -5,6 +5,7 @@ import type { OperatorTab } from "../lib/operator-queues";
 const TABS: Array<{ tab: OperatorTab; label: string }> = [
   { tab: "orders", label: UI_COPY.operator.title },
   { tab: "catalog", label: UI_COPY.operator.catalogTitle },
+  { tab: "promo-codes", label: UI_COPY.operator.promoCodesTitle },
   { tab: "settings", label: UI_COPY.operator.settingsTitle },
 ];
 

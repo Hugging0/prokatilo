@@ -1,6 +1,6 @@
 import {
+  Gift,
   Home,
-  Info,
   LayoutDashboard,
   Package,
   User as UserIcon,
@@ -14,14 +14,12 @@ interface AppNavigationProps {
   view: AppView;
   isAdmin: boolean;
   onNavigate: (view: AppView) => void;
-  onBonusClick: () => void;
 }
 
 export function AppNavigation({
   view,
   isAdmin,
   onNavigate,
-  onBonusClick,
 }: AppNavigationProps) {
   const activeClass = `${BRAND_GRADIENT} text-white shadow-lg`;
 
@@ -66,10 +64,12 @@ export function AppNavigation({
         ) : (
           <button
             type="button"
-            onClick={onBonusClick}
-            className="flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black text-slate-400"
+            onClick={() => onNavigate("bonuses")}
+            className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
+              view === "bonuses" ? activeClass : "text-slate-400"
+            }`}
           >
-            <Info size={20} />
+            <Gift size={20} />
             Бонусы
           </button>
         )}

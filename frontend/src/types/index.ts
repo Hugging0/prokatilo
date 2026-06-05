@@ -25,8 +25,21 @@ export type AppView =
   | "details"
   | "checkout"
   | "orders"
+  | "bonuses"
   | "profile"
   | "admin-dashboard";
+
+export type PromoCodeKind =
+  | "percent_discount"
+  | "fixed_discount"
+  | "bonus_credit";
+
+export type LoyaltyTransactionType =
+  | "earned"
+  | "spent"
+  | "promo_credit"
+  | "refund"
+  | "adjustment";
 
 export interface User {
   id: number;
@@ -74,6 +87,11 @@ export interface AppOrder {
   time: string;
   rentalStartAt: string;
   rentalEndAt: string;
+  subtotalPrice: number;
+  promoDiscountAmount: number;
+  bonusSpentAmount: number;
+  bonusEarnedAmount: number;
+  promoCode: AppPromoCode | null;
   price: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
@@ -146,6 +164,11 @@ export interface BackendOrderDto {
   yookassa_payment_id: string | null;
   yookassa_confirmation_url: string | null;
   tariff_type: TariffType;
+  subtotal_price: string;
+  promo_code: BackendPromoCodeDto | null;
+  promo_discount_amount: string;
+  bonus_spent_amount: string;
+  bonus_earned_amount: string;
   total_price: string;
   status: OrderStatus;
   comment: string | null;
@@ -187,7 +210,139 @@ export interface CreateOrderPayload {
   rental_time: string;
   rental_end_date?: string | null;
   rental_end_time?: string | null;
+  promo_code?: string | null;
+  bonus_spend_amount?: number | null;
   comment?: string | null;
+}
+
+export interface BackendLoyaltyAccountDto {
+  balance: string;
+  lifetime_earned: string;
+  lifetime_spent: string;
+}
+
+export interface BackendLoyaltyTransactionDto {
+  id: number;
+  type: LoyaltyTransactionType;
+  amount: string;
+  description: string;
+  order_id: number | null;
+  promo_code_id: number | null;
+  created_at: string;
+}
+
+export interface BackendLoyaltySummaryDto {
+  account: BackendLoyaltyAccountDto;
+  recent_transactions: BackendLoyaltyTransactionDto[];
+  cashback_percent: number;
+  bonus_to_ruble_rate: number;
+  max_bonus_spend_percent: number;
+}
+
+export interface AppLoyaltyAccount {
+  balance: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
+}
+
+export interface AppLoyaltyTransaction {
+  id: number;
+  type: LoyaltyTransactionType;
+  amount: number;
+  description: string;
+  orderId: number | null;
+  promoCodeId: number | null;
+  createdAt: string;
+}
+
+export interface AppLoyaltySummary {
+  account: AppLoyaltyAccount;
+  recentTransactions: AppLoyaltyTransaction[];
+  cashbackPercent: number;
+  bonusToRubleRate: number;
+  maxBonusSpendPercent: number;
+}
+
+export interface BackendPromoCodeDto {
+  id: number;
+  code: string;
+  title: string;
+  description: string | null;
+  kind: PromoCodeKind;
+  discount_percent: string | null;
+  discount_amount: string | null;
+  bonus_amount: string | null;
+  min_order_amount: string | null;
+  max_uses: number | null;
+  used_count: number;
+  max_uses_per_user: number;
+  valid_from: string | null;
+  valid_until: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AppPromoCode {
+  id: number;
+  code: string;
+  title: string;
+  description: string | null;
+  kind: PromoCodeKind;
+  discountPercent: number | null;
+  discountAmount: number | null;
+  bonusAmount: number | null;
+  minOrderAmount: number | null;
+  maxUses: number | null;
+  usedCount: number;
+  maxUsesPerUser: number;
+  validFrom: string | null;
+  validUntil: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BackendPromoCodePreviewDto {
+  code: string;
+  title: string;
+  description: string | null;
+  kind: PromoCodeKind;
+  discount_amount: string;
+  bonus_amount: string;
+  message: string;
+}
+
+export interface AppPromoCodePreview {
+  code: string;
+  title: string;
+  description: string | null;
+  kind: PromoCodeKind;
+  discountAmount: number;
+  bonusAmount: number;
+  message: string;
+}
+
+export interface BackendPromoCodeActivateDto {
+  balance: string;
+  credited_amount: string;
+  message: string;
+}
+
+export interface AdminPromoCodePayload {
+  code: string;
+  title: string;
+  description: string | null;
+  kind: PromoCodeKind;
+  discount_percent: number | null;
+  discount_amount: number | null;
+  bonus_amount: number | null;
+  min_order_amount: number | null;
+  max_uses: number | null;
+  max_uses_per_user: number;
+  valid_from: string | null;
+  valid_until: string | null;
+  is_active: boolean;
 }
 
 export interface AdminOrderUpdatePayload {

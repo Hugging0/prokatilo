@@ -1,5 +1,5 @@
 from datetime import datetime, time, timedelta
-from decimal import Decimal, ROUND_CEILING
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, or_, select
@@ -12,6 +12,9 @@ from app.auth import hash_password, verify_password
 
 
 APP_TIMEZONE = ZoneInfo("Europe/Moscow")
+LOYALTY_CASHBACK_PERCENT = Decimal("0.05")
+MAX_BONUS_SPEND_PERCENT = Decimal("0.30")
+MONEY_ZERO = Decimal("0.00")
 BOOKING_BLOCKING_STATUSES = (
     schemas.OrderStatus.PENDING.value,
     schemas.OrderStatus.CONFIRMED.value,
@@ -247,7 +250,10 @@ async def get_order_by_id(
 ) -> models.OrderModel:
     stmt = (
         select(models.OrderModel)
-        .options(selectinload(models.OrderModel.item))
+        .options(
+            selectinload(models.OrderModel.item),
+            selectinload(models.OrderModel.promo_code),
+        )
         .where(models.OrderModel.id == order_id)
     )
     result = await db.execute(stmt)
@@ -260,6 +266,441 @@ async def get_order_by_id(
         )
 
     return order
+
+
+def normalize_money(value: Decimal) -> Decimal:
+    return Decimal(value).quantize(Decimal("0.01"))
+
+
+def normalize_promo_code(code: str) -> str:
+    return code.strip().upper()
+
+
+async def get_or_create_loyalty_account(
+    db: AsyncSession,
+    user_id: int,
+) -> models.LoyaltyAccountModel:
+    result = await db.execute(
+        select(models.LoyaltyAccountModel).where(
+            models.LoyaltyAccountModel.user_id == user_id,
+        ),
+    )
+    account = result.scalar_one_or_none()
+
+    if account:
+        return account
+
+    account = models.LoyaltyAccountModel(user_id=user_id)
+    db.add(account)
+    await db.flush()
+    return account
+
+
+async def list_loyalty_transactions(
+    db: AsyncSession,
+    user_id: int,
+    limit: int = 50,
+) -> list[models.LoyaltyTransactionModel]:
+    stmt = (
+        select(models.LoyaltyTransactionModel)
+        .where(models.LoyaltyTransactionModel.user_id == user_id)
+        .order_by(models.LoyaltyTransactionModel.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def get_loyalty_summary(
+    db: AsyncSession,
+    user_id: int,
+) -> schemas.LoyaltySummaryRead:
+    account = await get_or_create_loyalty_account(db=db, user_id=user_id)
+    transactions = await list_loyalty_transactions(db=db, user_id=user_id)
+
+    return schemas.LoyaltySummaryRead(
+        account=account,
+        recent_transactions=transactions,
+    )
+
+
+async def get_promo_code_by_id(
+    db: AsyncSession,
+    promo_code_id: int,
+) -> models.PromoCodeModel:
+    promo_code = await db.get(models.PromoCodeModel, promo_code_id)
+
+    if not promo_code:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Промокод не найден",
+        )
+
+    return promo_code
+
+
+async def get_promo_code_by_code(
+    db: AsyncSession,
+    code: str,
+) -> models.PromoCodeModel | None:
+    result = await db.execute(
+        select(models.PromoCodeModel).where(
+            models.PromoCodeModel.code == normalize_promo_code(code),
+        ),
+    )
+    return result.scalar_one_or_none()
+
+
+async def validate_promo_code_for_user(
+    db: AsyncSession,
+    user_id: int,
+    code: str,
+    subtotal_price: Decimal,
+    allowed_kinds: set[schemas.PromoCodeKind],
+) -> models.PromoCodeModel:
+    normalized_code = normalize_promo_code(code)
+
+    if not normalized_code:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Введите промокод",
+        )
+
+    promo_code = await get_promo_code_by_code(db=db, code=normalized_code)
+
+    if not promo_code:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Промокод не найден",
+        )
+
+    promo_kind = schemas.PromoCodeKind(promo_code.kind)
+
+    if promo_kind not in allowed_kinds:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Этот промокод нельзя применить здесь",
+        )
+
+    if not promo_code.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Промокод отключен",
+        )
+
+    now = datetime.now(tz=APP_TIMEZONE)
+
+    if promo_code.valid_from and now < promo_code.valid_from:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Промокод пока не действует",
+        )
+
+    if promo_code.valid_until and now > promo_code.valid_until:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Срок действия промокода истек",
+        )
+
+    if promo_code.min_order_amount and subtotal_price < promo_code.min_order_amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Промокод действует от {int(promo_code.min_order_amount)} ₽",
+        )
+
+    if promo_code.max_uses is not None and promo_code.used_count >= promo_code.max_uses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Лимит использований промокода исчерпан",
+        )
+
+    usage_count_result = await db.execute(
+        select(func.count(models.PromoCodeRedemptionModel.id)).where(
+            models.PromoCodeRedemptionModel.promo_code_id == promo_code.id,
+            models.PromoCodeRedemptionModel.user_id == user_id,
+        ),
+    )
+    usage_count = usage_count_result.scalar_one()
+
+    if usage_count >= promo_code.max_uses_per_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Вы уже использовали этот промокод",
+        )
+
+    return promo_code
+
+
+def calculate_promo_discount(
+    promo_code: models.PromoCodeModel,
+    subtotal_price: Decimal,
+) -> Decimal:
+    promo_kind = schemas.PromoCodeKind(promo_code.kind)
+
+    if promo_kind == schemas.PromoCodeKind.PERCENT_DISCOUNT:
+        percent = promo_code.discount_percent or MONEY_ZERO
+        return normalize_money(
+            min(subtotal_price, subtotal_price * percent / Decimal("100")),
+        )
+
+    if promo_kind == schemas.PromoCodeKind.FIXED_DISCOUNT:
+        return normalize_money(min(subtotal_price, promo_code.discount_amount or MONEY_ZERO))
+
+    return MONEY_ZERO
+
+
+async def preview_promo_code(
+    db: AsyncSession,
+    user_id: int,
+    code: str,
+    subtotal_price: Decimal,
+) -> schemas.PromoCodePreviewRead:
+    promo_code = await validate_promo_code_for_user(
+        db=db,
+        user_id=user_id,
+        code=code,
+        subtotal_price=subtotal_price,
+        allowed_kinds={
+            schemas.PromoCodeKind.PERCENT_DISCOUNT,
+            schemas.PromoCodeKind.FIXED_DISCOUNT,
+            schemas.PromoCodeKind.BONUS_CREDIT,
+        },
+    )
+    promo_kind = schemas.PromoCodeKind(promo_code.kind)
+    discount_amount = calculate_promo_discount(promo_code, subtotal_price)
+    bonus_amount = normalize_money(promo_code.bonus_amount or MONEY_ZERO)
+    message = (
+        f"Промокод применен: скидка {int(discount_amount)} ₽"
+        if promo_kind != schemas.PromoCodeKind.BONUS_CREDIT
+        else f"Промокод начислит {int(bonus_amount)} бонусов"
+    )
+
+    return schemas.PromoCodePreviewRead(
+        code=promo_code.code,
+        title=promo_code.title,
+        description=promo_code.description,
+        kind=promo_kind,
+        discount_amount=discount_amount,
+        bonus_amount=bonus_amount,
+        message=message,
+    )
+
+
+async def redeem_bonus_credit_promo(
+    db: AsyncSession,
+    user_id: int,
+    code: str,
+) -> schemas.PromoCodeActivateRead:
+    promo_code = await validate_promo_code_for_user(
+        db=db,
+        user_id=user_id,
+        code=code,
+        subtotal_price=MONEY_ZERO,
+        allowed_kinds={schemas.PromoCodeKind.BONUS_CREDIT},
+    )
+    bonus_amount = normalize_money(promo_code.bonus_amount or MONEY_ZERO)
+
+    if bonus_amount <= MONEY_ZERO:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="У промокода не указана сумма бонусов",
+        )
+
+    account = await get_or_create_loyalty_account(db=db, user_id=user_id)
+    account.balance = normalize_money(account.balance + bonus_amount)
+    account.lifetime_earned = normalize_money(account.lifetime_earned + bonus_amount)
+    promo_code.used_count += 1
+    db.add(
+        models.PromoCodeRedemptionModel(
+            promo_code_id=promo_code.id,
+            user_id=user_id,
+        ),
+    )
+    db.add(
+        models.LoyaltyTransactionModel(
+            user_id=user_id,
+            promo_code_id=promo_code.id,
+            type=schemas.LoyaltyTransactionType.PROMO_CREDIT.value,
+            amount=bonus_amount,
+            description=f"Промокод {promo_code.code}",
+        ),
+    )
+    await db.commit()
+    await db.refresh(account)
+
+    return schemas.PromoCodeActivateRead(
+        balance=account.balance,
+        credited_amount=bonus_amount,
+        message=f"Промокод активирован: начислено {int(bonus_amount)} бонусов",
+    )
+
+
+def calculate_bonus_spend(
+    account_balance: Decimal,
+    requested_bonus_spend: Decimal | None,
+    subtotal_price: Decimal,
+    promo_discount_amount: Decimal,
+) -> Decimal:
+    if not requested_bonus_spend or requested_bonus_spend <= MONEY_ZERO:
+        return MONEY_ZERO
+
+    max_by_percent = normalize_money(subtotal_price * MAX_BONUS_SPEND_PERCENT)
+    price_after_promo = max(MONEY_ZERO, subtotal_price - promo_discount_amount)
+    return normalize_money(
+        min(account_balance, requested_bonus_spend, max_by_percent, price_after_promo),
+    )
+
+
+async def spend_bonuses_for_order(
+    db: AsyncSession,
+    user_id: int,
+    order_id: int,
+    amount: Decimal,
+) -> None:
+    if amount <= MONEY_ZERO:
+        return
+
+    account = await get_or_create_loyalty_account(db=db, user_id=user_id)
+
+    if amount > account.balance:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Недостаточно бонусов для списания",
+        )
+
+    account.balance = normalize_money(account.balance - amount)
+    account.lifetime_spent = normalize_money(account.lifetime_spent + amount)
+    db.add(
+        models.LoyaltyTransactionModel(
+            user_id=user_id,
+            order_id=order_id,
+            type=schemas.LoyaltyTransactionType.SPENT.value,
+            amount=-amount,
+            description=f"Списание в заказе №{order_id}",
+        ),
+    )
+
+
+async def process_loyalty_for_returned_order(
+    db: AsyncSession,
+    order: models.OrderModel,
+) -> None:
+    if order.loyalty_processed_at is not None:
+        return
+
+    order.loyalty_processed_at = datetime.now(tz=APP_TIMEZONE)
+
+    if not order.user_id:
+        return
+
+    bonus_amount = (
+        order.total_price * LOYALTY_CASHBACK_PERCENT
+    ).to_integral_value(rounding=ROUND_FLOOR)
+    bonus_amount = normalize_money(bonus_amount)
+
+    if bonus_amount <= MONEY_ZERO:
+        return
+
+    account = await get_or_create_loyalty_account(db=db, user_id=order.user_id)
+    account.balance = normalize_money(account.balance + bonus_amount)
+    account.lifetime_earned = normalize_money(account.lifetime_earned + bonus_amount)
+    order.bonus_earned_amount = bonus_amount
+    db.add(
+        models.LoyaltyTransactionModel(
+            user_id=order.user_id,
+            order_id=order.id,
+            type=schemas.LoyaltyTransactionType.EARNED.value,
+            amount=bonus_amount,
+            description=f"5% за аренду №{order.id}",
+        ),
+    )
+
+
+async def list_promo_codes(db: AsyncSession) -> list[models.PromoCodeModel]:
+    result = await db.execute(
+        select(models.PromoCodeModel).order_by(models.PromoCodeModel.created_at.desc()),
+    )
+    return list(result.scalars().all())
+
+
+def validate_promo_payload(
+    payload: schemas.PromoCodeCreate | schemas.PromoCodeUpdate,
+    current_kind: schemas.PromoCodeKind | None = None,
+) -> None:
+    kind = getattr(payload, "kind", None) or current_kind
+
+    if not kind:
+        return
+
+    if kind == schemas.PromoCodeKind.PERCENT_DISCOUNT and not payload.discount_percent:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Укажите процент скидки",
+        )
+
+    if kind == schemas.PromoCodeKind.FIXED_DISCOUNT and not payload.discount_amount:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Укажите сумму скидки",
+        )
+
+    if kind == schemas.PromoCodeKind.BONUS_CREDIT and not payload.bonus_amount:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Укажите сумму бонусов",
+        )
+
+
+async def create_promo_code(
+    db: AsyncSession,
+    payload: schemas.PromoCodeCreate,
+) -> models.PromoCodeModel:
+    validate_promo_payload(payload)
+    code = normalize_promo_code(payload.code)
+
+    if await get_promo_code_by_code(db=db, code=code):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Промокод с таким кодом уже существует",
+        )
+
+    promo_code = models.PromoCodeModel(
+        **payload.model_dump(exclude={"code", "kind"}),
+        code=code,
+        kind=payload.kind.value,
+    )
+    db.add(promo_code)
+    await db.commit()
+    await db.refresh(promo_code)
+    return promo_code
+
+
+async def update_promo_code(
+    db: AsyncSession,
+    promo_code_id: int,
+    payload: schemas.PromoCodeUpdate,
+) -> models.PromoCodeModel:
+    promo_code = await get_promo_code_by_id(db=db, promo_code_id=promo_code_id)
+    validate_promo_payload(payload, current_kind=schemas.PromoCodeKind(promo_code.kind))
+    update_data = payload.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(promo_code, key, value)
+
+    await db.commit()
+    await db.refresh(promo_code)
+    return promo_code
+
+
+async def archive_promo_code(
+    db: AsyncSession,
+    promo_code_id: int,
+) -> models.PromoCodeModel:
+    promo_code = await get_promo_code_by_id(db=db, promo_code_id=promo_code_id)
+    promo_code.is_active = False
+    await db.commit()
+    await db.refresh(promo_code)
+    return promo_code
 
 
 async def get_item_by_id(
@@ -468,6 +909,43 @@ async def create_order(
         rental_start_at=rental_start_at,
         rental_end_at=rental_end_at,
     )
+    subtotal_price = normalize_money(
+        get_tariff_price(
+            item,
+            order_data.tariff_type,
+            rental_start_at,
+            rental_end_at,
+        ),
+    )
+    promo_code = None
+    promo_discount_amount = MONEY_ZERO
+
+    if order_data.promo_code:
+        promo_code = await validate_promo_code_for_user(
+            db=db,
+            user_id=user.id,
+            code=order_data.promo_code,
+            subtotal_price=subtotal_price,
+            allowed_kinds={
+                schemas.PromoCodeKind.PERCENT_DISCOUNT,
+                schemas.PromoCodeKind.FIXED_DISCOUNT,
+            },
+        )
+        promo_discount_amount = calculate_promo_discount(
+            promo_code=promo_code,
+            subtotal_price=subtotal_price,
+        )
+
+    account = await get_or_create_loyalty_account(db=db, user_id=user.id)
+    bonus_spent_amount = calculate_bonus_spend(
+        account_balance=account.balance,
+        requested_bonus_spend=order_data.bonus_spend_amount,
+        subtotal_price=subtotal_price,
+        promo_discount_amount=promo_discount_amount,
+    )
+    total_price = normalize_money(
+        max(MONEY_ZERO, subtotal_price - promo_discount_amount - bonus_spent_amount),
+    )
 
     db_order = models.OrderModel(
         item_id=order_data.item_id,
@@ -484,12 +962,11 @@ async def create_order(
             else schemas.PaymentStatus.PENDING.value
         ),
         tariff_type=order_data.tariff_type.value,
-        total_price=get_tariff_price(
-            item,
-            order_data.tariff_type,
-            rental_start_at,
-            rental_end_at,
-        ),
+        subtotal_price=subtotal_price,
+        promo_code_id=promo_code.id if promo_code else None,
+        promo_discount_amount=promo_discount_amount,
+        bonus_spent_amount=bonus_spent_amount,
+        total_price=total_price,
         rental_date=order_data.rental_date,
         rental_time=order_data.rental_time,
         rental_start_at=rental_start_at,
@@ -499,6 +976,25 @@ async def create_order(
     )
 
     db.add(db_order)
+    await db.flush()
+
+    if promo_code:
+        promo_code.used_count += 1
+        db.add(
+            models.PromoCodeRedemptionModel(
+                promo_code_id=promo_code.id,
+                user_id=user.id,
+                order_id=db_order.id,
+            ),
+        )
+
+    await spend_bonuses_for_order(
+        db=db,
+        user_id=user.id,
+        order_id=db_order.id,
+        amount=bonus_spent_amount,
+    )
+
     await db.commit()
     return await get_order_by_id(db, db_order.id)
 
@@ -525,7 +1021,10 @@ async def get_orders_by_customer_phone(
 ) -> list[models.OrderModel]:
     stmt = (
         select(models.OrderModel)
-        .options(selectinload(models.OrderModel.item))
+        .options(
+            selectinload(models.OrderModel.item),
+            selectinload(models.OrderModel.promo_code),
+        )
         .where(models.OrderModel.customer_phone == customer_phone)
         .order_by(models.OrderModel.created_at.desc())
     )
@@ -539,7 +1038,10 @@ async def get_orders_by_user(
 ) -> list[models.OrderModel]:
     stmt = (
         select(models.OrderModel)
-        .options(selectinload(models.OrderModel.item))
+        .options(
+            selectinload(models.OrderModel.item),
+            selectinload(models.OrderModel.promo_code),
+        )
         .where(models.OrderModel.user_id == user_id)
         .order_by(models.OrderModel.created_at.desc())
     )
@@ -608,6 +1110,7 @@ async def get_admin_orders(
 ) -> list[models.OrderModel]:
     stmt = select(models.OrderModel).options(
         selectinload(models.OrderModel.item),
+        selectinload(models.OrderModel.promo_code),
     )
 
     if status_filter is not None:
@@ -665,11 +1168,21 @@ async def update_order(
         )
         order.rental_start_at = rental_start_at
         order.rental_end_at = rental_end_at
-        order.total_price = get_tariff_price(
-            order.item,
-            next_tariff_type,
-            rental_start_at,
-            rental_end_at,
+        order.subtotal_price = normalize_money(
+            get_tariff_price(
+                order.item,
+                next_tariff_type,
+                rental_start_at,
+                rental_end_at,
+            ),
+        )
+        order.total_price = normalize_money(
+            max(
+                MONEY_ZERO,
+                order.subtotal_price
+                - order.promo_discount_amount
+                - order.bonus_spent_amount,
+            ),
         )
 
     for key, value in update_data.items():
@@ -704,6 +1217,9 @@ async def update_order_status(
         )
 
     order.status = new_status.value
+
+    if new_status == schemas.OrderStatus.RETURNED:
+        await process_loyalty_for_returned_order(db=db, order=order)
 
     await db.commit()
     return await get_order_by_id(db, order_id)
