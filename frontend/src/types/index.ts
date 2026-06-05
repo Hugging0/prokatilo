@@ -81,6 +81,7 @@ export interface AppOrder {
   color: string;
   bg: string;
   customerName: string;
+  customerEmail: string | null;
   customerPhone: string;
   tariff: TariffType;
   date: string;

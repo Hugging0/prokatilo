@@ -17,16 +17,16 @@ export function OperatorTabs({
   onTabChange: (tab: OperatorTab) => void;
 }) {
   return (
-    <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+    <div className="flex gap-2 overflow-x-auto rounded-[1.75rem] border border-slate-100 bg-white p-2 shadow-sm">
       {TABS.map(({ tab, label }) => (
         <button
           key={tab}
           type="button"
           onClick={() => onTabChange(tab)}
-          className={`rounded-2xl px-4 py-3 text-xs font-black ${
+          className={`min-h-11 rounded-2xl px-4 text-sm font-black transition ${
             activeTab === tab
-              ? "bg-white text-slate-900"
-              : "bg-white/10 text-white/50"
+              ? "bg-slate-950 text-white"
+              : "text-slate-500"
           }`}
         >
           {label}

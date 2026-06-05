@@ -1,20 +1,29 @@
 import { LayoutDashboard } from "lucide-react";
 
+import { AppCard } from "@/components/ui/AppCard";
+import { BRAND_GRADIENT } from "@/lib/brand";
 import { UI_COPY } from "@/lib/copy";
 
 export function OperatorHeader() {
   return (
-    <div className="mb-6 flex items-center justify-between">
-      <div>
-        <h2 className="text-3xl font-black leading-none tracking-tighter">
-          {UI_COPY.operator.title}
+    <AppCard variant="hero" className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+          Оператор / Админ
+        </p>
+        <h2 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950">
+          Заявки и управление
         </h2>
-        <p className="mt-1 text-sm font-bold text-white/40">
+        <p className="mt-2 text-base font-bold leading-relaxed text-slate-600">
           {UI_COPY.operator.subtitle}
         </p>
       </div>
 
-      <LayoutDashboard className="text-white/30" size={30} />
-    </div>
+      <div
+        className={`flex size-14 shrink-0 items-center justify-center rounded-3xl ${BRAND_GRADIENT} text-white shadow-lg`}
+      >
+        <LayoutDashboard size={25} />
+      </div>
+    </AppCard>
   );
 }

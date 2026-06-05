@@ -46,78 +46,77 @@ export function OperatorDashboard({
   const filteredOrders = filterOrdersByQueue(adminOrders.orders, activeQueue);
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 pt-12 pb-32 text-white">
-      <OperatorHeader />
-      <OperatorTabs activeTab={activeTab} onTabChange={setActiveTab} />
+    <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-32">
+      <div className="mx-auto flex max-w-2xl flex-col gap-5">
+        <OperatorHeader />
+        <OperatorTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === "orders" && (
-        <>
-          <OperatorQueueStats counts={queueCounts} />
+        {activeTab === "orders" && (
+          <section className="flex flex-col gap-5">
+            <OperatorQueueStats counts={queueCounts} />
 
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="font-black">{UI_COPY.operator.title}</h3>
+            <div className="flex items-center justify-between gap-3">
+            <h3 className="text-lg font-black tracking-tight text-slate-950">
+              {UI_COPY.operator.title}
+            </h3>
             <button
               type="button"
               onClick={() => void adminOrders.refreshOrders()}
-              className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 text-xs font-black text-white/60"
+              className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-xs font-black text-slate-500 shadow-sm"
             >
               <RefreshCw size={14} />
               Обновить
             </button>
-          </div>
+            </div>
 
-          <OperatorQueueTabs
-            activeQueue={activeQueue}
-            counts={queueCounts}
-            onQueueChange={setActiveQueue}
-          />
+            <OperatorQueueTabs
+              activeQueue={activeQueue}
+              counts={queueCounts}
+              onQueueChange={setActiveQueue}
+            />
 
-          {adminOrders.isOrdersLoading && (
-            <AppNotice tone="dark" className="mb-4">
-              {UI_COPY.operator.ordersLoading}
-            </AppNotice>
-          )}
-
-          {adminOrders.ordersMessage && (
-            <AppNotice tone="dark" className="mb-4">
-              {adminOrders.ordersMessage}
-            </AppNotice>
-          )}
-
-          <div className="flex flex-col gap-4">
-            {filteredOrders.map((order) => (
-              <OperatorOrderCard
-                key={order.id}
-                order={order}
-                onUpdateStatus={(orderId, status) =>
-                  void adminOrders.updateOrderStatus(orderId, status)
-                }
-              />
-            ))}
-
-            {!adminOrders.isOrdersLoading && filteredOrders.length === 0 && (
-              <AppEmptyState
-                dark
-                title={UI_COPY.operator.empty}
-                description="В выбранной очереди нет заявок. Попробуйте другую вкладку или обновите список."
-              />
+            {adminOrders.isOrdersLoading && (
+              <AppNotice>{UI_COPY.operator.ordersLoading}</AppNotice>
             )}
-          </div>
-        </>
-      )}
 
-      {activeTab === "catalog" && (
-        <CatalogManagement
-          token={authToken}
-          onCatalogChanged={onCatalogChanged}
-        />
-      )}
+            {adminOrders.ordersMessage && (
+              <AppNotice>{adminOrders.ordersMessage}</AppNotice>
+            )}
 
-      {activeTab === "promo-codes" && (
-        <PromoCodesManagement authToken={authToken} />
-      )}
+            <div className="flex flex-col gap-4">
+              {filteredOrders.map((order) => (
+                <OperatorOrderCard
+                  key={order.id}
+                  order={order}
+                  onUpdateStatus={(orderId, status) =>
+                    void adminOrders.updateOrderStatus(orderId, status)
+                  }
+                />
+              ))}
 
-      {activeTab === "settings" && <OperatorSettingsPanel />}
+              {!adminOrders.isOrdersLoading && filteredOrders.length === 0 && (
+                <AppEmptyState
+                  title={UI_COPY.operator.empty}
+                  description="В выбранной очереди нет заявок. Попробуйте другую вкладку или обновите список."
+                />
+              )}
+            </div>
+          </section>
+        )}
+
+        {activeTab === "catalog" && (
+          <CatalogManagement
+            token={authToken}
+            onCatalogChanged={onCatalogChanged}
+          />
+        )}
+
+        {activeTab === "promo-codes" && (
+          <PromoCodesManagement authToken={authToken} />
+        )}
+
+        {activeTab === "settings" && <OperatorSettingsPanel />}
+      </div>
     </main>
   );
 }

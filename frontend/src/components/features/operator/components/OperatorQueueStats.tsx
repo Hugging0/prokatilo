@@ -4,21 +4,21 @@ type QueueCounts = ReturnType<typeof getQueueCounts>;
 
 export function OperatorQueueStats({ counts }: { counts: QueueCounts }) {
   return (
-    <section className="mb-5 grid grid-cols-3 gap-3">
+    <section className="grid grid-cols-3 gap-3">
       <StatCard label="Новые" value={counts.attention} />
       <StatCard label="Сегодня" value={counts.today} />
-      <StatCard label="Активные" value={counts.active} />
+      <StatCard label="В работе" value={counts.active} />
     </section>
   );
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-[1.5rem] bg-white/10 p-4">
-      <p className="text-xs font-black uppercase tracking-widest text-white/40">
+    <div className="rounded-[1.5rem] border border-slate-100 bg-white p-4 shadow-sm">
+      <p className="text-xs font-black uppercase tracking-widest text-slate-500">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-black">{value}</p>
+      <p className="mt-1 text-2xl font-black text-slate-950">{value}</p>
     </div>
   );
 }

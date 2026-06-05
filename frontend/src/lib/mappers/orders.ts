@@ -34,6 +34,7 @@ export function mapBackendOrderToAppOrder(
     color: mappedItem?.color || FALLBACK_ITEM_STYLES.color,
     bg: mappedItem?.bg || FALLBACK_ITEM_STYLES.bg,
     customerName: order.customer_name,
+    customerEmail: order.customer_email,
     customerPhone: order.customer_phone,
     tariff: order.tariff_type,
     date: order.rental_date,

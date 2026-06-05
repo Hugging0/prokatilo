@@ -16,16 +16,16 @@ export function OperatorQueueTabs({
   onQueueChange: (queue: OrderQueue) => void;
 }) {
   return (
-    <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+    <div className="flex gap-2 overflow-x-auto pb-1">
       {ORDER_QUEUE_CONFIG.map(({ queue, label }) => (
         <button
           key={queue}
           type="button"
           onClick={() => onQueueChange(queue)}
-          className={`rounded-2xl px-4 py-3 text-xs font-black ${
+          className={`min-h-11 rounded-2xl px-4 text-sm font-black transition ${
             activeQueue === queue
-              ? "bg-white text-slate-900"
-              : "bg-white/10 text-white/50"
+              ? "bg-slate-950 text-white shadow-sm"
+              : "border border-slate-200 bg-white text-slate-500"
           }`}
         >
           {label} · {counts[queue]}
