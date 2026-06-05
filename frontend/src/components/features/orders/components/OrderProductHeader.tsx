@@ -4,11 +4,19 @@ import { getRentalDurationLabel } from "@/lib/booking-time";
 import { formatPricePerDay } from "../lib/orders-view.utils";
 import { OrderIcon } from "./OrderIcon";
 
-export function OrderProductHeader({ order }: { order: AppOrder }) {
-  const duration = getRentalDurationLabel(
-    new Date(order.rentalStartAt),
-    new Date(order.rentalEndAt),
-  );
+export function OrderProductHeader({
+  order,
+  showDuration = true,
+}: {
+  order: AppOrder;
+  showDuration?: boolean;
+}) {
+  const duration = showDuration
+    ? getRentalDurationLabel(
+        new Date(order.rentalStartAt),
+        new Date(order.rentalEndAt),
+      )
+    : null;
 
   return (
     <div className="flex items-center gap-4">
@@ -20,9 +28,11 @@ export function OrderProductHeader({ order }: { order: AppOrder }) {
         <p className="mt-1 text-base font-bold text-slate-500">
           {formatPricePerDay(order)}
         </p>
-        <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">
-          {duration}
-        </p>
+        {showDuration && (
+          <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">
+            {duration}
+          </p>
+        )}
       </div>
     </div>
   );

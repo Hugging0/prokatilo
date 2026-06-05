@@ -21,7 +21,9 @@ export function SupportContactCard() {
       <div className="grid gap-3 sm:grid-cols-2">
         <AppButton
           type="button"
-          onClick={() => window.open(copy.telegramUrl, "_blank", "noopener,noreferrer")}
+          onClick={() =>
+            window.open(copy.telegramUrl, "_blank", "noopener,noreferrer")
+          }
           fullWidth
         >
           <Send size={19} />
@@ -39,9 +41,6 @@ export function SupportContactCard() {
           {copy.phoneButton}
         </AppButton>
       </div>
-      <p className="text-sm font-bold leading-relaxed text-slate-500">
-        Telegram {copy.telegramUsername} · {copy.phoneLabel}
-      </p>
     </AppCard>
   );
 }

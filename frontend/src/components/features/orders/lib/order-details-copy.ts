@@ -4,9 +4,7 @@ export const ORDER_DETAILS_COPY = {
   support: {
     title: "Поддержка",
     description: "Напишите нам в Telegram или позвоните — поможем с бронью.",
-    telegramUsername: "@xapkoofff",
     telegramUrl: "https://t.me/xapkoofff",
-    phoneLabel: "+7 915 950 59 44",
     phoneHref: "tel:+79159505944",
     telegramButton: "Написать в Telegram",
     phoneButton: "Позвонить",
