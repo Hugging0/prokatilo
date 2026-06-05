@@ -115,7 +115,9 @@ export function OperatorDashboard({
           <PromoCodesManagement authToken={authToken} />
         )}
 
-        {activeTab === "settings" && <OperatorSettingsPanel />}
+        {activeTab === "settings" && (
+          <OperatorSettingsPanel authToken={authToken} />
+        )}
       </div>
     </main>
   );

@@ -280,6 +280,47 @@ class PromoCodeActivateRead(BaseModel):
     message: str
 
 
+class ServiceSettingsUpdate(BaseModel):
+    timezone: str | None = Field(None, min_length=1, max_length=100)
+    workday_start: str | None = Field(None, pattern=r"^\d{2}:\d{2}$")
+    workday_end: str | None = Field(None, pattern=r"^\d{2}:\d{2}$")
+    delivery_slot_minutes: int | None = Field(None, ge=15, le=240)
+    min_order_lead_minutes: int | None = Field(None, ge=0, le=1440)
+    support_phone: str | None = Field(None, max_length=50)
+    service_is_active: bool | None = None
+    service_pause_message: str | None = Field(None, max_length=500)
+    cash_enabled: bool | None = None
+    card_enabled: bool | None = None
+    sbp_enabled: bool | None = None
+    default_payment_method: PaymentMethod | None = None
+    cashback_percent: int | None = Field(None, ge=0, le=100)
+    max_bonus_spend_percent: int | None = Field(None, ge=0, le=100)
+    bonus_to_ruble_rate: int | None = Field(None, ge=1, le=100)
+
+
+class ServiceSettingsRead(BaseModel):
+    id: int
+    timezone: str
+    workday_start: str
+    workday_end: str
+    delivery_slot_minutes: int
+    min_order_lead_minutes: int
+    support_phone: str | None
+    service_is_active: bool
+    service_pause_message: str | None
+    cash_enabled: bool
+    card_enabled: bool
+    sbp_enabled: bool
+    default_payment_method: PaymentMethod
+    cashback_percent: int
+    max_bonus_spend_percent: int
+    bonus_to_ruble_rate: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class OrderRead(OrderBase):
     id: int
     user_id: int | None

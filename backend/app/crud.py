@@ -27,6 +27,103 @@ TARIFF_DURATIONS = {
     schemas.TariffType.TWENTY_FOUR_HOURS: timedelta(hours=24),
     schemas.TariffType.SEVEN_DAYS: timedelta(days=7),
 }
+SERVICE_SETTINGS_DEFAULTS = {
+    "timezone": "Europe/Moscow",
+    "workday_start": "08:00",
+    "workday_end": "20:00",
+    "delivery_slot_minutes": 120,
+    "min_order_lead_minutes": 15,
+    "support_phone": None,
+    "service_is_active": True,
+    "service_pause_message": None,
+    "cash_enabled": True,
+    "card_enabled": False,
+    "sbp_enabled": False,
+    "default_payment_method": schemas.PaymentMethod.CASH.value,
+    "cashback_percent": 5,
+    "max_bonus_spend_percent": 30,
+    "bonus_to_ruble_rate": 1,
+}
+
+
+def _parse_settings_time(value: str) -> time:
+    try:
+        return time.fromisoformat(value)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Укажите время в формате ЧЧ:ММ",
+        ) from exc
+
+
+def _validate_service_settings(settings: models.ServiceSettingsModel) -> None:
+    if _parse_settings_time(settings.workday_start) >= _parse_settings_time(
+        settings.workday_end,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Начало рабочего дня должно быть раньше окончания",
+        )
+
+    enabled_methods = {
+        schemas.PaymentMethod.CASH.value: settings.cash_enabled,
+        schemas.PaymentMethod.CARD.value: settings.card_enabled,
+        schemas.PaymentMethod.SBP.value: settings.sbp_enabled,
+    }
+
+    if not any(enabled_methods.values()):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Включите хотя бы один способ оплаты",
+        )
+
+    if not enabled_methods.get(settings.default_payment_method, False):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Способ оплаты по умолчанию должен быть включен",
+        )
+
+
+async def get_or_create_default_service_settings(
+    db: AsyncSession,
+) -> models.ServiceSettingsModel:
+    result = await db.execute(
+        select(models.ServiceSettingsModel).order_by(
+            models.ServiceSettingsModel.id.asc(),
+        ),
+    )
+    settings = result.scalars().first()
+
+    if settings:
+        return settings
+
+    settings = models.ServiceSettingsModel(**SERVICE_SETTINGS_DEFAULTS)
+    db.add(settings)
+    await db.commit()
+    await db.refresh(settings)
+    return settings
+
+
+async def get_service_settings(db: AsyncSession) -> models.ServiceSettingsModel:
+    return await get_or_create_default_service_settings(db)
+
+
+async def update_service_settings(
+    db: AsyncSession,
+    payload: schemas.ServiceSettingsUpdate,
+) -> models.ServiceSettingsModel:
+    settings = await get_or_create_default_service_settings(db)
+    update_data = payload.model_dump(exclude_unset=True)
+
+    for field, value in update_data.items():
+        if isinstance(value, schemas.PaymentMethod):
+            value = value.value
+        setattr(settings, field, value)
+
+    _validate_service_settings(settings)
+    await db.commit()
+    await db.refresh(settings)
+    return settings
 
 
 def get_tariff_duration(tariff_type: schemas.TariffType) -> timedelta:

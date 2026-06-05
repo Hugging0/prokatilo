@@ -164,6 +164,39 @@ Index(
 )
 
 
+class ServiceSettingsModel(Base):
+    __tablename__ = "service_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    timezone: Mapped[str] = mapped_column(String(100), default="Europe/Moscow")
+    workday_start: Mapped[str] = mapped_column(String(5), default="08:00")
+    workday_end: Mapped[str] = mapped_column(String(5), default="20:00")
+    delivery_slot_minutes: Mapped[int] = mapped_column(Integer, default=120)
+    min_order_lead_minutes: Mapped[int] = mapped_column(Integer, default=15)
+    support_phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    service_is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    service_pause_message: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+    cash_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    card_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    sbp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    default_payment_method: Mapped[str] = mapped_column(String(50), default="cash")
+    cashback_percent: Mapped[int] = mapped_column(Integer, default=5)
+    max_bonus_spend_percent: Mapped[int] = mapped_column(Integer, default=30)
+    bonus_to_ruble_rate: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
 class OrderModel(Base):
     __tablename__ = 'orders'
 

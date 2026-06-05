@@ -687,6 +687,31 @@ async def archive_admin_promo_code(
 
 
 @app.get(
+    "/admin/settings/service",
+    response_model=schemas.ServiceSettingsRead,
+    tags=["Admin Settings"],
+    dependencies=[Depends(verify_admin_access)],
+)
+async def read_admin_service_settings(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.ServiceSettingsModel:
+    return await crud.get_service_settings(db=db)
+
+
+@app.patch(
+    "/admin/settings/service",
+    response_model=schemas.ServiceSettingsRead,
+    tags=["Admin Settings"],
+    dependencies=[Depends(verify_admin_access)],
+)
+async def update_admin_service_settings(
+    payload: schemas.ServiceSettingsUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.ServiceSettingsModel:
+    return await crud.update_service_settings(db=db, payload=payload)
+
+
+@app.get(
     "/admin/orders/{order_id}",
     response_model=schemas.AdminOrderRead,
     tags=["Admin Orders"],
