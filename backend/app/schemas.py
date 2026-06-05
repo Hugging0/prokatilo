@@ -146,6 +146,10 @@ class OrderStatusUpdate(BaseModel):
     new_status: OrderStatus
 
 
+class OrderAddressUpdate(BaseModel):
+    delivery_address: str = Field(..., min_length=5, max_length=500)
+
+
 class BookingRead(BaseModel):
     order_id: int
     item_id: int

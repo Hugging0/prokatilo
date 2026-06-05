@@ -189,6 +189,8 @@ export default function App() {
           onRefresh={() => void ordersState.reloadOrders()}
           onOpenCatalog={() => setView("home")}
           onLeaveReview={ordersState.leaveReview}
+          onUpdateAddress={ordersState.updateOrderAddress}
+          onCancelOrder={ordersState.cancelOrder}
         />
       )}
 

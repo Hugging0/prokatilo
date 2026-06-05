@@ -473,6 +473,42 @@ async def read_account_orders(
     return await crud.get_orders_by_user(db=db, user_id=current_user.id)
 
 
+@app.patch(
+    "/me/orders/{order_id}/address",
+    response_model=schemas.OrderRead,
+    tags=["Orders"],
+)
+async def update_account_order_address(
+    order_id: int,
+    payload: schemas.OrderAddressUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> models.OrderModel:
+    return await crud.update_user_order_address(
+        db=db,
+        order_id=order_id,
+        user_id=current_user.id,
+        delivery_address=payload.delivery_address,
+    )
+
+
+@app.patch(
+    "/me/orders/{order_id}/cancel",
+    response_model=schemas.OrderRead,
+    tags=["Orders"],
+)
+async def cancel_account_order(
+    order_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> models.OrderModel:
+    return await crud.cancel_user_order(
+        db=db,
+        order_id=order_id,
+        user_id=current_user.id,
+    )
+
+
 @app.get(
     "/orders/my",
     response_model=list[schemas.OrderRead],

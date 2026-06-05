@@ -1,114 +1,163 @@
-import {
-  ArrowLeft,
-  CalendarDays,
-  Clock3,
-  MapPin,
-  MoreVertical,
-  Phone,
-  RefreshCw,
-} from "lucide-react";
+import { useState } from "react";
+import { CalendarDays, MapPin, Phone } from "lucide-react";
 
+import { AppCard } from "@/components/ui/AppCard";
 import { formatRentalPeriod, getRentalDurationLabel } from "@/lib/booking-time";
 import { getTariffLabel } from "@/lib/tariffs";
 import type { AppOrder } from "@/types";
 
-import {
-  getCourierPaymentHint,
-  getDeliveryHint,
-} from "../lib/order-status-text";
+import { getDeliveryHint } from "../lib/order-status-text";
+import type { OrderActionId } from "../lib/order-actions";
+import { CancelOrderDialog } from "./CancelOrderDialog";
 import { DetailRow } from "./DetailRow";
+import { EditAddressDialog } from "./EditAddressDialog";
 import { OrderActions } from "./OrderActions";
+import { OrderDetailsHeader } from "./OrderDetailsHeader";
+import { OrderDetailsSection } from "./OrderDetailsSection";
+import { OrderNextSteps } from "./OrderNextSteps";
+import { OrderPaymentCard } from "./OrderPaymentCard";
 import { OrderProductHeader } from "./OrderProductHeader";
+import { OrderStatusHero } from "./OrderStatusHero";
 import { ReviewBlock } from "./ReviewBlock";
-import { StatusBadge } from "./StatusBadge";
-import { StatusInfoBlock } from "./StatusInfoBlock";
+import { SupportContactCard } from "./SupportContactCard";
 
 export function OrderDetailsView({
   order,
   onBack,
   onLeaveReview,
+  onUpdateAddress,
+  onCancelOrder,
 }: {
   order: AppOrder;
   onBack: () => void;
   onLeaveReview: (orderId: number, rating: number, comment: string) => void;
+  onUpdateAddress: (orderId: number, address: string) => Promise<void>;
+  onCancelOrder: (orderId: number) => Promise<void>;
 }) {
+  const [isEditAddressOpen, setIsEditAddressOpen] = useState(false);
+  const [isCancelOpen, setIsCancelOpen] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const duration = getRentalDurationLabel(
     new Date(order.rentalStartAt),
     new Date(order.rentalEndAt),
   );
 
+  const handleAction = (action: OrderActionId) => {
+    setActionError(null);
+
+    if (action === "edit-address") {
+      setIsEditAddressOpen(true);
+    }
+
+    if (action === "cancel") {
+      setIsCancelOpen(true);
+    }
+
+    if (action === "support") {
+      document
+        .getElementById("order-support")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const updateAddress = async (address: string) => {
+    setIsMutating(true);
+    setActionError(null);
+
+    try {
+      await onUpdateAddress(order.id, address);
+      setIsEditAddressOpen(false);
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Не удалось изменить адрес",
+      );
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const cancelOrder = async () => {
+    setIsMutating(true);
+    setActionError(null);
+
+    try {
+      await onCancelOrder(order.id);
+      setIsCancelOpen(false);
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Не удалось отменить бронь",
+      );
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-slate-50 px-5 pt-7 pb-32">
+    <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-32">
       <div className="mx-auto flex max-w-2xl flex-col gap-5">
-        <header className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex size-12 items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-800 shadow-sm active:scale-95"
-            aria-label="Назад к списку броней"
-          >
-            <ArrowLeft size={21} />
-          </button>
-          <button
-            type="button"
-            className="flex size-12 items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-500 shadow-sm"
-            aria-label="Дополнительные действия"
-            disabled
-          >
-            <MoreVertical size={21} />
-          </button>
-        </header>
+        <OrderDetailsHeader orderId={order.id} onBack={onBack} />
+        <OrderStatusHero order={order} />
 
-        <section className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm">
-          <StatusBadge status={order.status} />
-          <div className="mt-5">
-            <OrderProductHeader order={order} />
-          </div>
-        </section>
+        <AppCard>
+          <OrderProductHeader order={order} />
+        </AppCard>
 
-        <section className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-5">
-            <DetailRow
-              icon={CalendarDays}
-              label={order.status === "returned" ? "Аренда была" : "Когда"}
-              value={formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
-              hint={`${getTariffLabel(order.tariff)} · ${duration}`}
-            />
-            <DetailRow
-              icon={MapPin}
-              label="Доставка"
-              value={order.deliveryAddress}
-              hint={getDeliveryHint(order.status)}
-            />
-            <DetailRow
-              icon={Phone}
-              label="Контакт"
-              value={order.customerPhone}
-              hint={order.customerName}
-            />
-            <DetailRow
-              icon={Clock3}
-              label="Оплата"
-              value="Курьеру при получении"
-              hint={getCourierPaymentHint(order.status)}
-            />
-            <DetailRow
-              icon={RefreshCw}
-              label="Сумма"
-              value={`${order.price} ₽`}
-              hint="Итог по выбранному периоду аренды"
-            />
-          </div>
-        </section>
+        <OrderDetailsSection title="Главное по брони">
+          <DetailRow
+            icon={CalendarDays}
+            label={order.status === "returned" ? "Аренда была" : "Когда"}
+            value={formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
+            hint={`${getTariffLabel(order.tariff)} · ${duration}`}
+          />
+          <DetailRow
+            icon={MapPin}
+            label="Адрес доставки"
+            value={order.deliveryAddress}
+            hint={getDeliveryHint(order.status)}
+          />
+          <DetailRow
+            icon={Phone}
+            label="Телефон для связи"
+            value={order.customerPhone}
+            hint={order.customerName}
+          />
+        </OrderDetailsSection>
 
-        <StatusInfoBlock order={order} />
+        <OrderPaymentCard order={order} />
+        <OrderNextSteps order={order} />
+        <SupportContactCard />
+        <OrderActions order={order} onAction={handleAction} />
 
         {order.status === "returned" && (
           <ReviewBlock order={order} onLeaveReview={onLeaveReview} />
         )}
-
-        <OrderActions order={order} />
       </div>
+
+      {isEditAddressOpen && (
+        <EditAddressDialog
+          initialAddress={order.deliveryAddress}
+          error={actionError}
+          isSubmitting={isMutating}
+          onClose={() => {
+            setIsEditAddressOpen(false);
+            setActionError(null);
+          }}
+          onSubmit={updateAddress}
+        />
+      )}
+
+      {isCancelOpen && (
+        <CancelOrderDialog
+          error={actionError}
+          isSubmitting={isMutating}
+          onClose={() => {
+            setIsCancelOpen(false);
+            setActionError(null);
+          }}
+          onConfirm={cancelOrder}
+        />
+      )}
     </main>
   );
 }

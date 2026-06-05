@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getMyOrders } from "@/lib/api/orders";
+import {
+  cancelMyOrder,
+  getMyOrders,
+  updateMyOrderAddress,
+} from "@/lib/api/orders";
 import { UI_COPY } from "@/lib/copy";
-import { mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
-import type { AppItem, AppOrder } from "@/types";
+import {
+  mapBackendOrderToAppOrder,
+  mapBackendOrdersToAppOrders,
+} from "@/lib/mappers/orders";
+import type { AppItem, AppOrder, BackendOrderDto } from "@/types";
 
 export function useOrders({
   authToken,
@@ -73,6 +80,43 @@ export function useOrders({
     onNotify(UI_COPY.toast.reviewThanks);
   };
 
+  const mergeOrder = (backendOrder: BackendOrderDto) => {
+    setOrders((currentOrders) => {
+      const existingOrder = currentOrders.find(
+        (order) => order.id === backendOrder.id,
+      );
+      const mappedOrder = mapBackendOrderToAppOrder(
+        backendOrder,
+        items.find((item) => item.id === backendOrder.item_id),
+        existingOrder?.review ?? null,
+      );
+
+      return currentOrders.map((order) =>
+        order.id === mappedOrder.id ? mappedOrder : order,
+      );
+    });
+  };
+
+  const updateOrderAddress = async (orderId: number, address: string) => {
+    if (!authToken) {
+      throw new Error(UI_COPY.toast.loginRequired);
+    }
+
+    const backendOrder = await updateMyOrderAddress(authToken, orderId, address);
+    mergeOrder(backendOrder);
+    onNotify(UI_COPY.toast.addressUpdated);
+  };
+
+  const cancelOrder = async (orderId: number) => {
+    if (!authToken) {
+      throw new Error(UI_COPY.toast.loginRequired);
+    }
+
+    const backendOrder = await cancelMyOrder(authToken, orderId);
+    mergeOrder(backendOrder);
+    onNotify(UI_COPY.toast.orderCancelled);
+  };
+
   const clearOrders = () => {
     setOrders([]);
     setOrdersError(null);
@@ -84,6 +128,8 @@ export function useOrders({
     ordersError,
     reloadOrders,
     leaveReview,
+    updateOrderAddress,
+    cancelOrder,
     clearOrders,
   };
 }

@@ -547,6 +547,61 @@ async def get_orders_by_user(
     return list(result.scalars().all())
 
 
+async def update_user_order_address(
+    db: AsyncSession,
+    order_id: int,
+    user_id: int,
+    delivery_address: str,
+) -> models.OrderModel:
+    order = await get_order_for_user(db=db, order_id=order_id, user_id=user_id)
+
+    if schemas.OrderStatus(order.status) not in {
+        schemas.OrderStatus.PENDING,
+        schemas.OrderStatus.CONFIRMED,
+    }:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Адрес можно изменить только до передачи заказа курьеру",
+        )
+
+    order.delivery_address = delivery_address
+
+    await db.commit()
+    return await get_order_by_id(db, order.id)
+
+
+async def cancel_user_order(
+    db: AsyncSession,
+    order_id: int,
+    user_id: int,
+) -> models.OrderModel:
+    order = await get_order_for_user(db=db, order_id=order_id, user_id=user_id)
+    current_status = schemas.OrderStatus(order.status)
+
+    if current_status == schemas.OrderStatus.CANCELLED:
+        return order
+
+    if current_status not in {
+        schemas.OrderStatus.PENDING,
+        schemas.OrderStatus.CONFIRMED,
+    }:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Бронь можно отменить только до передачи заказа курьеру",
+        )
+
+    if order.payment_status == schemas.PaymentStatus.SUCCEEDED.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Бронь уже оплачена. Для отмены свяжитесь с поддержкой.",
+        )
+
+    order.status = schemas.OrderStatus.CANCELLED.value
+
+    await db.commit()
+    return await get_order_by_id(db, order.id)
+
+
 async def get_admin_orders(
     db: AsyncSession,
     status_filter: schemas.OrderStatus | None = None,

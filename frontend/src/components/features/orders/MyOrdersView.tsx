@@ -31,6 +31,8 @@ interface MyOrdersViewProps {
     rating: number,
     comment: string,
   ) => void;
+  onUpdateAddress: (orderId: number, address: string) => Promise<void>;
+  onCancelOrder: (orderId: number) => Promise<void>;
 }
 
 export function MyOrdersView({
@@ -40,6 +42,8 @@ export function MyOrdersView({
   onRefresh,
   onOpenCatalog,
   onLeaveReview,
+  onUpdateAddress,
+  onCancelOrder,
 }: MyOrdersViewProps) {
   const [activeTab, setActiveTab] = useState<OrdersTab>("active");
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
@@ -62,6 +66,8 @@ export function MyOrdersView({
         order={selectedOrder}
         onBack={() => setSelectedOrderId(null)}
         onLeaveReview={onLeaveReview}
+        onUpdateAddress={onUpdateAddress}
+        onCancelOrder={onCancelOrder}
       />
     );
   }

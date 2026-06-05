@@ -23,6 +23,28 @@ export async function getMyOrders(token: string): Promise<BackendOrderDto[]> {
   });
 }
 
+export async function updateMyOrderAddress(
+  token: string,
+  orderId: number,
+  deliveryAddress: string,
+): Promise<BackendOrderDto> {
+  return apiRequest<BackendOrderDto>(`/me/orders/${orderId}/address`, {
+    method: "PATCH",
+    headers: getAuthHeaders(token),
+    body: JSON.stringify({ delivery_address: deliveryAddress }),
+  });
+}
+
+export async function cancelMyOrder(
+  token: string,
+  orderId: number,
+): Promise<BackendOrderDto> {
+  return apiRequest<BackendOrderDto>(`/me/orders/${orderId}/cancel`, {
+    method: "PATCH",
+    headers: getAuthHeaders(token),
+  });
+}
+
 export async function createOrderPayment(
   token: string,
   orderId: number,

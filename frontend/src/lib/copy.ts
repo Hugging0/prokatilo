@@ -125,6 +125,10 @@ export const UI_COPY = {
       "Не удалось создать бронь. Проверьте соединение или попробуйте позже.",
     statusUpdated: "Статус заявки обновлён",
     reviewThanks: "Спасибо за отзыв! ⭐",
+    addressUpdated: "Адрес доставки обновлён",
+    addressUpdateError: "Не удалось изменить адрес",
+    orderCancelled: "Бронь отменена",
+    orderCancelError: "Не удалось отменить бронь",
   },
 };
 
