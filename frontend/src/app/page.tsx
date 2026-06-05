@@ -1,7 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { AuthView } from "@/components/features/auth/AuthView";
 import { CheckoutView } from "@/components/features/checkout/CheckoutView";
@@ -12,78 +11,23 @@ import { OperatorDashboard } from "@/components/features/operator/OperatorDashbo
 import { ProfileView } from "@/components/features/profile/ProfileView";
 import { AppNavigation } from "@/components/layout/AppNavigation";
 import { Toast } from "@/components/ui/Toast";
+import { useAuth } from "@/hooks/use-auth";
+import { useBookingSlots } from "@/hooks/use-booking-slots";
+import { useCatalogFilter } from "@/hooks/use-catalog-filter";
+import { useCheckoutState } from "@/hooks/use-checkout-state";
 import { useItems } from "@/hooks/use-items";
-import { getCurrentUser, loginUser, registerUser } from "@/lib/api/auth";
-import { getItemBookings } from "@/lib/api/items";
-import {
-  createOrder,
-  getMyOrders,
-} from "@/lib/api/orders";
-import { clearAuthToken, getAuthToken, setAuthToken } from "@/lib/auth-session";
-import {
-  getPresetEndInputValues,
-  getSelectedRentalInterval,
-  getTodayDateInputValue,
-} from "@/lib/booking-time";
+import { useOrders } from "@/hooks/use-orders";
+import { useToast } from "@/hooks/use-toast";
+import { createOrder } from "@/lib/api/orders";
+import { getSelectedRentalInterval } from "@/lib/booking-time";
 import { UI_COPY } from "@/lib/copy";
-import { mapAppCheckoutToOrderCreatePayload, mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
+import { mapAppCheckoutToOrderCreatePayload } from "@/lib/mappers/orders";
 import { getRentalTotalPrice } from "@/lib/tariffs";
-import type {
-  AppItem,
-  AppOrder,
-  AppView,
-  BookingSlot,
-  PaymentMethod,
-  TariffType,
-  User,
-} from "@/types";
-
-function mapBackendUserToUser(user: {
-  id: number;
-  email: string;
-  name: string;
-  phone: string | null;
-  is_admin: boolean;
-}): User {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    phone: user.phone ?? "",
-    isAdmin: user.is_admin,
-  };
-}
+import type { AppItem, AppView, PaymentMethod } from "@/types";
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [authToken, setAuthTokenState] = useState<string | null>(() =>
-    getAuthToken(),
-  );
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [view, setView] = useState<AppView>("home");
-  const [selectedItem, setSelectedItem] = useState<AppItem | null>(null);
-  const [selectedTariff, setSelectedTariff] = useState<TariffType>("24h");
-  const [selectedDate, setSelectedDate] = useState(
-    getTodayDateInputValue,
-  );
-  const [selectedTime, setSelectedTime] = useState("12:00");
-  const [selectedEndDate, setSelectedEndDate] = useState(
-    getTodayDateInputValue,
-  );
-  const [selectedEndTime, setSelectedEndTime] = useState("15:00");
   const [paymentMethod] = useState<PaymentMethod>("cash");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [courierComment, setCourierComment] = useState("");
-  const [clarifyAddress, setClarifyAddress] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("Все вещи");
-  const [toast, setToast] = useState<string | null>(null);
-  const [orders, setOrders] = useState<AppOrder[]>([]);
-  const [bookingSlots, setBookingSlots] = useState<BookingSlot[]>([]);
-  const [isBookingsLoading, setIsBookingsLoading] = useState(false);
-  const [bookingsError, setBookingsError] = useState<string | null>(null);
-  const [isOrdersLoading, setIsOrdersLoading] = useState(false);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
 
   const {
@@ -93,228 +37,33 @@ export default function App() {
     source: catalogSource,
     reload: reloadCatalog,
   } = useItems();
-
-  const showNotification = (message: string) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  async function reloadOrders(token = authToken) {
-    if (!token) {
-      setOrders([]);
-      setOrdersError(null);
-      return;
-    }
-
-    setIsOrdersLoading(true);
-    setOrdersError(null);
-
-    try {
-      const backendOrders = await getMyOrders(token);
-      setOrders((currentOrders) =>
-        mapBackendOrdersToAppOrders(backendOrders, items, currentOrders),
-      );
-    } catch (error) {
-      setOrdersError(
-        error instanceof Error
-          ? error.message
-          : UI_COPY.orders.loadError,
-      );
-    } finally {
-      setIsOrdersLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!authToken) {
-      return;
-    }
-
-    let isMounted = true;
-
-    void getCurrentUser(authToken)
-      .then((backendUser) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setUser(mapBackendUserToUser(backendUser));
-        return getMyOrders(authToken);
-      })
-      .then((backendOrders) => {
-        if (!isMounted || !backendOrders) {
-          return;
-        }
-
-        setOrders((currentOrders) =>
-          mapBackendOrdersToAppOrders(backendOrders, items, currentOrders),
-        );
-      })
-      .catch((error) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setOrdersError(
-          error instanceof Error
-            ? error.message
-            : UI_COPY.orders.loadError,
-        );
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsOrdersLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [authToken, items]);
-
-  useEffect(() => {
-    if (!selectedItem) {
-      return;
-    }
-
-    let isMounted = true;
-
-    void Promise.resolve()
-      .then(() => {
-        if (!isMounted) {
-          return null;
-        }
-
-        setIsBookingsLoading(true);
-        setBookingsError(null);
-        return getItemBookings(selectedItem.id);
-      })
-      .then((backendBookings) => {
-        if (!isMounted) {
-          return;
-        }
-
-        if (!backendBookings) {
-          return;
-        }
-
-        setBookingSlots(
-          backendBookings.map((booking) => ({
-            orderId: booking.order_id,
-            itemId: booking.item_id,
-            rentalStartAt: booking.rental_start_at,
-            rentalEndAt: booking.rental_end_at,
-            status: booking.status,
-          })),
-        );
-      })
-      .catch((error) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setBookingSlots([]);
-        setBookingsError(
-          error instanceof Error
-            ? error.message
-            : "Не удалось загрузить занятость",
-        );
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsBookingsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedItem]);
-
-  const handleAuth = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "").trim().toLowerCase();
-    const password = String(formData.get("password") ?? "");
-    const name = String(formData.get("name") ?? "").trim();
-    const phone = String(formData.get("phone") ?? "").trim();
-
-    if (!email.includes("@")) {
-      showNotification(UI_COPY.toast.invalidEmail);
-      return;
-    }
-
-    if (password.length < 6) {
-      showNotification(UI_COPY.toast.invalidPassword);
-      return;
-    }
-
-    if (authMode === "register" && !name) {
-      showNotification("Введите имя");
-      return;
-    }
-
-    try {
-      const authResponse =
-        authMode === "register"
-          ? await registerUser({
-              email,
-              password,
-              name,
-              phone: phone || null,
-            })
-          : await loginUser({
-              email,
-              password,
-            });
-
-      setAuthToken(authResponse.access_token);
-      setAuthTokenState(authResponse.access_token);
-      setUser(mapBackendUserToUser(authResponse.user));
-      setIsOrdersLoading(true);
-      setOrdersError(null);
-      setView("home");
-      showNotification(
-        authMode === "register"
-          ? UI_COPY.toast.registered
-          : UI_COPY.toast.welcomeBack,
-      );
-    } catch (error) {
-      showNotification(
-        error instanceof Error ? error.message : "Не удалось войти",
-      );
-    }
-  };
+  const { toast, showNotification } = useToast();
+  const auth = useAuth({
+    onNotify: showNotification,
+    onAuthenticated: () => setView("home"),
+    onLogout: () => setView("home"),
+  });
+  const ordersState = useOrders({
+    authToken: auth.authToken,
+    items,
+    onNotify: showNotification,
+  });
+  const checkout = useCheckoutState();
+  const catalogFilter = useCatalogFilter(items);
+  const bookingSlotsState = useBookingSlots(checkout.selectedItem?.id ?? null);
 
   const handleOpenDetails = (item: AppItem) => {
-    setSelectedItem(item);
-    setSelectedTariff("24h");
-    const presetEnd = getPresetEndInputValues(selectedDate, selectedTime, "24h");
-    if (presetEnd) {
-      setSelectedEndDate(presetEnd.endDate);
-      setSelectedEndTime(presetEnd.endTime);
-    }
+    checkout.openDetails(item);
     setView("details");
   };
 
-  const handleSelectTariff = (tariff: TariffType) => {
-    setSelectedTariff(tariff);
-    const presetEnd = getPresetEndInputValues(selectedDate, selectedTime, tariff);
-
-    if (presetEnd) {
-      setSelectedEndDate(presetEnd.endDate);
-      setSelectedEndTime(presetEnd.endTime);
-    }
-  };
-
   const handleBook = async () => {
-    if (!selectedItem) {
+    if (!checkout.selectedItem) {
       showNotification(UI_COPY.toast.selectItemFirst);
       return;
     }
 
-    if (!user || !authToken) {
+    if (!auth.user || !auth.authToken) {
       setView("auth");
       showNotification(UI_COPY.toast.loginRequired);
       return;
@@ -324,27 +73,27 @@ export default function App() {
 
     try {
       const selectedInterval = getSelectedRentalInterval(
-        selectedDate,
-        selectedTime,
-        selectedEndDate,
-        selectedEndTime,
+        checkout.selectedDate,
+        checkout.selectedTime,
+        checkout.selectedEndDate,
+        checkout.selectedEndTime,
       );
       await createOrder(
-        authToken,
+        auth.authToken,
         mapAppCheckoutToOrderCreatePayload({
-          user,
-          item: selectedItem,
-          tariff: selectedTariff,
+          user: auth.user,
+          item: checkout.selectedItem,
+          tariff: checkout.selectedTariff,
           paymentMethod,
-          deliveryAddress,
-          courierComment,
-          selectedDate,
-          selectedTime,
-          selectedEndDate,
-          selectedEndTime,
+          deliveryAddress: checkout.deliveryAddress,
+          courierComment: checkout.courierComment,
+          selectedDate: checkout.selectedDate,
+          selectedTime: checkout.selectedTime,
+          selectedEndDate: checkout.selectedEndDate,
+          selectedEndTime: checkout.selectedEndTime,
           totalPrice: getRentalTotalPrice(
-            selectedItem,
-            selectedTariff,
+            checkout.selectedItem,
+            checkout.selectedTariff,
             selectedInterval?.startAt ?? null,
             selectedInterval?.endAt ?? null,
           ),
@@ -352,22 +101,9 @@ export default function App() {
       );
 
       await reloadCatalog();
-      if (selectedItem) {
-        const backendBookings = await getItemBookings(selectedItem.id);
-        setBookingSlots(
-          backendBookings.map((booking) => ({
-            orderId: booking.order_id,
-            itemId: booking.item_id,
-            rentalStartAt: booking.rental_start_at,
-            rentalEndAt: booking.rental_end_at,
-            status: booking.status,
-          })),
-        );
-      }
-      await reloadOrders(authToken);
-      setDeliveryAddress("");
-      setCourierComment("");
-      setClarifyAddress(false);
+      await bookingSlotsState.reloadBookingSlots();
+      await ordersState.reloadOrders(auth.authToken);
+      checkout.resetCheckoutForm();
 
       setView("orders");
       showNotification(UI_COPY.toast.bookingCreated);
@@ -382,158 +118,113 @@ export default function App() {
     }
   };
 
-  const leaveReview = (
-    orderId: number,
-    rating: number,
-    comment: string,
-  ) => {
-    setOrders((currentOrders) =>
-      currentOrders.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              review: {
-                rating,
-                comment,
-              },
-            }
-          : order,
-      ),
-    );
-
-    showNotification(UI_COPY.toast.reviewThanks);
-  };
-
-  const handleLogout = () => {
-    clearAuthToken();
-    setAuthTokenState(null);
-    setUser(null);
-    setOrders([]);
-    setView("home");
-  };
-
-  const filteredItems = items.filter((item) => {
-    const normalizedSearchQuery = searchQuery.toLowerCase();
-    const matchesSearch =
-      item.title.toLowerCase().includes(normalizedSearchQuery) ||
-      item.desc.toLowerCase().includes(normalizedSearchQuery);
-
-    const matchesCategory =
-      activeCategory === "Все вещи" ||
-      item.category === activeCategory;
-
-    return matchesSearch && matchesCategory;
-  });
-
-  const categories = [
-    "Все вещи",
-    ...Array.from(new Set(items.map((item) => item.category))),
-  ];
-
   return (
     <div className="min-h-screen bg-slate-50">
       <Toast message={toast} />
 
       {view === "auth" && (
         <AuthView
-          mode={authMode}
-          onModeChange={setAuthMode}
-          onSubmit={(event) => void handleAuth(event)}
+          mode={auth.authMode}
+          onModeChange={auth.setAuthMode}
+          onSubmit={(event) => void auth.handleAuth(event)}
         />
       )}
 
       {view === "home" && (
         <HomeView
-          items={filteredItems}
-          categories={categories}
-          searchQuery={searchQuery}
-          activeCategory={activeCategory}
+          items={catalogFilter.filteredItems}
+          categories={catalogFilter.categories}
+          searchQuery={catalogFilter.searchQuery}
+          activeCategory={catalogFilter.activeCategory}
           isLoading={isCatalogLoading}
           catalogSource={catalogSource}
           catalogError={catalogError}
-          onSearchChange={setSearchQuery}
-          onCategoryChange={setActiveCategory}
+          onSearchChange={catalogFilter.setSearchQuery}
+          onCategoryChange={catalogFilter.setActiveCategory}
           onOpenDetails={handleOpenDetails}
         />
       )}
 
-      {view === "details" && selectedItem && (
+      {view === "details" && checkout.selectedItem && (
         <DetailsView
-          item={selectedItem}
+          item={checkout.selectedItem}
           onBack={() => setView("home")}
           onCheckout={() => setView("checkout")}
         />
       )}
 
-      {view === "checkout" && selectedItem && (
+      {view === "checkout" && checkout.selectedItem && (
         <CheckoutView
-          selectedItem={selectedItem}
-          selectedTariff={selectedTariff}
-          selectedDate={selectedDate}
-          selectedTime={selectedTime}
-          selectedEndDate={selectedEndDate}
-          selectedEndTime={selectedEndTime}
-          deliveryAddress={deliveryAddress}
-          courierComment={courierComment}
-          clarifyAddress={clarifyAddress}
-          bookingSlots={bookingSlots}
-          isBookingsLoading={isBookingsLoading}
-          bookingsError={bookingsError}
+          selectedItem={checkout.selectedItem}
+          selectedTariff={checkout.selectedTariff}
+          selectedDate={checkout.selectedDate}
+          selectedTime={checkout.selectedTime}
+          selectedEndDate={checkout.selectedEndDate}
+          selectedEndTime={checkout.selectedEndTime}
+          deliveryAddress={checkout.deliveryAddress}
+          courierComment={checkout.courierComment}
+          clarifyAddress={checkout.clarifyAddress}
+          bookingSlots={bookingSlotsState.bookingSlots}
+          isBookingsLoading={bookingSlotsState.isBookingsLoading}
+          bookingsError={bookingSlotsState.bookingsError}
           isSubmitting={isBookingSubmitting}
           onBack={() => setView("details")}
-          onTariffChange={handleSelectTariff}
-          onDateChange={setSelectedDate}
-          onTimeChange={setSelectedTime}
-          onEndDateChange={setSelectedEndDate}
-          onEndTimeChange={setSelectedEndTime}
-          onDeliveryAddressChange={setDeliveryAddress}
-          onCourierCommentChange={setCourierComment}
-          onClarifyAddressChange={setClarifyAddress}
+          onTariffChange={checkout.selectTariff}
+          onDateChange={checkout.setSelectedDate}
+          onTimeChange={checkout.setSelectedTime}
+          onEndDateChange={checkout.setSelectedEndDate}
+          onEndTimeChange={checkout.setSelectedEndTime}
+          onDeliveryAddressChange={checkout.setDeliveryAddress}
+          onCourierCommentChange={checkout.setCourierComment}
+          onClarifyAddressChange={checkout.setClarifyAddress}
           onSubmit={() => void handleBook()}
         />
       )}
 
-      {view === "orders" && user && (
+      {view === "orders" && auth.user && (
         <MyOrdersView
-          orders={orders}
-          isLoading={isOrdersLoading}
-          error={ordersError}
-          onRefresh={() => void reloadOrders()}
+          orders={ordersState.orders}
+          isLoading={ordersState.isOrdersLoading}
+          error={ordersState.ordersError}
+          onRefresh={() => void ordersState.reloadOrders()}
           onOpenCatalog={() => setView("home")}
-          onLeaveReview={leaveReview}
+          onLeaveReview={ordersState.leaveReview}
         />
       )}
 
-      {view === "orders" && !user && (
+      {view === "orders" && !auth.user && (
         <AuthView
-          mode={authMode}
-          onModeChange={setAuthMode}
-          onSubmit={(event) => void handleAuth(event)}
+          mode={auth.authMode}
+          onModeChange={auth.setAuthMode}
+          onSubmit={(event) => void auth.handleAuth(event)}
         />
       )}
 
-      {view === "profile" && user && (
+      {view === "profile" && auth.user && (
         <ProfileView
-          user={user}
-          onLogout={handleLogout}
+          user={auth.user}
+          onLogout={() => {
+            ordersState.clearOrders();
+            auth.logout();
+          }}
         />
       )}
 
-      {view === "profile" && !user && (
+      {view === "profile" && !auth.user && (
         <AuthView
-          mode={authMode}
-          onModeChange={setAuthMode}
-          onSubmit={(event) => void handleAuth(event)}
+          mode={auth.authMode}
+          onModeChange={auth.setAuthMode}
+          onSubmit={(event) => void auth.handleAuth(event)}
         />
       )}
 
-      {view === "admin-dashboard" && user?.isAdmin && authToken && (
+      {view === "admin-dashboard" && auth.user?.isAdmin && auth.authToken && (
         <OperatorDashboard
-          authToken={authToken}
+          authToken={auth.authToken}
           items={items}
           onCatalogChanged={async () => {
             await reloadCatalog();
-            await reloadOrders();
+            await ordersState.reloadOrders();
           }}
         />
       )}
@@ -541,9 +232,9 @@ export default function App() {
       {view !== "checkout" && (
         <AppNavigation
           view={view}
-          isAdmin={Boolean(user?.isAdmin)}
+          isAdmin={Boolean(auth.user?.isAdmin)}
           onNavigate={(nextView) => {
-            if (nextView === "admin-dashboard" && !user?.isAdmin) {
+            if (nextView === "admin-dashboard" && !auth.user?.isAdmin) {
               setView("profile");
               return;
             }

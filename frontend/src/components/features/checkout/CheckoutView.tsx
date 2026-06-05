@@ -1,20 +1,16 @@
-import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
-import { ArrowLeft, CalendarDays, Clock3, type LucideIcon, MapPin, PackageCheck } from "lucide-react";
+import { useCallback, useEffect } from "react";
 
-import { AppButton } from "@/components/ui/AppButton";
-import { AppCard } from "@/components/ui/AppCard";
-import { AppNotice } from "@/components/ui/AppNotice";
-import { BRAND_GRADIENT } from "@/lib/brand";
-import {
-  formatDateInputValue,
-  getDateTimeFromInputs,
-  getPresetEndInputValues,
-  getRentalDurationLabel,
-  getSelectedRentalInterval,
-  intervalsOverlap,
-} from "@/lib/booking-time";
-import { getRentalTotalPrice, getTariffPrice, TARIFFS } from "@/lib/tariffs";
+import { getPresetEndInputValues } from "@/lib/booking-time";
 import type { AppItem, BookingSlot, TariffType } from "@/types";
+
+import { AddressStep } from "./components/AddressStep";
+import { CheckoutFooter } from "./components/CheckoutFooter";
+import { CheckoutHeader } from "./components/CheckoutHeader";
+import { NextStepsStep } from "./components/NextStepsStep";
+import { ReviewStep } from "./components/ReviewStep";
+import { TimingStep } from "./components/TimingStep";
+import { useCheckoutAvailability } from "./hooks/useCheckoutAvailability";
+import { useCheckoutStep } from "./hooks/useCheckoutStep";
 
 interface CheckoutViewProps {
   selectedItem: AppItem;
@@ -42,22 +38,6 @@ interface CheckoutViewProps {
   onSubmit: () => void;
 }
 
-const DELIVERY_INTERVALS = [
-  "08:00",
-  "10:00",
-  "12:00",
-  "14:00",
-  "16:00",
-  "18:00",
-] as const;
-
-const DELIVERY_INTERVAL_HOURS = 2;
-const checkoutDateFormatter = new Intl.DateTimeFormat("ru-RU", {
-  day: "numeric",
-  month: "long",
-  timeZone: "Europe/Moscow",
-});
-
 export function CheckoutView({
   selectedItem,
   selectedTariff,
@@ -84,43 +64,17 @@ export function CheckoutView({
   onSubmit,
 }: CheckoutViewProps) {
   const [step, setStep] = useCheckoutStep();
-  const selectedInterval = getSelectedRentalInterval(
+  const availability = useCheckoutAvailability({
+    selectedItem,
+    selectedTariff,
     selectedDate,
     selectedTime,
     selectedEndDate,
     selectedEndTime,
-  );
-  const totalPrice = getRentalTotalPrice(
-    selectedItem,
-    selectedTariff,
-    selectedInterval?.startAt ?? null,
-    selectedInterval?.endAt ?? null,
-  );
-  const conflictingBookingSlots = selectedInterval
-    ? bookingSlots.filter((slot) =>
-        intervalsOverlap(
-          selectedInterval.startAt,
-          selectedInterval.endAt,
-          new Date(slot.rentalStartAt),
-          new Date(slot.rentalEndAt),
-        ),
-      )
-    : [];
-  const hasConflict = conflictingBookingSlots.length > 0;
-  const isPeriodValid = Boolean(selectedInterval && selectedInterval.endAt > selectedInterval.startAt);
-  const canGoNextFromTiming = selectedItem.available && isPeriodValid && !hasConflict;
-  const canGoNextFromAddress = clarifyAddress || deliveryAddress.trim().length >= 5;
-  const availableIntervals = DELIVERY_INTERVALS.filter((time) =>
-    isDeliveryIntervalAvailable(
-      selectedDate,
-      time,
-      selectedTariff,
-      bookingSlots,
-    ),
-  );
-  const isSelectedTimeAvailable = availableIntervals.includes(
-    selectedTime as (typeof DELIVERY_INTERVALS)[number],
-  );
+    bookingSlots,
+    clarifyAddress,
+    deliveryAddress,
+  });
 
   const updateStart = useCallback(
     (
@@ -156,541 +110,108 @@ export function CheckoutView({
       step !== 1 ||
       isBookingsLoading ||
       bookingsError ||
-      availableIntervals.length === 0 ||
-      isSelectedTimeAvailable
+      availability.availableIntervals.length === 0 ||
+      availability.isSelectedTimeAvailable
     ) {
       return;
     }
 
-    updateStart(selectedDate, availableIntervals[0]);
+    updateStart(selectedDate, availability.availableIntervals[0]);
   }, [
-    availableIntervals,
+    availability.availableIntervals,
+    availability.isSelectedTimeAvailable,
     bookingsError,
     isBookingsLoading,
-    isSelectedTimeAvailable,
     selectedDate,
     step,
     updateStart,
   ]);
 
-  const selectTariff = (tariff: TariffType) => {
+  const handleTariffChange = (tariff: TariffType) => {
     onTariffChange(tariff);
-    const presetEnd = getPresetEndInputValues(selectedDate, selectedTime, tariff);
-
-    if (presetEnd) {
-      onEndDateChange(presetEnd.endDate);
-      onEndTimeChange(presetEnd.endTime);
-    }
+    updateStart(selectedDate, selectedTime, tariff);
   };
 
-  const rentalDurationSummary = getRentalDurationLabel(
-    selectedInterval?.startAt ?? null,
-    selectedInterval?.endAt ?? null,
-  );
-  const deliveryIntervalSummary = selectedInterval
-    ? `${formatDeliveryDateLabel(
-        selectedInterval.startAt,
-      )}, ${formatDeliveryIntervalLabel(selectedTime)}`
-    : "Выберите интервал доставки";
+  const goBack = () => {
+    if (step === 1) {
+      onBack();
+      return;
+    }
+
+    setStep((current) => current - 1);
+  };
+
+  const goNext = () => {
+    if (step === 4) {
+      onSubmit();
+      return;
+    }
+
+    setStep((current) => current + 1);
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 pb-10">
-      <header className="sticky top-0 z-30 border-b border-slate-100 bg-slate-50/95 px-6 py-4 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={step === 1 ? onBack : () => setStep((current) => current - 1)}
-            className="rounded-2xl bg-white p-3 text-slate-900 shadow-sm active:scale-95"
-            aria-label="Назад"
-          >
-            <ArrowLeft size={21} />
-          </button>
-          <div className="text-center">
-            <p className="text-sm font-black tracking-[0.18em] text-slate-900">
-              ПРОКАТИЛО
-            </p>
-            <p className="mt-1 text-sm font-bold text-slate-400">
-              {step} из 4
-            </p>
-          </div>
-          <div className="h-11 w-11" />
-        </div>
-      </header>
+      <CheckoutHeader step={step} onBack={goBack} />
 
       <div className="mx-auto max-w-2xl px-6 pt-7">
         {step === 1 && (
-          <section>
-            <StepTitle
-              title="Когда нужна вещь?"
-              subtitle="Выберите дату, интервал и длительность"
-            />
-
-            <div className="mt-7 space-y-6">
-              <Panel>
-                <PanelLabel icon={CalendarDays} label="Дата доставки" />
-                <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-                  {getQuickDateOptions().map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => updateStart(option.value)}
-                      className={`shrink-0 rounded-2xl border px-4 py-3 text-base font-black transition ${
-                        selectedDate === option.value
-                          ? "border-slate-900 bg-slate-900 text-white"
-                          : "border-slate-100 bg-slate-50 text-slate-700"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                  <DatePickerButton
-                    value={selectedDate}
-                    onChange={(value) => updateStart(value)}
-                  />
-                </div>
-              </Panel>
-
-              <Panel>
-                <PanelLabel icon={Clock3} label="Интервал доставки" />
-                {isBookingsLoading && (
-                  <p className="mt-4 text-sm font-bold text-slate-400">
-                    Проверяем занятость…
-                  </p>
-                )}
-                {!isBookingsLoading && bookingsError && (
-                  <p className="mt-4 text-sm font-bold text-rose-500">
-                    {bookingsError}
-                  </p>
-                )}
-                {!isBookingsLoading && !bookingsError && (
-                  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {availableIntervals.map((time) => (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={() => updateStart(selectedDate, time)}
-                        className={`rounded-2xl border px-3 py-3 text-base font-black transition ${
-                          selectedTime === time
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-100 bg-slate-50 text-slate-700"
-                        }`}
-                      >
-                        {formatDeliveryIntervalLabel(time)}
-                      </button>
-                    ))}
-                    {availableIntervals.length === 0 && (
-                      <p className="col-span-full rounded-2xl bg-slate-50 px-4 py-4 text-base font-bold text-slate-500">
-                        На эту дату свободных интервалов нет.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </Panel>
-
-              <Panel>
-                <PanelLabel icon={PackageCheck} label="Длительность" />
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {TARIFFS.map((tariff) => (
-                    <button
-                      key={tariff.id}
-                      type="button"
-                      onClick={() => selectTariff(tariff.id)}
-                      className={`rounded-2xl border px-3 py-3 text-left transition ${
-                        selectedTariff === tariff.id
-                          ? "border-slate-900 bg-slate-900 text-white"
-                          : "border-slate-100 bg-slate-50 text-slate-700"
-                      }`}
-                    >
-                      <span className="block text-base font-black">
-                        {tariff.id === "24h" ? "1 день" : tariff.label}
-                      </span>
-                      <span className="mt-1 block text-sm font-bold opacity-70">
-                        {getTariffPrice(selectedItem, tariff.id)} ₽
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </Panel>
-
-              {!isPeriodValid && (
-                <InlineWarning text="Конец аренды должен быть позже доставки." />
-              )}
-              {hasConflict && (
-                <InlineWarning text="Выбранный период пересекается с другой бронью." />
-              )}
-            </div>
-          </section>
+          <TimingStep
+            selectedItem={selectedItem}
+            selectedTariff={selectedTariff}
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            availableIntervals={availability.availableIntervals}
+            isBookingsLoading={isBookingsLoading}
+            bookingsError={bookingsError}
+            isPeriodValid={availability.isPeriodValid}
+            hasConflict={availability.hasConflict}
+            onStartChange={updateStart}
+            onTariffChange={handleTariffChange}
+          />
         )}
 
         {step === 2 && (
-          <section>
-            <StepTitle
-              title="Куда доставить?"
-              subtitle="Укажите адрес или уточните с оператором"
-            />
-
-            <div className="mt-7 space-y-5">
-              <Panel>
-                <PanelLabel icon={MapPin} label="Адрес доставки" />
-                <input
-                  value={deliveryAddress}
-                  onChange={(event) => onDeliveryAddressChange(event.target.value)}
-                  disabled={clarifyAddress}
-                  placeholder="Улица, дом, подъезд, квартира"
-                  className="mt-4 w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-base font-bold text-slate-700 outline-none transition focus:border-slate-300 disabled:text-slate-300"
-                />
-                <textarea
-                  value={courierComment}
-                  onChange={(event) => onCourierCommentChange(event.target.value)}
-                  placeholder="Комментарий курьеру"
-                  rows={3}
-                  className="mt-3 w-full resize-none rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-base font-bold text-slate-700 outline-none transition focus:border-slate-300"
-                />
-              </Panel>
-
-              <label className="flex cursor-pointer items-start gap-3 rounded-[1.5rem] border border-slate-100 bg-white p-5 shadow-sm">
-                <input
-                  type="checkbox"
-                  checked={clarifyAddress}
-                  onChange={(event) => onClarifyAddressChange(event.target.checked)}
-                  className="mt-1 h-5 w-5 rounded border-slate-300 text-slate-900"
-                />
-                <span>
-                  <span className="block text-base font-black text-slate-900">
-                    Уточнить адрес с оператором
-                  </span>
-                  <span className="mt-1 block text-sm font-bold text-slate-500">
-                    Мы свяжемся после создания брони.
-                  </span>
-                </span>
-              </label>
-            </div>
-          </section>
+          <AddressStep
+            deliveryAddress={deliveryAddress}
+            courierComment={courierComment}
+            clarifyAddress={clarifyAddress}
+            onDeliveryAddressChange={onDeliveryAddressChange}
+            onCourierCommentChange={onCourierCommentChange}
+            onClarifyAddressChange={onClarifyAddressChange}
+          />
         )}
 
         {step === 3 && (
-          <section>
-            <StepTitle
-              title="Проверьте бронь"
-              subtitle="Убедитесь, что всё указано верно"
-            />
-
-            <div className="mt-7 space-y-4">
-              <Panel>
-                <div className="flex items-center gap-4">
-                  {selectedItem.imageUrl ? (
-                    <div className="h-16 w-16 overflow-hidden rounded-2xl bg-slate-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={selectedItem.imageUrl}
-                        alt={selectedItem.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${selectedItem.bg} ${selectedItem.color}`}>
-                      <selectedItem.icon size={30} />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <h3 className="truncate text-lg font-black text-slate-900">
-                      {selectedItem.title}
-                    </h3>
-                    <p className="mt-1 text-base font-bold text-slate-500">
-                      {selectedItem.category}
-                    </p>
-                  </div>
-                </div>
-              </Panel>
-
-              <ReviewRow
-                title="Интервал доставки"
-                value={selectedInterval ? deliveryIntervalSummary : "Не выбрано"}
-                onEdit={() => setStep(1)}
-              />
-              <ReviewRow
-                title="Длительность аренды"
-                value={selectedInterval ? rentalDurationSummary : "Не выбрано"}
-                onEdit={() => setStep(1)}
-              />
-              <ReviewRow
-                title="Наличие"
-                value="Предварительно доступно. Оператор подтвердит бронь."
-              />
-              <ReviewRow
-                title="Доставка"
-                value={clarifyAddress ? "Адрес уточнит оператор" : deliveryAddress}
-                onEdit={() => setStep(2)}
-              />
-              <ReviewRow
-                title="Оплата"
-                value="Оплата курьеру при получении товара. Сейчас деньги не списываются."
-              />
-
-              <Panel>
-                <SummaryRow label="Аренда" value={`${totalPrice} ₽`} />
-                <SummaryRow label="Доставка" value="0 ₽" />
-                <SummaryRow label="К оплате курьеру" value={`${totalPrice} ₽`} strong />
-              </Panel>
-            </div>
-          </section>
+          <ReviewStep
+            selectedItem={selectedItem}
+            deliveryAddress={deliveryAddress}
+            clarifyAddress={clarifyAddress}
+            deliveryIntervalSummary={availability.deliveryIntervalSummary}
+            rentalDurationSummary={availability.rentalDurationSummary}
+            totalPrice={availability.totalPrice}
+            hasSelectedInterval={Boolean(availability.selectedInterval)}
+            onEditTiming={() => setStep(1)}
+            onEditAddress={() => setStep(2)}
+          />
         )}
 
-        {step === 4 && (
-          <section>
-            <StepTitle
-              title="Что будет дальше?"
-              subtitle="Оператор подтвердит детали и подготовит доставку"
-            />
-
-            <div className="mt-7 space-y-4">
-              {[
-                "Оператор проверит наличие, подтвердит бронь и позвонит вам.",
-                "Курьер привезёт вещь в выбранный интервал.",
-                "Курьер подпишет с вами договор аренды. Для оформления понадобятся паспортные данные.",
-                "Оплата будет при получении товара курьеру. Сейчас деньги не списываются.",
-              ].map((text, index) => (
-                <div
-                  key={text}
-                  className="flex gap-4 rounded-[1.5rem] border border-slate-100 bg-white p-5 shadow-sm"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-black text-white">
-                    {index + 1}
-                  </span>
-                  <p className="pt-1 text-base font-bold leading-relaxed text-slate-700">
-                    {text}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {step === 4 && <NextStepsStep />}
       </div>
 
-      <footer className="mx-auto mt-8 flex max-w-2xl gap-3 px-6">
-        <AppButton
-          type="button"
-          onClick={step === 1 ? onBack : () => setStep((current) => current - 1)}
-          variant="secondary"
-          className="flex-1"
-        >
-          Назад
-        </AppButton>
-        <AppButton
-          type="button"
-          onClick={() => {
-            if (step === 4) {
-              onSubmit();
-              return;
-            }
-            setStep((current) => current + 1);
-          }}
-          disabled={
-            isSubmitting ||
-            (step === 1 && (!canGoNextFromTiming || availableIntervals.length === 0)) ||
-            (step === 2 && !canGoNextFromAddress)
-          }
-          className={`flex-[1.4] ${BRAND_GRADIENT} shadow-rose-200`}
-        >
-          {isSubmitting ? "Создаём бронь…" : getStepButtonLabel(step)}
-        </AppButton>
-      </footer>
-    </main>
-  );
-}
-
-function useCheckoutStep() {
-  return useState(1);
-}
-
-function DatePickerButton({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const inputId = useId();
-
-  return (
-    <label
-      htmlFor={inputId}
-      className="relative flex shrink-0 cursor-pointer items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-base font-black text-slate-700"
-    >
-      <CalendarDays size={16} />
-      <span>Календарь</span>
-      <input
-        id={inputId}
-        type="date"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0"
-        aria-label="Выбрать дату"
+      <CheckoutFooter
+        step={step}
+        isSubmitting={isSubmitting}
+        disabled={
+          isSubmitting ||
+          (step === 1 &&
+            (!availability.canGoNextFromTiming ||
+              availability.availableIntervals.length === 0)) ||
+          (step === 2 && !availability.canGoNextFromAddress)
+        }
+        onBack={goBack}
+        onNext={goNext}
       />
-    </label>
-  );
-}
-
-function getQuickDateOptions() {
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-
-  return [
-    { label: "Сегодня", value: formatDateInputValue(today) },
-    { label: "Завтра", value: formatDateInputValue(tomorrow) },
-    { label: "Сб", value: getNextWeekdayInputValue(6) },
-    { label: "Вс", value: getNextWeekdayInputValue(0) },
-  ];
-}
-
-function getNextWeekdayInputValue(weekday: number) {
-  const date = new Date();
-  const daysAhead = (weekday - date.getDay() + 7) % 7 || 7;
-  date.setDate(date.getDate() + daysAhead);
-  return formatDateInputValue(date);
-}
-
-function formatDeliveryIntervalLabel(startTime: string) {
-  const [hourValue] = startTime.split(":");
-  const startHour = Number(hourValue);
-  const endHour = startHour + DELIVERY_INTERVAL_HOURS;
-  return `${startTime}–${String(endHour).padStart(2, "0")}:00`;
-}
-
-function formatDeliveryDateLabel(value: Date) {
-  return checkoutDateFormatter.format(value);
-}
-
-function isDeliveryIntervalAvailable(
-  selectedDate: string,
-  selectedTime: string,
-  selectedTariff: TariffType,
-  bookingSlots: BookingSlot[],
-) {
-  const startAt = getDateTimeFromInputs(selectedDate, selectedTime);
-  const presetEnd = getPresetEndInputValues(selectedDate, selectedTime, selectedTariff);
-  const endAt = presetEnd
-    ? getDateTimeFromInputs(presetEnd.endDate, presetEnd.endTime)
-    : null;
-
-  if (!startAt || !endAt) {
-    return false;
-  }
-
-  return !bookingSlots.some((slot) =>
-    intervalsOverlap(
-      startAt,
-      endAt,
-      new Date(slot.rentalStartAt),
-      new Date(slot.rentalEndAt),
-    ),
-  );
-}
-
-function getStepButtonLabel(step: number) {
-  switch (step) {
-    case 1:
-      return "Далее: адрес";
-    case 2:
-      return "Далее: проверить";
-    case 3:
-      return "Далее";
-    default:
-      return "Создать бронь";
-  }
-}
-
-function StepTitle({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div>
-      <h2 className="text-3xl font-black leading-tight tracking-tight text-slate-900">
-        {title}
-      </h2>
-      <p className="mt-3 text-base font-bold leading-relaxed text-slate-500">
-        {subtitle}
-      </p>
-    </div>
-  );
-}
-
-function Panel({ children }: { children: ReactNode }) {
-  return (
-    <AppCard>
-      {children}
-    </AppCard>
-  );
-}
-
-function PanelLabel({
-  icon: Icon,
-  label,
-}: {
-  icon: LucideIcon;
-  label: string;
-}) {
-  return (
-    <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
-      <Icon size={15} />
-      {label}
-    </p>
-  );
-}
-
-function InlineWarning({ text }: { text: string }) {
-  return (
-    <AppNotice tone="danger" className="px-4 py-3">
-      {text}
-    </AppNotice>
-  );
-}
-
-function ReviewRow({
-  title,
-  value,
-  onEdit,
-}: {
-  title: string;
-  value: string;
-  onEdit?: () => void;
-}) {
-  return (
-    <AppCard className="flex items-start justify-between gap-4">
-      <div>
-        <p className="text-xs font-black uppercase tracking-widest text-slate-500">
-          {title}
-        </p>
-        <p className="mt-2 text-base font-bold leading-relaxed text-slate-800">
-          {value}
-        </p>
-      </div>
-      {onEdit && (
-        <button
-          type="button"
-          onClick={onEdit}
-          className="shrink-0 rounded-xl bg-slate-50 px-3 py-2 text-xs font-black text-slate-600"
-        >
-          Изменить
-        </button>
-      )}
-    </AppCard>
-  );
-}
-
-function SummaryRow({
-  label,
-  value,
-  strong = false,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 last:border-b-0">
-      <span className="text-base font-bold text-slate-500">{label}</span>
-      <span className={`text-base ${strong ? "font-black text-slate-900" : "font-bold text-slate-700"}`}>
-        {value}
-      </span>
-    </div>
+    </main>
   );
 }

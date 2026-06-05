@@ -1,0 +1,73 @@
+import { useState } from "react";
+
+import {
+  getPresetEndInputValues,
+  getTodayDateInputValue,
+} from "@/lib/booking-time";
+import type { AppItem, TariffType } from "@/types";
+
+export function useCheckoutState() {
+  const [selectedItem, setSelectedItem] = useState<AppItem | null>(null);
+  const [selectedTariff, setSelectedTariff] = useState<TariffType>("24h");
+  const [selectedDate, setSelectedDate] = useState(getTodayDateInputValue);
+  const [selectedTime, setSelectedTime] = useState("12:00");
+  const [selectedEndDate, setSelectedEndDate] = useState(getTodayDateInputValue);
+  const [selectedEndTime, setSelectedEndTime] = useState("15:00");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [courierComment, setCourierComment] = useState("");
+  const [clarifyAddress, setClarifyAddress] = useState(false);
+
+  const applyPresetEnd = (
+    date: string,
+    time: string,
+    tariff: TariffType,
+  ) => {
+    const presetEnd = getPresetEndInputValues(date, time, tariff);
+
+    if (!presetEnd) {
+      return;
+    }
+
+    setSelectedEndDate(presetEnd.endDate);
+    setSelectedEndTime(presetEnd.endTime);
+  };
+
+  const openDetails = (item: AppItem) => {
+    setSelectedItem(item);
+    setSelectedTariff("24h");
+    applyPresetEnd(selectedDate, selectedTime, "24h");
+  };
+
+  const selectTariff = (tariff: TariffType) => {
+    setSelectedTariff(tariff);
+    applyPresetEnd(selectedDate, selectedTime, tariff);
+  };
+
+  const resetCheckoutForm = () => {
+    setDeliveryAddress("");
+    setCourierComment("");
+    setClarifyAddress(false);
+  };
+
+  return {
+    selectedItem,
+    selectedTariff,
+    selectedDate,
+    selectedTime,
+    selectedEndDate,
+    selectedEndTime,
+    deliveryAddress,
+    courierComment,
+    clarifyAddress,
+    setSelectedDate,
+    setSelectedTime,
+    setSelectedEndDate,
+    setSelectedEndTime,
+    setDeliveryAddress,
+    setCourierComment,
+    setClarifyAddress,
+    openDetails,
+    selectTariff,
+    resetCheckoutForm,
+  };
+}
