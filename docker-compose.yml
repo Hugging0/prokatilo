@@ -79,6 +79,9 @@ services:
 
   caddy:
     image: caddy:2-alpine
+    environment:
+      APP_DOMAIN: "${APP_DOMAIN:-prokatilo.com}"
+      ACME_EMAIL: "${ACME_EMAIL:-admin@prokatilo.com}"
     depends_on:
       frontend:
         condition: service_started
