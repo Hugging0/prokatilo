@@ -27,7 +27,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-2">
-      <span className="text-xs font-black uppercase tracking-widest text-white/50">
+      <span className="text-xs font-black uppercase tracking-widest text-slate-500">
         {label}
       </span>
       {children}
@@ -36,7 +36,7 @@ function Field({
 }
 
 function inputClass() {
-  return "min-h-12 rounded-2xl border border-white/10 bg-white/10 px-4 text-base font-bold text-white outline-none placeholder:text-white/30";
+  return "min-h-12 rounded-2xl border border-slate-200 bg-white px-4 text-base font-bold text-slate-950 outline-none placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100";
 }
 
 export function PromoCodeForm({
@@ -58,8 +58,8 @@ export function PromoCodeForm({
   ) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <AppCard variant="dark" className="mb-5 text-white">
-      <h3 className="text-lg font-black tracking-tight">
+    <AppCard className="text-slate-950">
+      <h3 className="text-lg font-black tracking-tight text-slate-950">
         {promoCode ? UI_COPY.operator.editPromoCode : UI_COPY.operator.createPromoCode}
       </h3>
       <div className="mt-4 grid gap-3">
@@ -164,7 +164,7 @@ export function PromoCodeForm({
               className={inputClass()}
             />
           </Field>
-          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 text-base font-black text-white">
+          <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-base font-black text-slate-700">
             <input
               type="checkbox"
               checked={form.isActive}

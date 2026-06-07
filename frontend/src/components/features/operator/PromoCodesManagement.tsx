@@ -15,13 +15,15 @@ export function PromoCodesManagement({ authToken }: { authToken: string }) {
   const promoCodes = useAdminPromoCodes(authToken);
 
   return (
-    <section>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="font-black">{UI_COPY.operator.promoCodesTitle}</h3>
+    <section className="flex flex-col gap-5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-lg font-black tracking-tight text-slate-950">
+          {UI_COPY.operator.promoCodesTitle}
+        </h3>
         <button
           type="button"
           onClick={() => void promoCodes.refresh()}
-          className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-3 py-2 text-xs font-black text-white/60"
+          className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-xs font-black text-slate-500 shadow-sm"
         >
           <RefreshCw size={14} />
           Обновить
@@ -37,13 +39,13 @@ export function PromoCodesManagement({ authToken }: { authToken: string }) {
       />
 
       {promoCodes.isLoading && (
-        <AppNotice tone="dark" className="mb-4">
+        <AppNotice>
           Загружаем промокоды…
         </AppNotice>
       )}
 
       {promoCodes.message && (
-        <AppNotice tone="dark" className="mb-4">
+        <AppNotice>
           {promoCodes.message}
         </AppNotice>
       )}
@@ -60,7 +62,6 @@ export function PromoCodesManagement({ authToken }: { authToken: string }) {
 
         {!promoCodes.isLoading && promoCodes.promoCodes.length === 0 && (
           <AppEmptyState
-            dark
             title={UI_COPY.operator.promoCodesEmpty}
             description="Создайте первый промокод для скидок или бонусов сервиса."
             action={

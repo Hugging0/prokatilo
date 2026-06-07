@@ -26,16 +26,16 @@ export function PromoCodeCard({
   onArchive: () => void;
 }) {
   return (
-    <AppCard variant="dark" className="flex flex-col gap-4 text-white">
+    <AppCard className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-widest text-white/50">
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">
             {promoCode.code}
           </p>
-          <h3 className="mt-1 text-lg font-black tracking-tight">
+          <h3 className="mt-1 text-lg font-black tracking-tight text-slate-950">
             {promoCode.title}
           </h3>
-          <p className="mt-1 text-sm font-bold leading-relaxed text-white/50">
+          <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">
             {getPromoCodeValue(promoCode)} · использовано {promoCode.usedCount}
             {promoCode.maxUses ? `/${promoCode.maxUses}` : ""}
           </p>
