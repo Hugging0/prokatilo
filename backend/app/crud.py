@@ -172,6 +172,25 @@ def build_rental_interval(
     return start_at, end_at
 
 
+def get_order_planned_interval(
+    order: models.OrderModel,
+) -> tuple[datetime, datetime]:
+    return build_rental_interval(
+        rental_date=order.rental_date,
+        rental_time=order.rental_time,
+        tariff_type=schemas.TariffType(order.tariff_type),
+    )
+
+
+def get_order_blocking_interval(
+    order: models.OrderModel,
+) -> tuple[datetime, datetime]:
+    if order.rental_start_at and order.rental_end_at:
+        return order.rental_start_at, order.rental_end_at
+
+    return get_order_planned_interval(order)
+
+
 async def ensure_booking_slot_is_free(
     db: AsyncSession,
     item_id: int,
@@ -179,11 +198,9 @@ async def ensure_booking_slot_is_free(
     rental_end_at: datetime,
     exclude_order_id: int | None = None,
 ) -> None:
-    stmt = select(func.count(models.OrderModel.id)).where(
+    stmt = select(models.OrderModel).where(
         models.OrderModel.item_id == item_id,
         models.OrderModel.status.in_(BOOKING_BLOCKING_STATUSES),
-        models.OrderModel.rental_start_at < rental_end_at,
-        models.OrderModel.rental_end_at > rental_start_at,
     )
 
     if exclude_order_id is not None:
@@ -191,14 +208,17 @@ async def ensure_booking_slot_is_free(
 
     result = await db.execute(stmt)
 
-    if result.scalar_one() > 0:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                "На выбранное время вещь уже забронирована. "
-                "Выберите другой слот."
-            ),
-        )
+    for order in result.scalars().all():
+        blocking_start_at, blocking_end_at = get_order_blocking_interval(order)
+
+        if blocking_start_at < rental_end_at and blocking_end_at > rental_start_at:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "На выбранное время вещь уже забронирована. "
+                    "Выберите другой слот."
+                ),
+            )
 
 
 async def get_items(
@@ -249,7 +269,6 @@ async def get_item_bookings(
             models.OrderModel.item_id == item_id,
             models.OrderModel.status.in_(BOOKING_BLOCKING_STATUSES),
         )
-        .order_by(models.OrderModel.rental_start_at.asc())
     )
 
     if rental_date:
@@ -263,13 +282,20 @@ async def get_item_bookings(
 
         day_start = datetime.combine(day, time.min, tzinfo=APP_TIMEZONE)
         day_end = day_start + timedelta(days=1)
-        stmt = stmt.where(
-            models.OrderModel.rental_start_at < day_end,
-            models.OrderModel.rental_end_at > day_start,
-        )
-
     result = await db.execute(stmt)
-    return list(result.scalars().all())
+    orders = list(result.scalars().all())
+
+    if rental_date:
+        orders = [
+            order
+            for order in orders
+            if (
+                get_order_blocking_interval(order)[0] < day_end
+                and get_order_blocking_interval(order)[1] > day_start
+            )
+        ]
+
+    return sorted(orders, key=lambda order: get_order_blocking_interval(order)[0])
 
 
 async def get_admin_items(db: AsyncSession) -> list[models.ItemModel]:
@@ -993,25 +1019,23 @@ async def create_order(
             detail="Товар недоступен для заказа",
         )
 
-    rental_start_at, rental_end_at = build_rental_interval(
+    planned_start_at, planned_end_at = build_rental_interval(
         rental_date=order_data.rental_date,
         rental_time=order_data.rental_time,
         tariff_type=order_data.tariff_type,
-        rental_end_date=order_data.rental_end_date,
-        rental_end_time=order_data.rental_end_time,
     )
     await ensure_booking_slot_is_free(
         db=db,
         item_id=order_data.item_id,
-        rental_start_at=rental_start_at,
-        rental_end_at=rental_end_at,
+        rental_start_at=planned_start_at,
+        rental_end_at=planned_end_at,
     )
     subtotal_price = normalize_money(
         get_tariff_price(
             item,
             order_data.tariff_type,
-            rental_start_at,
-            rental_end_at,
+            None,
+            None,
         ),
     )
     promo_code = None
@@ -1066,8 +1090,8 @@ async def create_order(
         total_price=total_price,
         rental_date=order_data.rental_date,
         rental_time=order_data.rental_time,
-        rental_start_at=rental_start_at,
-        rental_end_at=rental_end_at,
+        rental_start_at=None,
+        rental_end_at=None,
         comment=order_data.comment,
         status=schemas.OrderStatus.PENDING.value,
     )
@@ -1227,8 +1251,6 @@ async def update_order(
     update_data = order_data.model_dump(exclude_unset=True)
     next_rental_date = update_data.get("rental_date", order.rental_date)
     next_rental_time = update_data.get("rental_time", order.rental_time)
-    next_rental_end_date = update_data.get("rental_end_date")
-    next_rental_end_time = update_data.get("rental_end_time")
     next_tariff_type = update_data.get(
         "tariff_type",
         schemas.TariffType(order.tariff_type),
@@ -1249,28 +1271,24 @@ async def update_order(
     )
 
     if should_update_interval:
-        rental_start_at, rental_end_at = build_rental_interval(
+        planned_start_at, planned_end_at = build_rental_interval(
             rental_date=next_rental_date,
             rental_time=next_rental_time,
             tariff_type=next_tariff_type,
-            rental_end_date=next_rental_end_date,
-            rental_end_time=next_rental_end_time,
         )
         await ensure_booking_slot_is_free(
             db=db,
             item_id=order.item_id,
-            rental_start_at=rental_start_at,
-            rental_end_at=rental_end_at,
+            rental_start_at=planned_start_at,
+            rental_end_at=planned_end_at,
             exclude_order_id=order.id,
         )
-        order.rental_start_at = rental_start_at
-        order.rental_end_at = rental_end_at
         order.subtotal_price = normalize_money(
             get_tariff_price(
                 order.item,
                 next_tariff_type,
-                rental_start_at,
-                rental_end_at,
+                None,
+                None,
             ),
         )
         order.total_price = normalize_money(
@@ -1314,6 +1332,13 @@ async def update_order_status(
         )
 
     order.status = new_status.value
+
+    if new_status == schemas.OrderStatus.ACTIVE and not order.rental_start_at:
+        rental_start_at = datetime.now(tz=APP_TIMEZONE)
+        order.rental_start_at = rental_start_at
+        order.rental_end_at = rental_start_at + get_tariff_duration(
+            schemas.TariffType(order.tariff_type),
+        )
 
     if new_status == schemas.OrderStatus.RETURNED:
         await process_loyalty_for_returned_order(db=db, order=order)

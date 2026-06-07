@@ -1,9 +1,9 @@
 import {
-  getRentalDurationLabel,
-  getSelectedRentalInterval,
+  getDateTimeFromInputs,
+  getPresetEndInputValues,
   intervalsOverlap,
 } from "@/lib/booking-time";
-import { getRentalTotalPrice } from "@/lib/tariffs";
+import { getRentalTotalPrice, getTariffLabel } from "@/lib/tariffs";
 import type { AppItem, BookingSlot, TariffType } from "@/types";
 
 import {
@@ -17,8 +17,6 @@ export function useCheckoutAvailability({
   selectedTariff,
   selectedDate,
   selectedTime,
-  selectedEndDate,
-  selectedEndTime,
   bookingSlots,
   clarifyAddress,
   deliveryAddress,
@@ -27,37 +25,36 @@ export function useCheckoutAvailability({
   selectedTariff: TariffType;
   selectedDate: string;
   selectedTime: string;
-  selectedEndDate: string;
-  selectedEndTime: string;
   bookingSlots: BookingSlot[];
   clarifyAddress: boolean;
   deliveryAddress: string;
 }) {
-  const selectedInterval = getSelectedRentalInterval(
+  const selectedStartAt = getDateTimeFromInputs(selectedDate, selectedTime);
+  const selectedPresetEnd = getPresetEndInputValues(
     selectedDate,
     selectedTime,
-    selectedEndDate,
-    selectedEndTime,
+    selectedTariff,
   );
+  const selectedEndAt = selectedPresetEnd
+    ? getDateTimeFromInputs(selectedPresetEnd.endDate, selectedPresetEnd.endTime)
+    : null;
   const totalPrice = getRentalTotalPrice(
     selectedItem,
     selectedTariff,
-    selectedInterval?.startAt ?? null,
-    selectedInterval?.endAt ?? null,
+    null,
+    null,
   );
-  const hasConflict = selectedInterval
+  const hasConflict = selectedStartAt && selectedEndAt
     ? bookingSlots.some((slot) =>
         intervalsOverlap(
-          selectedInterval.startAt,
-          selectedInterval.endAt,
+          selectedStartAt,
+          selectedEndAt,
           new Date(slot.rentalStartAt),
           new Date(slot.rentalEndAt),
         ),
       )
     : false;
-  const isPeriodValid = Boolean(
-    selectedInterval && selectedInterval.endAt > selectedInterval.startAt,
-  );
+  const isPeriodValid = Boolean(selectedStartAt && selectedEndAt);
   const availableIntervals = getAvailableDeliveryIntervals({
     selectedDate,
     selectedTariff,
@@ -70,18 +67,20 @@ export function useCheckoutAvailability({
     selectedItem.available && isPeriodValid && !hasConflict;
   const canGoNextFromAddress =
     clarifyAddress || deliveryAddress.trim().length >= 5;
-  const rentalDurationSummary = getRentalDurationLabel(
-    selectedInterval?.startAt ?? null,
-    selectedInterval?.endAt ?? null,
-  );
-  const deliveryIntervalSummary = selectedInterval
+  const rentalDurationSummary = getTariffLabel(selectedTariff);
+  const deliveryIntervalSummary = selectedStartAt
     ? `${formatDeliveryDateLabel(
-        selectedInterval.startAt,
+        selectedStartAt,
       )}, ${formatDeliveryIntervalLabel(selectedTime)}`
     : "Выберите интервал доставки";
 
   return {
-    selectedInterval,
+    selectedInterval: selectedStartAt
+      ? {
+          startAt: selectedStartAt,
+          endAt: selectedEndAt,
+        }
+      : null,
     totalPrice,
     rentalDurationSummary,
     deliveryIntervalSummary,

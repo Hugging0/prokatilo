@@ -1,7 +1,8 @@
 import { CalendarDays, MapPin, Phone } from "lucide-react";
 
 import { AppCard } from "@/components/ui/AppCard";
-import { formatRentalPeriod, getRentalDurationLabel } from "@/lib/booking-time";
+import { formatDateTime, formatDeliveryWindow } from "@/lib/booking-time";
+import { getTariffLabel } from "@/lib/tariffs";
 import type { AppOrder } from "@/types";
 
 import { getDeliveryHint } from "../lib/order-status-text";
@@ -24,10 +25,7 @@ export function OrderDetailsView({
   onBack: () => void;
   onLeaveReview: (orderId: number, rating: number, comment: string) => void;
 }) {
-  const duration = getRentalDurationLabel(
-    new Date(order.rentalStartAt),
-    new Date(order.rentalEndAt),
-  );
+  const hasActualRental = Boolean(order.rentalStartAt && order.rentalEndAt);
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-32">
@@ -42,9 +40,17 @@ export function OrderDetailsView({
         <OrderDetailsSection title="Главное по брони">
           <DetailRow
             icon={CalendarDays}
-            label={order.status === "returned" ? "Аренда была" : "Когда"}
-            value={formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
-            hint={duration}
+            label={hasActualRental ? "Вернуть до" : "Окно доставки"}
+            value={
+              hasActualRental
+                ? formatDateTime(order.rentalEndAt)
+                : formatDeliveryWindow(order.date, order.time)
+            }
+            hint={
+              hasActualRental
+                ? `Передано клиенту: ${formatDateTime(order.rentalStartAt)}`
+                : `Срок аренды: ${getTariffLabel(order.tariff)}`
+            }
           />
           <DetailRow
             icon={MapPin}

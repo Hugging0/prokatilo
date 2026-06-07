@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 import { APP_NAME } from "@/lib/brand";
 
@@ -106,12 +107,21 @@ export function LegalPage({
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-8 sm:py-12">
       <article className="mx-auto max-w-3xl rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-10">
-        <Link
-          href="/"
-          className="text-sm font-black uppercase tracking-wide text-orange-600"
-        >
-          {APP_NAME}
-        </Link>
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="rounded-2xl bg-slate-50 p-3 text-slate-900 shadow-sm active:scale-95"
+            aria-label="Вернуться в приложение"
+          >
+            <ArrowLeft size={21} />
+          </Link>
+          <Link
+            href="/"
+            className="text-sm font-black uppercase tracking-wide text-orange-600"
+          >
+            {APP_NAME}
+          </Link>
+        </div>
 
         <header className="mt-5 border-b border-slate-100 pb-6">
           <h1 className="text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">

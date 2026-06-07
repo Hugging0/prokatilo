@@ -61,12 +61,12 @@ export function ReviewStep({
         </CheckoutPanel>
 
         <ReviewRow
-          title="Интервал доставки"
+          title="Окно доставки"
           value={hasSelectedInterval ? deliveryIntervalSummary : "Не выбрано"}
           onEdit={onEditTiming}
         />
         <ReviewRow
-          title="Длительность аренды"
+          title="Срок аренды"
           value={hasSelectedInterval ? rentalDurationSummary : "Не выбрано"}
           onEdit={onEditTiming}
         />

@@ -14,12 +14,12 @@ export const TARIFFS: TariffMeta[] = [
   },
   {
     id: "24h",
-    label: "сутки",
+    label: "1 день",
     shortLabel: "24 ч",
   },
   {
     id: "7d",
-    label: "неделя",
+    label: "1 неделя",
     shortLabel: "7 д",
   },
 ];
@@ -31,9 +31,9 @@ export function getTariffLabel(tariff: TariffType): string {
     case "6h":
       return "6 часов";
     case "24h":
-      return "сутки";
+      return "1 день";
     case "7d":
-      return "неделя";
+      return "1 неделя";
   }
 }
 

@@ -41,8 +41,8 @@ export function TimingStep({
   return (
     <section>
       <StepTitle
-        title="Когда нужна вещь?"
-        subtitle="Выберите дату, интервал и длительность"
+        title="Когда привезти?"
+        subtitle="Выберите окно доставки и срок аренды"
       />
 
       <div className="mt-7 space-y-6">
@@ -71,7 +71,7 @@ export function TimingStep({
         </CheckoutPanel>
 
         <CheckoutPanel>
-          <PanelLabel icon={Clock3} label="Интервал доставки" />
+          <PanelLabel icon={Clock3} label="Окно доставки" />
           {isBookingsLoading && (
             <p className="mt-4 text-sm font-bold text-slate-400">
               Проверяем занятость…
@@ -108,7 +108,7 @@ export function TimingStep({
         </CheckoutPanel>
 
         <CheckoutPanel>
-          <PanelLabel icon={PackageCheck} label="Длительность" />
+          <PanelLabel icon={PackageCheck} label="Срок аренды" />
           <div className="mt-4 grid grid-cols-3 gap-2">
             {TARIFFS.map((tariff) => (
               <button
@@ -130,6 +130,9 @@ export function TimingStep({
               </button>
             ))}
           </div>
+          <p className="mt-4 rounded-2xl bg-orange-50 px-4 py-3 text-sm font-bold leading-relaxed text-orange-700">
+            Срок аренды начнется после передачи вещи.
+          </p>
         </CheckoutPanel>
 
         {!isPeriodValid && (

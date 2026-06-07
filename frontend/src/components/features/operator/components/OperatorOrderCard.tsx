@@ -4,7 +4,7 @@ import { CalendarClock, ChevronDown, MapPin, Phone } from "lucide-react";
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
-import { formatRentalPeriod } from "@/lib/booking-time";
+import { formatDateTime, formatDeliveryWindow } from "@/lib/booking-time";
 import { UI_COPY } from "@/lib/copy";
 import { ORDER_STATUSES } from "@/lib/order-statuses";
 import {
@@ -26,6 +26,7 @@ export function OperatorOrderCard({
 }) {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const primaryAction = getPrimaryOrderAction(order);
+  const hasActualRental = Boolean(order.rentalStartAt && order.rentalEndAt);
 
   return (
     <AppCard className="flex flex-col gap-4">
@@ -57,7 +58,16 @@ export function OperatorOrderCard({
             </p>
             <p className="flex items-start gap-2">
               <CalendarClock size={16} className="mt-1 shrink-0" />
-              {formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
+              <span>
+                {hasActualRental
+                  ? `Вернуть до: ${formatDateTime(order.rentalEndAt)}`
+                  : `Доставка: ${formatDeliveryWindow(order.date, order.time)}`}
+                <span className="mt-1 block text-slate-400">
+                  {hasActualRental
+                    ? `Передано клиенту: ${formatDateTime(order.rentalStartAt)}`
+                    : `Срок аренды: ${getTariffLabel(order.tariff)}`}
+                </span>
+              </span>
             </p>
           </div>
         </div>

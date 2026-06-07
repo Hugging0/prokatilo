@@ -22,8 +22,6 @@ interface CheckoutViewProps {
   selectedTariff: TariffType;
   selectedDate: string;
   selectedTime: string;
-  selectedEndDate: string;
-  selectedEndTime: string;
   deliveryAddress: string;
   courierComment: string;
   clarifyAddress: boolean;
@@ -57,8 +55,6 @@ export function CheckoutView({
   selectedTariff,
   selectedDate,
   selectedTime,
-  selectedEndDate,
-  selectedEndTime,
   deliveryAddress,
   courierComment,
   clarifyAddress,
@@ -93,8 +89,6 @@ export function CheckoutView({
     selectedTariff,
     selectedDate,
     selectedTime,
-    selectedEndDate,
-    selectedEndTime,
     bookingSlots,
     clarifyAddress,
     deliveryAddress,

@@ -223,16 +223,21 @@ async def read_item_bookings(
         item_id=item_id,
         rental_date=rental_date,
     )
-    return [
-        schemas.BookingRead(
-            order_id=booking.id,
-            item_id=booking.item_id,
-            rental_start_at=booking.rental_start_at,
-            rental_end_at=booking.rental_end_at,
-            status=schemas.OrderStatus(booking.status),
+    booking_reads: list[schemas.BookingRead] = []
+
+    for booking in bookings:
+        rental_start_at, rental_end_at = crud.get_order_blocking_interval(booking)
+        booking_reads.append(
+            schemas.BookingRead(
+                order_id=booking.id,
+                item_id=booking.item_id,
+                rental_start_at=rental_start_at,
+                rental_end_at=rental_end_at,
+                status=schemas.OrderStatus(booking.status),
+            ),
         )
-        for booking in bookings
-    ]
+
+    return booking_reads
 
 
 @app.get(

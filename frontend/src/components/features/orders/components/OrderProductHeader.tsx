@@ -1,6 +1,6 @@
 import type { AppOrder } from "@/types";
 
-import { getRentalDurationLabel } from "@/lib/booking-time";
+import { getTariffLabel } from "@/lib/tariffs";
 import { formatPricePerDay } from "../lib/orders-view.utils";
 import { OrderIcon } from "./OrderIcon";
 
@@ -11,12 +11,7 @@ export function OrderProductHeader({
   order: AppOrder;
   showDuration?: boolean;
 }) {
-  const duration = showDuration
-    ? getRentalDurationLabel(
-        new Date(order.rentalStartAt),
-        new Date(order.rentalEndAt),
-      )
-    : null;
+  const duration = showDuration ? getTariffLabel(order.tariff) : null;
 
   return (
     <div className="flex items-center gap-4">

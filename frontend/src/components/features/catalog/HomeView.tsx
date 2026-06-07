@@ -49,7 +49,7 @@ export function HomeView({
             </p>
           </div>
 
-          <div className="ml-4 max-w-[7rem] shrink-0 rounded-xl border border-white/10 bg-white/20 px-2 py-1.5 text-right text-[10px] font-black uppercase leading-tight backdrop-blur-sm">
+          <div className="rounded-xl border border-white/10 bg-white/20 p-2 text-xs font-black uppercase backdrop-blur-sm">
             {UI_COPY.home.serviceBadge}
           </div>
         </div>

@@ -334,8 +334,8 @@ class OrderRead(OrderBase):
     promo_discount_amount: Decimal
     bonus_spent_amount: Decimal
     bonus_earned_amount: Decimal
-    rental_start_at: datetime
-    rental_end_at: datetime
+    rental_start_at: datetime | None
+    rental_end_at: datetime | None
     created_at: datetime
     updated_at: datetime
     item: AdminItemRead

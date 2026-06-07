@@ -1,4 +1,4 @@
-import { isTodayInAppTimeZone } from "@/lib/booking-time";
+import { getDateTimeFromInputs, isTodayInAppTimeZone } from "@/lib/booking-time";
 import type { AppOrder } from "@/types";
 
 export type OperatorTab = "orders" | "catalog" | "promo-codes" | "settings";
@@ -35,7 +35,9 @@ export function filterOrdersByQueue(orders: AppOrder[], queue: OrderQueue) {
       );
     case "today":
       return orders.filter((order) =>
-        isTodayInAppTimeZone(order.rentalStartAt),
+        isTodayInAppTimeZone(
+          order.rentalStartAt ?? getDateTimeFromInputs(order.date, order.time) ?? "",
+        ),
       );
     case "active":
       return orders.filter((order) =>

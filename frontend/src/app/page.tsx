@@ -21,7 +21,6 @@ import { useItems } from "@/hooks/use-items";
 import { useOrders } from "@/hooks/use-orders";
 import { useToast } from "@/hooks/use-toast";
 import { createOrder } from "@/lib/api/orders";
-import { getSelectedRentalInterval } from "@/lib/booking-time";
 import { UI_COPY } from "@/lib/copy";
 import { mapAppCheckoutToOrderCreatePayload } from "@/lib/mappers/orders";
 import { getRentalTotalPrice } from "@/lib/tariffs";
@@ -74,12 +73,6 @@ export default function App() {
     setIsBookingSubmitting(true);
 
     try {
-      const selectedInterval = getSelectedRentalInterval(
-        checkout.selectedDate,
-        checkout.selectedTime,
-        checkout.selectedEndDate,
-        checkout.selectedEndTime,
-      );
       await createOrder(
         auth.authToken,
         mapAppCheckoutToOrderCreatePayload({
@@ -93,13 +86,11 @@ export default function App() {
           bonusSpendAmount: checkout.bonusSpendAmount,
           selectedDate: checkout.selectedDate,
           selectedTime: checkout.selectedTime,
-          selectedEndDate: checkout.selectedEndDate,
-          selectedEndTime: checkout.selectedEndTime,
           totalPrice: getRentalTotalPrice(
             checkout.selectedItem,
             checkout.selectedTariff,
-            selectedInterval?.startAt ?? null,
-            selectedInterval?.endAt ?? null,
+            null,
+            null,
           ),
         }),
       );
@@ -164,8 +155,6 @@ export default function App() {
           selectedTariff={checkout.selectedTariff}
           selectedDate={checkout.selectedDate}
           selectedTime={checkout.selectedTime}
-          selectedEndDate={checkout.selectedEndDate}
-          selectedEndTime={checkout.selectedEndTime}
           deliveryAddress={checkout.deliveryAddress}
           courierComment={checkout.courierComment}
           clarifyAddress={checkout.clarifyAddress}

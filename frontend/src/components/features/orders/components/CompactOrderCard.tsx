@@ -1,7 +1,8 @@
 import { CalendarDays, ChevronRight, MapPin } from "lucide-react";
 
-import { formatRentalPeriod } from "@/lib/booking-time";
+import { formatDateTime, formatDeliveryWindow } from "@/lib/booking-time";
 import { ORDER_STATUSES } from "@/lib/order-statuses";
+import { getTariffLabel } from "@/lib/tariffs";
 import type { AppOrder } from "@/types";
 
 import { formatPricePerDay } from "../lib/orders-view.utils";
@@ -16,6 +17,7 @@ export function CompactOrderCard({
   onOpen: () => void;
 }) {
   const status = ORDER_STATUSES[order.status];
+  const hasActualRental = Boolean(order.rentalStartAt && order.rentalEndAt);
 
   return (
     <button
@@ -43,7 +45,16 @@ export function CompactOrderCard({
           <div className="mt-4 flex flex-col gap-2 text-sm font-bold text-slate-600">
             <span className="flex items-start gap-2">
               <CalendarDays className="mt-0.5 shrink-0 text-slate-400" size={17} />
-              {formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
+              <span>
+                {hasActualRental
+                  ? `Вернуть до: ${formatDateTime(order.rentalEndAt)}`
+                  : `Доставка: ${formatDeliveryWindow(order.date, order.time)}`}
+                <span className="mt-1 block text-slate-500">
+                  {hasActualRental
+                    ? `Аренда началась: ${formatDateTime(order.rentalStartAt)}`
+                    : `Срок аренды: ${getTariffLabel(order.tariff)}`}
+                </span>
+              </span>
             </span>
             <span className="flex items-start gap-2">
               <MapPin className="mt-0.5 shrink-0 text-slate-400" size={17} />

@@ -174,3 +174,31 @@ export function getRentalDurationLabel(startAt: Date | null, endAt: Date | null)
   const durationDays = Math.ceil(durationHours / 24);
   return `${durationDays} дн`;
 }
+
+export function formatDeliveryWindow(selectedDate: string, selectedTime: string) {
+  const startAt = getDateTimeFromInputs(selectedDate, selectedTime);
+
+  if (!startAt) {
+    return "Время уточняется";
+  }
+
+  const endAt = new Date(startAt.getTime() + 2 * 60 * 60 * 1000);
+
+  return `${dateFormatter.format(startAt)}, ${timeFormatter.format(
+    startAt,
+  )}–${timeFormatter.format(endAt)}`;
+}
+
+export function formatDateTime(value: string | Date | null) {
+  if (!value) {
+    return "появится после передачи вещи";
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Время уточняется";
+  }
+
+  return dateTimeFormatter.format(date);
+}

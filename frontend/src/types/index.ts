@@ -86,8 +86,8 @@ export interface AppOrder {
   tariff: TariffType;
   date: string;
   time: string;
-  rentalStartAt: string;
-  rentalEndAt: string;
+  rentalStartAt: string | null;
+  rentalEndAt: string | null;
   subtotalPrice: number;
   promoDiscountAmount: number;
   bonusSpentAmount: number;
@@ -175,8 +175,8 @@ export interface BackendOrderDto {
   comment: string | null;
   rental_date: string;
   rental_time: string;
-  rental_start_at: string;
-  rental_end_at: string;
+  rental_start_at: string | null;
+  rental_end_at: string | null;
   created_at: string;
   updated_at: string;
   item: BackendItemDto;

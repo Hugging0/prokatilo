@@ -1,8 +1,9 @@
 import { CalendarDays, ChevronRight, MapPin } from "lucide-react";
 
 import { AppButton } from "@/components/ui/AppButton";
-import { formatRentalPeriod } from "@/lib/booking-time";
+import { formatDateTime, formatDeliveryWindow } from "@/lib/booking-time";
 import { BRAND_GRADIENT } from "@/lib/brand";
+import { getTariffLabel } from "@/lib/tariffs";
 import type { AppOrder } from "@/types";
 
 import { OrderFact } from "./OrderFact";
@@ -15,14 +16,25 @@ export function FeaturedOrderCard({
   order: AppOrder;
   onOpen: () => void;
 }) {
+  const hasActualRental = Boolean(order.rentalStartAt && order.rentalEndAt);
+
   return (
     <article className="rounded-[1.75rem] border border-slate-100 bg-white p-5 shadow-sm">
       <OrderProductHeader order={order} />
       <div className="mt-5 flex flex-col gap-4">
         <OrderFact
           icon={CalendarDays}
-          label="Когда"
-          value={formatRentalPeriod(order.rentalStartAt, order.rentalEndAt)}
+          label={hasActualRental ? "Вернуть до" : "Доставка"}
+          value={
+            hasActualRental
+              ? formatDateTime(order.rentalEndAt)
+              : formatDeliveryWindow(order.date, order.time)
+          }
+          hint={
+            hasActualRental
+              ? `Аренда началась: ${formatDateTime(order.rentalStartAt)}`
+              : `Срок аренды: ${getTariffLabel(order.tariff)}`
+          }
         />
         <OrderFact
           icon={MapPin}

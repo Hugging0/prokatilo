@@ -1,3 +1,4 @@
+import { getDateTimeFromInputs } from "@/lib/booking-time";
 import { getTariffLabel } from "@/lib/tariffs";
 import type { AppOrder, OrderStatus } from "@/types";
 
@@ -12,10 +13,19 @@ const ACTIVE_STATUSES: OrderStatus[] = [
 
 export function sortOrders(orders: AppOrder[]) {
   return [...orders].sort((first, second) => {
-    const firstTime = new Date(first.rentalStartAt).getTime();
-    const secondTime = new Date(second.rentalStartAt).getTime();
+    const firstTime = getOrderSortTime(first);
+    const secondTime = getOrderSortTime(second);
     return firstTime - secondTime;
   });
+}
+
+function getOrderSortTime(order: AppOrder) {
+  const date =
+    order.rentalStartAt !== null
+      ? new Date(order.rentalStartAt)
+      : getDateTimeFromInputs(order.date, order.time);
+
+  return date && !Number.isNaN(date.getTime()) ? date.getTime() : 0;
 }
 
 export function getVisibleOrdersByTab(orders: AppOrder[], activeTab: OrdersTab) {
@@ -35,7 +45,7 @@ export function getVisibleOrdersByTab(orders: AppOrder[], activeTab: OrdersTab) 
 export function getNextOrder(activeOrders: AppOrder[]) {
   const now = Date.now();
   const futureOrder = activeOrders.find(
-    (order) => new Date(order.rentalStartAt).getTime() >= now,
+    (order) => getOrderSortTime(order) >= now,
   );
 
   return (

@@ -90,8 +90,6 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
   courierComment: string;
   selectedDate: string;
   selectedTime: string;
-  selectedEndDate: string;
-  selectedEndTime: string;
   totalPrice: number;
   promoCode?: string | null;
   bonusSpendAmount?: number | null;
@@ -108,8 +106,8 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
     total_price: input.totalPrice,
     rental_date: input.selectedDate,
     rental_time: input.selectedTime,
-    rental_end_date: input.selectedEndDate,
-    rental_end_time: input.selectedEndTime,
+    rental_end_date: null,
+    rental_end_time: null,
     promo_code: input.promoCode || null,
     bonus_spend_amount: input.bonusSpendAmount || null,
     comment: input.courierComment.trim() || null,
