@@ -14,6 +14,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://prokatilo.com"),
   title: {
     default: APP_NAME,
     template: `%s · ${APP_NAME}`,
@@ -28,7 +29,51 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  icons: {
+    icon: [
+      {
+        url: "/icons/favicon-32x32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        url: "/icons/favicon-96x96.png",
+        sizes: "96x96",
+        type: "image/png",
+      },
+    ],
+    shortcut: "/icons/favicon-32x32.png",
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
   manifest: "/manifest.webmanifest",
+  openGraph: {
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    url: "https://prokatilo.com",
+    siteName: APP_NAME,
+    locale: "ru_RU",
+    type: "website",
+    images: [
+      {
+        url: "/icons/prokatilo-icon-512.png",
+        width: 512,
+        height: 512,
+        alt: APP_NAME,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    images: ["/icons/prokatilo-icon-512.png"],
+  },
 };
 
 export const viewport: Viewport = {
