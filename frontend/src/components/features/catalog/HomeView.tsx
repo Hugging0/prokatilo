@@ -49,9 +49,6 @@ export function HomeView({
             </p>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-white/20 p-2 text-xs font-black uppercase backdrop-blur-sm">
-            {UI_COPY.home.serviceBadge}
-          </div>
         </div>
 
         <div className="relative">
