@@ -7,6 +7,7 @@ import { AddressStep } from "./components/AddressStep";
 import { CheckoutFooter } from "./components/CheckoutFooter";
 import { CheckoutHeader } from "./components/CheckoutHeader";
 import { CheckoutLoyaltyCard } from "./components/CheckoutLoyaltyCard";
+import { CheckoutPriceSummary } from "./components/CheckoutPriceSummary";
 import { NextStepsStep } from "./components/NextStepsStep";
 import { ReviewStep } from "./components/ReviewStep";
 import { TimingStep } from "./components/TimingStep";
@@ -209,7 +210,6 @@ export function CheckoutView({
               clarifyAddress={clarifyAddress}
               deliveryIntervalSummary={availability.deliveryIntervalSummary}
               rentalDurationSummary={availability.rentalDurationSummary}
-              totalPrice={availability.totalPrice}
               hasSelectedInterval={Boolean(availability.selectedInterval)}
               onEditTiming={() => setStep(1)}
               onEditAddress={() => setStep(2)}
@@ -218,13 +218,19 @@ export function CheckoutView({
               authToken={authToken}
               subtotalPrice={availability.totalPrice}
               promoCode={promoCode}
-              appliedPromoCode={appliedPromoCode}
               promoDiscountPreview={promoDiscountPreview}
               bonusSpendAmount={bonusSpendAmount}
               onNotify={onNotify}
               onPromoCodeChange={onPromoCodeChange}
               onPromoApplied={onPromoApplied}
               onBonusSpendChange={onBonusSpendChange}
+            />
+            <CheckoutPriceSummary
+              subtotalPrice={availability.totalPrice}
+              deliveryPrice={0}
+              appliedPromoCode={appliedPromoCode}
+              promoDiscountPreview={promoDiscountPreview}
+              bonusSpendAmount={bonusSpendAmount}
             />
           </div>
         )}

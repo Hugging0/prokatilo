@@ -3,7 +3,6 @@ import type { AppItem } from "@/types";
 import { CheckoutPanel } from "./CheckoutPanel";
 import { ReviewRow } from "./ReviewRow";
 import { StepTitle } from "./StepTitle";
-import { SummaryRow } from "./SummaryRow";
 
 export function ReviewStep({
   selectedItem,
@@ -11,7 +10,6 @@ export function ReviewStep({
   clarifyAddress,
   deliveryIntervalSummary,
   rentalDurationSummary,
-  totalPrice,
   hasSelectedInterval,
   onEditTiming,
   onEditAddress,
@@ -21,7 +19,6 @@ export function ReviewStep({
   clarifyAddress: boolean;
   deliveryIntervalSummary: string;
   rentalDurationSummary: string;
-  totalPrice: number;
   hasSelectedInterval: boolean;
   onEditTiming: () => void;
   onEditAddress: () => void;
@@ -86,12 +83,6 @@ export function ReviewStep({
           title="Оплата"
           value="Оплата курьеру при получении товара. Сейчас деньги не списываются."
         />
-
-        <CheckoutPanel>
-          <SummaryRow label="Аренда" value={`${totalPrice} ₽`} />
-          <SummaryRow label="Доставка" value="0 ₽" />
-          <SummaryRow label="К оплате курьеру" value={`${totalPrice} ₽`} strong />
-        </CheckoutPanel>
       </div>
     </section>
   );

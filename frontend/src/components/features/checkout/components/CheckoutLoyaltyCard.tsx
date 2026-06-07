@@ -10,13 +10,11 @@ import { mapBackendPromoCodePreviewToAppPromoCodePreview } from "@/lib/mappers/p
 import type { AppLoyaltySummary, AppPromoCodePreview } from "@/types";
 
 import { CheckoutPanel } from "./CheckoutPanel";
-import { SummaryRow } from "./SummaryRow";
 
 interface CheckoutLoyaltyCardProps {
   authToken: string;
   subtotalPrice: number;
   promoCode: string;
-  appliedPromoCode: string | null;
   promoDiscountPreview: number;
   bonusSpendAmount: number;
   onNotify: (message: string) => void;
@@ -29,7 +27,6 @@ export function CheckoutLoyaltyCard({
   authToken,
   subtotalPrice,
   promoCode,
-  appliedPromoCode,
   promoDiscountPreview,
   bonusSpendAmount,
   onNotify,
@@ -49,10 +46,6 @@ export function CheckoutLoyaltyCard({
   const normalizedBonusSpend = Math.min(
     bonusSpendAmount,
     availableBonusSpend,
-  );
-  const previewTotal = Math.max(
-    0,
-    subtotalPrice - promoDiscountPreview - normalizedBonusSpend,
   );
 
   useEffect(() => {
@@ -123,7 +116,7 @@ export function CheckoutLoyaltyCard({
             Промокод и бонусы
           </h3>
           <p className="mt-1 text-base font-bold leading-relaxed text-slate-500">
-            Финальную сумму пересчитает сервис при создании брони.
+            Добавьте промокод или спишите бонусы.
           </p>
         </div>
       </div>
@@ -170,19 +163,6 @@ export function CheckoutLoyaltyCard({
         <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
           Доступно к списанию: {availableBonusSpend} ₽
         </p>
-      </div>
-
-      <div className="mt-5 rounded-[1.5rem] bg-slate-50 p-4">
-        <SummaryRow label="Стоимость аренды" value={`${subtotalPrice} ₽`} />
-        <SummaryRow
-          label="Скидка по промокоду"
-          value={appliedPromoCode ? `−${promoDiscountPreview} ₽` : "0 ₽"}
-        />
-        <SummaryRow
-          label="Списание бонусов"
-          value={normalizedBonusSpend > 0 ? `−${normalizedBonusSpend} ₽` : "0 ₽"}
-        />
-        <SummaryRow label="Предварительно итого" value={`${previewTotal} ₽`} strong />
       </div>
     </CheckoutPanel>
   );
