@@ -11,6 +11,8 @@ import { MyOrdersView } from "@/components/features/orders/MyOrdersView";
 import { OperatorDashboard } from "@/components/features/operator/OperatorDashboard";
 import { ProfileView } from "@/components/features/profile/ProfileView";
 import { AppNavigation } from "@/components/layout/AppNavigation";
+import { Footer } from "@/components/layout/Footer";
+import { CookieNotice } from "@/components/legal/CookieNotice";
 import { Toast } from "@/components/ui/Toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useBookingSlots } from "@/hooks/use-booking-slots";
@@ -124,6 +126,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Toast message={toast} />
+      <CookieNotice />
 
       {view === "auth" && (
         <AuthView
@@ -257,6 +260,10 @@ export default function App() {
             await ordersState.reloadOrders();
           }}
         />
+      )}
+
+      {view !== "admin-dashboard" && (
+        <Footer withNavigation={view !== "checkout"} />
       )}
 
       {view !== "checkout" && (

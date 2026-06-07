@@ -53,7 +53,7 @@ const PAYMENT_METHODS: Array<{
   label: string;
   hint: string;
 }> = [
-  { value: "cash", label: "Курьеру", hint: "Основной режим MVP" },
+  { value: "cash", label: "Курьеру", hint: "Основной режим сейчас" },
   { value: "card", label: "Карта", hint: "Заготовка под онлайн" },
   { value: "sbp", label: "СБП", hint: "Пока не показываем клиенту" },
 ];
@@ -206,7 +206,7 @@ export function OperatorSettingsPanel({
               Настройки сервиса
             </h2>
             <p className="mt-1 text-base font-bold leading-relaxed text-slate-500">
-              Рабочие часы, способы оплаты и бонусная логика для текущего MVP.
+              Рабочие часы, способы оплаты и бонусная логика сервиса.
             </p>
           </div>
           <AppBadge className="w-fit bg-emerald-50 text-emerald-700">

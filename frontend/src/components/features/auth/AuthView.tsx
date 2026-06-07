@@ -1,5 +1,6 @@
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { ChevronRight, Lock, Mail, Phone, ShoppingBag, User } from "lucide-react";
+import Link from "next/link";
 
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
@@ -18,6 +19,8 @@ export function AuthView({
   onSubmit,
 }: AuthViewProps) {
   const isRegister = mode === "register";
+  const [hasAcceptedLegalTerms, setHasAcceptedLegalTerms] = useState(false);
+  const isSubmitDisabled = isRegister && !hasAcceptedLegalTerms;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex items-center justify-center p-6">
@@ -113,9 +116,55 @@ export function AuthView({
             </div>
           )}
 
+          {isRegister && (
+            <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+              <label className="flex items-start gap-3">
+                <input
+                  name="legal_terms"
+                  type="checkbox"
+                  checked={hasAcceptedLegalTerms}
+                  onChange={(event) =>
+                    setHasAcceptedLegalTerms(event.target.checked)
+                  }
+                  className="mt-1 size-5 rounded border-slate-300 accent-orange-500"
+                />
+                <span className="text-sm font-bold leading-relaxed text-slate-600">
+                  Я принимаю{" "}
+                  <Link
+                    href="/terms"
+                    className="font-black text-orange-600 hover:text-orange-700"
+                  >
+                    Пользовательское соглашение
+                  </Link>{" "}
+                  и даю{" "}
+                  <Link
+                    href="/consent"
+                    className="font-black text-orange-600 hover:text-orange-700"
+                  >
+                    согласие на обработку персональных данных
+                  </Link>{" "}
+                  в соответствии с{" "}
+                  <Link
+                    href="/privacy"
+                    className="font-black text-orange-600 hover:text-orange-700"
+                  >
+                    Политикой обработки персональных данных
+                  </Link>
+                  .
+                </span>
+              </label>
+              {!hasAcceptedLegalTerms && (
+                <p className="mt-3 text-sm font-bold leading-relaxed text-slate-400">
+                  {UI_COPY.legal.registrationAgreementHint}
+                </p>
+              )}
+            </div>
+          )}
+
           <AppButton
             type="submit"
             fullWidth
+            disabled={isSubmitDisabled}
             className="bg-slate-900 shadow-slate-200"
           >
             {isRegister ? UI_COPY.auth.registerButton : UI_COPY.auth.loginButton}

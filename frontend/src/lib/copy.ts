@@ -14,8 +14,8 @@ export const UI_COPY = {
     registerButton: "Создать аккаунт",
   },
   home: {
-    slogan: "Аренда без залога",
-    serviceBadge: "Доставим за 15 мин",
+    slogan: "Аренда вещей рядом",
+    serviceBadge: "Доставка от 15 минут",
     searchPlaceholder: "Что хотите арендовать?",
     emptyCatalog: "Ничего не найдено",
     catalogLoading: "Загружаем каталог…",
@@ -35,6 +35,14 @@ export const UI_COPY = {
       "Оплата сейчас только курьеру при получении. В приложении деньги не списываются.",
     submitButton: "Создать бронь",
     paymentRedirect: "Переходим к оплате…",
+    termsAgreement:
+      "Нажимая «Создать бронь», я подтверждаю согласие с условиями аренды, доставки, оплаты и обработки персональных данных.",
+  },
+  legal: {
+    registrationAgreement:
+      "Я принимаю Пользовательское соглашение и даю согласие на обработку персональных данных в соответствии с Политикой обработки персональных данных.",
+    registrationAgreementHint:
+      "Чтобы создать аккаунт, примите условия сервиса и обработки персональных данных.",
   },
   orders: {
     title: "Мои брони",
@@ -117,8 +125,8 @@ export const UI_COPY = {
     promoCodesEmpty: "Промокодов пока нет",
   },
   profile: {
-    operatorModeTitle: "Режим оператора",
-    operatorModeHint: "Только для тестирования MVP",
+    operatorModeTitle: "Администрирование",
+    operatorModeHint: "Управление каталогом и заявками",
     adminAccountTitle: "Админский аккаунт",
     adminAccountHint: "Каталог и заявки доступны через нижнюю навигацию",
     customerAccountTitle: "Клиентский аккаунт",

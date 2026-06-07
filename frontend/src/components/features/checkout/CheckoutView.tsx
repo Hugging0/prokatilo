@@ -1,11 +1,14 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 
 import { getPresetEndInputValues } from "@/lib/booking-time";
+import { UI_COPY } from "@/lib/copy";
 import type { AppItem, BookingSlot, TariffType } from "@/types";
 
 import { AddressStep } from "./components/AddressStep";
 import { CheckoutFooter } from "./components/CheckoutFooter";
 import { CheckoutHeader } from "./components/CheckoutHeader";
+import { CheckoutPanel } from "./components/CheckoutPanel";
 import { CheckoutLoyaltyCard } from "./components/CheckoutLoyaltyCard";
 import { CheckoutPriceSummary } from "./components/CheckoutPriceSummary";
 import { NextStepsStep } from "./components/NextStepsStep";
@@ -84,6 +87,7 @@ export function CheckoutView({
   onSubmit,
 }: CheckoutViewProps) {
   const [step, setStep] = useCheckoutStep();
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const availability = useCheckoutAvailability({
     selectedItem,
     selectedTariff,
@@ -235,7 +239,52 @@ export function CheckoutView({
           </div>
         )}
 
-        {step === 4 && <NextStepsStep />}
+        {step === 4 && (
+          <div className="space-y-4">
+            <NextStepsStep />
+            <CheckoutPanel>
+              <label className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={hasAcceptedTerms}
+                  onChange={(event) =>
+                    setHasAcceptedTerms(event.target.checked)
+                  }
+                  className="mt-1 size-5 rounded border-slate-300 accent-orange-500"
+                />
+                <span className="text-base font-bold leading-relaxed text-slate-600">
+                  Нажимая «Создать бронь», я подтверждаю согласие с{" "}
+                  <Link
+                    href="/terms"
+                    className="font-black text-orange-600 hover:text-orange-700"
+                  >
+                    условиями аренды
+                  </Link>
+                  ,{" "}
+                  <Link
+                    href="/delivery-payment"
+                    className="font-black text-orange-600 hover:text-orange-700"
+                  >
+                    доставки и оплаты
+                  </Link>{" "}
+                  и{" "}
+                  <Link
+                    href="/privacy"
+                    className="font-black text-orange-600 hover:text-orange-700"
+                  >
+                    обработки персональных данных
+                  </Link>
+                  .
+                </span>
+              </label>
+              {!hasAcceptedTerms && (
+                <p className="mt-3 text-sm font-bold leading-relaxed text-slate-400">
+                  {UI_COPY.checkout.termsAgreement}
+                </p>
+              )}
+            </CheckoutPanel>
+          </div>
+        )}
       </div>
 
       <CheckoutFooter
@@ -246,7 +295,8 @@ export function CheckoutView({
           (step === 1 &&
             (!availability.canGoNextFromTiming ||
               availability.availableIntervals.length === 0)) ||
-          (step === 2 && !availability.canGoNextFromAddress)
+          (step === 2 && !availability.canGoNextFromAddress) ||
+          (step === 4 && !hasAcceptedTerms)
         }
         onBack={goBack}
         onNext={goNext}

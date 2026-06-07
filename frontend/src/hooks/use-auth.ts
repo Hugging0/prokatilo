@@ -78,6 +78,7 @@ export function useAuth({
     const password = String(formData.get("password") ?? "");
     const name = String(formData.get("name") ?? "").trim();
     const phone = String(formData.get("phone") ?? "").trim();
+    const hasAcceptedLegalTerms = formData.get("legal_terms") === "on";
 
     if (!email.includes("@")) {
       onNotify(UI_COPY.toast.invalidEmail);
@@ -91,6 +92,11 @@ export function useAuth({
 
     if (authMode === "register" && !name) {
       onNotify("Введите имя");
+      return;
+    }
+
+    if (authMode === "register" && !hasAcceptedLegalTerms) {
+      onNotify(UI_COPY.legal.registrationAgreementHint);
       return;
     }
 
