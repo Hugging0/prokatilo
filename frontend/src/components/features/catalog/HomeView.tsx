@@ -37,7 +37,7 @@ export function HomeView({
       <section
         className={`relative z-30 w-full ${BRAND_GRADIENT} rounded-b-[2rem] px-6 pt-16 pb-14 text-white shadow-lg`}
       >
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-6 flex flex-col items-start gap-3">
           <div className="min-w-0">
             <h1
               className={`text-4xl ${BRAND_LOGO_CLASS} leading-none`}
@@ -49,7 +49,7 @@ export function HomeView({
             </p>
           </div>
 
-          <div className="max-w-[7.5rem] shrink-0 rounded-2xl border border-white/15 bg-white/20 px-3 py-2 text-center text-xs font-black uppercase leading-snug backdrop-blur-sm">
+          <div className="inline-flex max-w-full items-center rounded-2xl border border-white/15 bg-white/20 px-3.5 py-2 text-xs font-black uppercase leading-none tracking-wide backdrop-blur-sm">
             {UI_COPY.home.serviceBadge}
           </div>
         </div>
