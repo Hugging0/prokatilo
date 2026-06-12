@@ -22,7 +22,7 @@ export function AppBadge({
 }: AppBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-black ${BADGE_TONES[tone]} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-center text-xs font-black leading-snug ${BADGE_TONES[tone]} ${className}`}
       {...props}
     >
       {children}

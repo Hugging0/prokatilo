@@ -121,6 +121,33 @@ class AuthRead(BaseModel):
     user: UserRead
 
 
+class WebPushPublicKeyRead(BaseModel):
+    public_key: str | None
+    is_configured: bool
+
+
+class PushSubscriptionKeys(BaseModel):
+    p256dh: str = Field(..., min_length=1, max_length=255)
+    auth: str = Field(..., min_length=1, max_length=255)
+
+
+class PushSubscriptionCreate(BaseModel):
+    endpoint: str = Field(..., min_length=1, max_length=2048)
+    keys: PushSubscriptionKeys
+
+
+class PushSubscriptionDelete(BaseModel):
+    endpoint: str = Field(..., min_length=1, max_length=2048)
+
+
+class PushSubscriptionRead(BaseModel):
+    id: int
+    endpoint: str
+    is_active: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class OrderBase(BaseModel):
     item_id: int = Field(..., gt=0)
     customer_name: str = Field(..., min_length=1, max_length=100)

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import crud, models, schemas
 from app.auth import create_access_token, parse_access_token
 from app.database import Base, engine, get_db
+from app.notifications import notify_admins_about_new_order, notify_user_about_order_status
 from app.payments import create_yookassa_payment, get_yookassa_payment
 from app.settings import get_settings
 
@@ -117,6 +118,55 @@ async def health_check() -> schemas.HealthRead:
     return schemas.HealthRead(
         status="ok",
         service="prokatilo-api",
+    )
+
+
+@app.get(
+    "/web-push/public-key",
+    response_model=schemas.WebPushPublicKeyRead,
+    tags=["Push Notifications"],
+)
+async def read_web_push_public_key() -> schemas.WebPushPublicKeyRead:
+    return schemas.WebPushPublicKeyRead(
+        public_key=settings.web_push_vapid_public_key,
+        is_configured=settings.web_push_is_configured,
+    )
+
+
+@app.post(
+    "/me/push-subscriptions",
+    response_model=schemas.PushSubscriptionRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Push Notifications"],
+)
+async def save_push_subscription(
+    payload: schemas.PushSubscriptionCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+    user_agent: Annotated[str | None, Header()] = None,
+) -> models.PushSubscriptionModel:
+    return await crud.upsert_push_subscription(
+        db=db,
+        user=current_user,
+        payload=payload,
+        user_agent=user_agent,
+    )
+
+
+@app.delete(
+    "/me/push-subscriptions",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Push Notifications"],
+)
+async def delete_push_subscription(
+    payload: schemas.PushSubscriptionDelete,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[models.UserModel, Depends(get_current_user)],
+) -> None:
+    await crud.deactivate_push_subscription(
+        db=db,
+        user=current_user,
+        endpoint=payload.endpoint,
     )
 
 
@@ -351,11 +401,17 @@ async def create_order(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[models.UserModel, Depends(get_current_user)],
 ) -> models.OrderModel:
-    return await crud.create_order(
+    created_order = await crud.create_order(
         db=db,
         order_data=order,
         user=current_user,
     )
+    await notify_admins_about_new_order(
+        db=db,
+        settings=settings,
+        order=created_order,
+    )
+    return created_order
 
 
 def map_yookassa_payment_status(status_value: str) -> schemas.PaymentStatus:
@@ -764,8 +820,14 @@ async def change_order_status(
         ),
     ),
 ) -> models.OrderModel:
-    return await crud.update_order_status(
+    updated_order = await crud.update_order_status(
         db=db,
         order_id=order_id,
         new_status=new_status,
     )
+    await notify_user_about_order_status(
+        db=db,
+        settings=settings,
+        order=updated_order,
+    )
+    return updated_order

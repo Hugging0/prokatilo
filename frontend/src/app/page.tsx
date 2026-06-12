@@ -12,6 +12,7 @@ import { OperatorDashboard } from "@/components/features/operator/OperatorDashbo
 import { ProfileView } from "@/components/features/profile/ProfileView";
 import { AppNavigation } from "@/components/layout/AppNavigation";
 import { CookieNotice } from "@/components/legal/CookieNotice";
+import { PushNotificationPrompt } from "@/components/ui/PushNotificationPrompt";
 import { Toast } from "@/components/ui/Toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useBookingSlots } from "@/hooks/use-booking-slots";
@@ -22,6 +23,7 @@ import { useOrders } from "@/hooks/use-orders";
 import { useToast } from "@/hooks/use-toast";
 import { createOrder } from "@/lib/api/orders";
 import { UI_COPY } from "@/lib/copy";
+import { enablePushNotifications } from "@/lib/push-notifications";
 import { mapAppCheckoutToOrderCreatePayload } from "@/lib/mappers/orders";
 import { getRentalTotalPrice } from "@/lib/tariffs";
 import type { AppItem, AppView, PaymentMethod } from "@/types";
@@ -30,6 +32,8 @@ export default function App() {
   const [view, setView] = useState<AppView>("home");
   const [paymentMethod] = useState<PaymentMethod>("cash");
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
+  const [isPushPromptOpen, setIsPushPromptOpen] = useState(false);
+  const [isPushPromptSubmitting, setIsPushPromptSubmitting] = useState(false);
 
   const {
     items,
@@ -39,9 +43,30 @@ export default function App() {
     reload: reloadCatalog,
   } = useItems();
   const { toast, showNotification } = useToast();
+
+  const requestPushAfterAuth = async (token: string) => {
+    const result = await enablePushNotifications(token);
+
+    if (result.status === "enabled") {
+      return;
+    }
+
+    if (result.status === "default" || result.status === "error") {
+      setIsPushPromptOpen(true);
+      return;
+    }
+
+    if (result.status === "denied") {
+      showNotification(result.message);
+    }
+  };
+
   const auth = useAuth({
     onNotify: showNotification,
-    onAuthenticated: () => setView("home"),
+    onAuthenticated: (token) => {
+      setView("home");
+      void requestPushAfterAuth(token);
+    },
     onLogout: () => setView("home"),
   });
   const ordersState = useOrders({
@@ -117,6 +142,23 @@ export default function App() {
     <div className="min-h-screen bg-slate-50">
       <Toast message={toast} />
       <CookieNotice />
+      <PushNotificationPrompt
+        isOpen={isPushPromptOpen}
+        isLoading={isPushPromptSubmitting}
+        onClose={() => setIsPushPromptOpen(false)}
+        onEnable={async () => {
+          if (!auth.authToken) return;
+
+          setIsPushPromptSubmitting(true);
+          const result = await enablePushNotifications(auth.authToken);
+          setIsPushPromptSubmitting(false);
+          showNotification(result.message);
+
+          if (result.status !== "default") {
+            setIsPushPromptOpen(false);
+          }
+        }}
+      />
 
       {view === "auth" && (
         <AuthView
@@ -224,6 +266,8 @@ export default function App() {
       {view === "profile" && auth.user && (
         <ProfileView
           user={auth.user}
+          authToken={auth.authToken ?? ""}
+          onNotify={showNotification}
           onLogout={() => {
             ordersState.clearOrders();
             auth.logout();
@@ -250,7 +294,7 @@ export default function App() {
         />
       )}
 
-      {view !== "checkout" && (
+      {view !== "auth" && view !== "checkout" && (
         <AppNavigation
           view={view}
           isAdmin={Boolean(auth.user?.isAdmin)}

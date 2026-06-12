@@ -37,6 +37,18 @@ class Settings(BaseSettings):
         default="http://localhost:3000",
         alias="YOOKASSA_RETURN_URL",
     )
+    web_push_vapid_public_key: str | None = Field(
+        default=None,
+        alias="WEB_PUSH_VAPID_PUBLIC_KEY",
+    )
+    web_push_vapid_private_key: str | None = Field(
+        default=None,
+        alias="WEB_PUSH_VAPID_PRIVATE_KEY",
+    )
+    web_push_vapid_subject: str = Field(
+        default="mailto:support@prokatilo.local",
+        alias="WEB_PUSH_VAPID_SUBJECT",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -63,6 +75,14 @@ class Settings(BaseSettings):
     @property
     def yookassa_is_configured(self) -> bool:
         return bool(self.yookassa_shop_id and self.yookassa_secret_key)
+
+    @property
+    def web_push_is_configured(self) -> bool:
+        return bool(
+            self.web_push_vapid_public_key
+            and self.web_push_vapid_private_key
+            and self.web_push_vapid_subject
+        )
 
 
 @lru_cache

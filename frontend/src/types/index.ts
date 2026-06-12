@@ -346,6 +346,19 @@ export interface AdminPromoCodePayload {
   is_active: boolean;
 }
 
+export interface WebPushPublicKeyDto {
+  public_key: string | null;
+  is_configured: boolean;
+}
+
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}
+
 export interface BackendServiceSettingsDto {
   id: number;
   timezone: string;

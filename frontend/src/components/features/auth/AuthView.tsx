@@ -20,10 +20,15 @@ export function AuthView({
 }: AuthViewProps) {
   const isRegister = mode === "register";
   const [hasAcceptedLegalTerms, setHasAcceptedLegalTerms] = useState(false);
-  const isSubmitDisabled = isRegister && !hasAcceptedLegalTerms;
+  const [showLegalError, setShowLegalError] = useState(false);
+
+  const handleModeChange = (nextMode: "login" | "register") => {
+    setShowLegalError(false);
+    onModeChange(nextMode);
+  };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex items-center justify-center p-6">
+    <main className="flex min-h-screen items-start justify-center bg-gradient-to-b from-white to-slate-50 px-5 py-10 sm:items-center sm:p-6">
       <AppCard variant="hero" className="w-full max-w-sm p-8">
         <div className="mb-8 flex size-24 rotate-3 items-center justify-center rounded-[2rem] bg-gradient-to-br from-amber-400 to-rose-600 text-white shadow-2xl shadow-rose-200">
           <ShoppingBag size={42} strokeWidth={2.5} />
@@ -47,7 +52,7 @@ export function AuthView({
             <button
               key={nextMode}
               type="button"
-              onClick={() => onModeChange(nextMode as "login" | "register")}
+              onClick={() => handleModeChange(nextMode as "login" | "register")}
               className={`rounded-2xl py-3 text-xs font-black ${
                 mode === nextMode
                   ? "bg-slate-900 text-white shadow-lg"
@@ -59,7 +64,18 @@ export function AuthView({
           ))}
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form
+          onSubmit={(event) => {
+            if (isRegister && !hasAcceptedLegalTerms) {
+              event.preventDefault();
+              setShowLegalError(true);
+              return;
+            }
+
+            onSubmit(event);
+          }}
+          className="space-y-4"
+        >
           {isRegister && (
             <div className="relative">
               <User
@@ -123,9 +139,10 @@ export function AuthView({
                   name="legal_terms"
                   type="checkbox"
                   checked={hasAcceptedLegalTerms}
-                  onChange={(event) =>
-                    setHasAcceptedLegalTerms(event.target.checked)
-                  }
+                  onChange={(event) => {
+                    setHasAcceptedLegalTerms(event.target.checked);
+                    if (event.target.checked) setShowLegalError(false);
+                  }}
                   className="mt-1 size-5 rounded border-slate-300 accent-orange-500"
                 />
                 <span className="text-sm font-bold leading-relaxed text-slate-600">
@@ -153,7 +170,7 @@ export function AuthView({
                   .
                 </span>
               </label>
-              {!hasAcceptedLegalTerms && (
+              {showLegalError && (
                 <p className="mt-3 text-sm font-bold leading-relaxed text-slate-400">
                   {UI_COPY.legal.registrationAgreementHint}
                 </p>
@@ -164,7 +181,6 @@ export function AuthView({
           <AppButton
             type="submit"
             fullWidth
-            disabled={isSubmitDisabled}
             className="bg-slate-900 shadow-slate-200"
           >
             {isRegister ? UI_COPY.auth.registerButton : UI_COPY.auth.loginButton}

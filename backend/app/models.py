@@ -57,6 +57,9 @@ class UserModel(Base):
     loyalty_account: Mapped["LoyaltyAccountModel | None"] = relationship(
         back_populates="user",
     )
+    push_subscriptions: Mapped[list["PushSubscriptionModel"]] = relationship(
+        back_populates="user",
+    )
 
 
 class LoyaltyAccountModel(Base):
@@ -195,6 +198,29 @@ class ServiceSettingsModel(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class PushSubscriptionModel(Base):
+    __tablename__ = "push_subscriptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    endpoint: Mapped[str] = mapped_column(String(2048), unique=True, index=True)
+    p256dh: Mapped[str] = mapped_column(String(255))
+    auth: Mapped[str] = mapped_column(String(255))
+    user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    user: Mapped["UserModel"] = relationship(back_populates="push_subscriptions")
 
 
 class OrderModel(Base):

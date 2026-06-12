@@ -11,7 +11,7 @@ interface AppButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const BUTTON_VARIANTS: Record<AppButtonVariant, string> = {
   primary:
-    "bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600 text-white shadow-xl shadow-rose-100",
+    "bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600 text-white shadow-lg shadow-rose-100",
   secondary:
     "border border-slate-200 bg-white text-slate-700 shadow-sm",
   danger: "border border-rose-100 bg-rose-50 text-rose-700 shadow-sm",
@@ -20,7 +20,7 @@ const BUTTON_VARIANTS: Record<AppButtonVariant, string> = {
 
 const BUTTON_SIZES: Record<AppButtonSize, string> = {
   md: "min-h-14 rounded-2xl px-5 text-base",
-  sm: "rounded-xl px-3 py-2 text-xs",
+  sm: "min-h-11 rounded-xl px-3 py-2 text-xs",
 };
 
 export function AppButton({

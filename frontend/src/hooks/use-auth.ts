@@ -21,7 +21,7 @@ export function useAuth({
   onLogout,
 }: {
   onNotify: (message: string) => void;
-  onAuthenticated: () => void;
+  onAuthenticated: (authToken: string) => void;
   onLogout: () => void;
 }) {
   const [user, setUser] = useState<User | null>(null);
@@ -119,7 +119,7 @@ export function useAuth({
       setAuthToken(authResponse.access_token);
       setAuthTokenState(authResponse.access_token);
       setUser(mapBackendUserToUser(authResponse.user));
-      onAuthenticated();
+      onAuthenticated(authResponse.access_token);
       onNotify(
         authMode === "register"
           ? UI_COPY.toast.registered

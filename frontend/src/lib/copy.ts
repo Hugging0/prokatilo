@@ -15,7 +15,7 @@ export const UI_COPY = {
   },
   home: {
     slogan: "Аренда вещей рядом",
-    serviceBadge: "Доставка от 15 минут",
+    serviceBadge: "Доставка от 15 мин",
     searchPlaceholder: "Что хотите арендовать?",
     emptyCatalog: "Ничего не найдено",
     catalogLoading: "Загружаем каталог…",
@@ -42,7 +42,7 @@ export const UI_COPY = {
     registrationAgreement:
       "Я принимаю Пользовательское соглашение и даю согласие на обработку персональных данных в соответствии с Политикой обработки персональных данных.",
     registrationAgreementHint:
-      "Чтобы создать аккаунт, примите условия сервиса и обработки персональных данных.",
+      "Примите условия, чтобы создать аккаунт.",
   },
   orders: {
     title: "Мои брони",
@@ -125,6 +125,13 @@ export const UI_COPY = {
     promoCodesEmpty: "Промокодов пока нет",
   },
   profile: {
+    notificationsTitle: "Уведомления",
+    notificationsEnabled: "Push-уведомления включены. Сообщим о статусах броней.",
+    notificationsDefault: "Включите уведомления, чтобы не пропустить бронь и доставку.",
+    notificationsDenied: "Уведомления запрещены в браузере. Разрешите их в настройках сайта.",
+    notificationsUnsupported: "Этот браузер не поддерживает push-уведомления.",
+    enableNotifications: "Включить",
+    disableNotifications: "Выключить",
     operatorModeTitle: "Администрирование",
     operatorModeHint: "Управление каталогом и заявками",
     adminAccountTitle: "Админский аккаунт",

@@ -17,6 +17,13 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { BRAND_GRADIENT } from "@/lib/brand";
+import { UI_COPY } from "@/lib/copy";
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+  getPushNotificationPermission,
+  type PushNotificationStatus,
+} from "@/lib/push-notifications";
 import type { User } from "@/types";
 
 const LEGAL_LINKS = [
@@ -31,7 +38,9 @@ const SUPPORT_EMAIL = "Prokatilo.corp@gmail.com";
 
 interface ProfileViewProps {
   user: User;
+  authToken: string;
   onLogout: () => void;
+  onNotify: (message: string) => void;
 }
 
 function InfoLine({
@@ -55,12 +64,37 @@ function InfoLine({
 
 export function ProfileView({
   user,
+  authToken,
   onLogout,
+  onNotify,
 }: ProfileViewProps) {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationStatus, setNotificationStatus] =
+    useState<PushNotificationStatus>(() => getPushNotificationPermission());
+  const [isNotificationSaving, setIsNotificationSaving] = useState(false);
+
+  const isNotificationsEnabled = notificationStatus === "enabled";
+  const notificationDescription =
+    notificationStatus === "enabled"
+      ? UI_COPY.profile.notificationsEnabled
+      : notificationStatus === "denied"
+        ? UI_COPY.profile.notificationsDenied
+        : notificationStatus === "unsupported"
+          ? UI_COPY.profile.notificationsUnsupported
+          : UI_COPY.profile.notificationsDefault;
+
+  const toggleNotifications = async () => {
+    setIsNotificationSaving(true);
+    const result = isNotificationsEnabled
+      ? await disablePushNotifications(authToken)
+      : await enablePushNotifications(authToken);
+
+    setNotificationStatus(result.status);
+    onNotify(result.message);
+    setIsNotificationSaving(false);
+  };
 
   return (
-    <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-32">
+    <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-[calc(8rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-2xl flex-col gap-5">
         <AppCard variant="hero">
           <div className="flex items-start justify-between gap-4">
@@ -147,25 +181,26 @@ export function ProfileView({
             </span>
             <div>
               <h2 className="text-lg font-black tracking-tight text-slate-950">
-                Уведомления
+                {UI_COPY.profile.notificationsTitle}
               </h2>
               <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">
-                Скоро здесь появятся пуш-уведомления приложения.
+                {notificationDescription}
               </p>
             </div>
           </div>
           <button
             type="button"
             role="switch"
-            aria-checked={notificationsEnabled}
-            onClick={() => setNotificationsEnabled((current) => !current)}
-            className={`flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition ${
-              notificationsEnabled ? "bg-slate-900" : "bg-slate-200"
+            aria-checked={isNotificationsEnabled}
+            onClick={() => void toggleNotifications()}
+            disabled={isNotificationSaving || notificationStatus === "unsupported"}
+            className={`flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition disabled:opacity-50 ${
+              isNotificationsEnabled ? "bg-slate-900" : "bg-slate-200"
             }`}
           >
             <span
               className={`size-6 rounded-full bg-white shadow-sm transition ${
-                notificationsEnabled ? "translate-x-6" : "translate-x-0"
+                isNotificationsEnabled ? "translate-x-6" : "translate-x-0"
               }`}
             />
           </button>

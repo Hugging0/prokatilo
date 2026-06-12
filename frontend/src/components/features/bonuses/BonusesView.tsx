@@ -21,7 +21,7 @@ export function BonusesView({ authToken, onNotify }: BonusesViewProps) {
   const loyalty = useLoyalty({ authToken, onNotify });
 
   return (
-    <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-32">
+    <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-[calc(8rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-2xl flex-col gap-5">
         {loyalty.isLoading && <AppNotice>{UI_COPY.bonus.loading}</AppNotice>}
 

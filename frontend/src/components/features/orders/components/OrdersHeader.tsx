@@ -9,7 +9,7 @@ export function OrdersHeader({ onRefresh }: { onRefresh: () => void }) {
         <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-400">
           ПРОКАТИЛО
         </p>
-        <h1 className="mt-2 text-[30px] font-black leading-tight tracking-tight text-slate-950">
+        <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950">
           {UI_COPY.orders.title}
         </h1>
       </div>

@@ -126,6 +126,52 @@ async def update_service_settings(
     return settings
 
 
+async def upsert_push_subscription(
+    db: AsyncSession,
+    user: models.UserModel,
+    payload: schemas.PushSubscriptionCreate,
+    user_agent: str | None,
+) -> models.PushSubscriptionModel:
+    result = await db.execute(
+        select(models.PushSubscriptionModel).where(
+            models.PushSubscriptionModel.endpoint == payload.endpoint,
+        ),
+    )
+    subscription = result.scalar_one_or_none()
+
+    if subscription is None:
+        subscription = models.PushSubscriptionModel(endpoint=payload.endpoint)
+
+    subscription.user_id = user.id
+    subscription.p256dh = payload.keys.p256dh
+    subscription.auth = payload.keys.auth
+    subscription.user_agent = user_agent
+    subscription.is_active = True
+
+    db.add(subscription)
+    await db.commit()
+    await db.refresh(subscription)
+    return subscription
+
+
+async def deactivate_push_subscription(
+    db: AsyncSession,
+    user: models.UserModel,
+    endpoint: str,
+) -> None:
+    result = await db.execute(
+        select(models.PushSubscriptionModel).where(
+            models.PushSubscriptionModel.user_id == user.id,
+            models.PushSubscriptionModel.endpoint == endpoint,
+        ),
+    )
+    subscription = result.scalar_one_or_none()
+
+    if subscription is not None:
+        subscription.is_active = False
+        await db.commit()
+
+
 def get_tariff_duration(tariff_type: schemas.TariffType) -> timedelta:
     return TARIFF_DURATIONS[tariff_type]
 

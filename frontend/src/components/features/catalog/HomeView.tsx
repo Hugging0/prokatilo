@@ -33,23 +33,23 @@ export function HomeView({
   onOpenDetails,
 }: HomeViewProps) {
   return (
-    <main className="min-h-screen bg-slate-50 pb-28">
+    <main className="min-h-screen bg-slate-50 pb-[calc(8rem+env(safe-area-inset-bottom))]">
       <section
         className={`relative z-30 w-full ${BRAND_GRADIENT} rounded-b-[2rem] px-6 pt-16 pb-14 text-white shadow-lg`}
       >
-        <div className="flex items-center justify-between mb-6">
-          <div>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div className="min-w-0">
             <h1
               className={`text-4xl ${BRAND_LOGO_CLASS} leading-none`}
             >
               ПРОКАТило
             </h1>
-            <p className="mt-2 text-xs font-black uppercase leading-none tracking-[0.18em] text-white/80">
+            <p className="mt-2 text-xs font-black uppercase leading-snug tracking-[0.14em] text-white/80">
               {UI_COPY.home.slogan}
             </p>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-white/20 p-2 text-xs font-black uppercase backdrop-blur-sm">
+          <div className="max-w-[7.5rem] shrink-0 rounded-2xl border border-white/15 bg-white/20 px-3 py-2 text-center text-xs font-black uppercase leading-snug backdrop-blur-sm">
             {UI_COPY.home.serviceBadge}
           </div>
         </div>

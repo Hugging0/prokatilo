@@ -24,7 +24,7 @@ export function AppNavigation({
   const activeClass = `${BRAND_GRADIENT} text-white shadow-lg`;
 
   return (
-    <nav className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-[2rem] border border-slate-100 bg-white/95 p-2 shadow-2xl shadow-slate-300 backdrop-blur">
+    <nav className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-[2rem] border border-slate-100 bg-white/95 p-2 shadow-xl shadow-slate-300/70 backdrop-blur">
       <div className="grid grid-cols-4 gap-1">
         <button
           type="button"
