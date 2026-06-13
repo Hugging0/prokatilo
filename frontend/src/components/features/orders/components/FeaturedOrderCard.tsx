@@ -40,7 +40,6 @@ export function FeaturedOrderCard({
           icon={MapPin}
           label="Доставка"
           value={order.deliveryAddress}
-          hint="Курьер свяжется перед приездом"
         />
       </div>
       <AppButton

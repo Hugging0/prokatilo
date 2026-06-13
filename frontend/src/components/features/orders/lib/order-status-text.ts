@@ -3,7 +3,7 @@ import type { AppOrder, OrderStatus } from "@/types";
 export function getDeliveryHint(status: OrderStatus) {
   switch (status) {
     case "pending":
-      return "Адрес можно уточнить до подтверждения";
+      return "Оператор подтвердит детали доставки";
     case "confirmed":
       return "Доставим в выбранный интервал";
     case "delivery":

@@ -5,7 +5,6 @@ import { formatDateTime, formatDeliveryWindow } from "@/lib/booking-time";
 import { getTariffLabel } from "@/lib/tariffs";
 import type { AppOrder } from "@/types";
 
-import { getDeliveryHint } from "../lib/order-status-text";
 import { DetailRow } from "./DetailRow";
 import { OrderDetailsHeader } from "./OrderDetailsHeader";
 import { OrderDetailsSection } from "./OrderDetailsSection";
@@ -56,7 +55,6 @@ export function OrderDetailsView({
             icon={MapPin}
             label="Адрес доставки"
             value={order.deliveryAddress}
-            hint={getDeliveryHint(order.status)}
           />
           <DetailRow
             icon={Phone}

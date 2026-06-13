@@ -13,7 +13,6 @@ interface HomeViewProps {
   searchQuery: string;
   activeCategory: string;
   isLoading?: boolean;
-  catalogSource?: "api" | "mock";
   catalogError?: string | null;
   onSearchChange: (value: string) => void;
   onCategoryChange: (category: string) => void;
@@ -26,7 +25,6 @@ export function HomeView({
   searchQuery,
   activeCategory,
   isLoading = false,
-  catalogSource = "mock",
   catalogError = null,
   onSearchChange,
   onCategoryChange,
@@ -87,11 +85,15 @@ export function HomeView({
           ))}
         </div>
 
-        {(isLoading || (catalogSource === "mock" && catalogError)) && (
+        {isLoading && (
           <AppNotice className="mt-3 px-4 py-3 text-sm">
-            {isLoading
-              ? UI_COPY.home.catalogLoading
-              : UI_COPY.home.catalogFallback}
+            {UI_COPY.home.catalogLoading}
+          </AppNotice>
+        )}
+
+        {!isLoading && catalogError && (
+          <AppNotice tone="danger" className="mt-3 px-4 py-3 text-sm">
+            {UI_COPY.home.catalogLoadError}
           </AppNotice>
         )}
 

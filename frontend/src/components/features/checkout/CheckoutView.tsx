@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { getPresetEndInputValues } from "@/lib/booking-time";
-import { UI_COPY } from "@/lib/copy";
 import type { AppItem, BookingSlot, TariffType } from "@/types";
 
 import { AddressStep } from "./components/AddressStep";
@@ -271,11 +270,6 @@ export function CheckoutView({
                   .
                 </span>
               </label>
-              {!hasAcceptedTerms && (
-                <p className="mt-3 text-sm font-bold leading-relaxed text-slate-400">
-                  {UI_COPY.checkout.termsAgreement}
-                </p>
-              )}
             </CheckoutPanel>
           </div>
         )}

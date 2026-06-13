@@ -66,7 +66,7 @@ export function DetailsView({
             </AppBadge>
             <AppBadge>
               <CreditCard size={14} />
-              Оплата при получении
+              Оплата курьеру
             </AppBadge>
             <AppBadge>
               <Truck size={14} />

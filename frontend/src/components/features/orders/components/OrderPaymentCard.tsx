@@ -16,9 +16,11 @@ export function OrderPaymentCard({ order }: { order: AppOrder }) {
           <h2 className="text-lg font-black leading-snug text-slate-950">
             {paymentCopy.title}
           </h2>
-          <p className="mt-2 text-base font-bold leading-relaxed text-slate-500">
-            {paymentCopy.hint}
-          </p>
+          {paymentCopy.hint && (
+            <p className="mt-2 text-base font-bold leading-relaxed text-slate-500">
+              {paymentCopy.hint}
+            </p>
+          )}
         </div>
         {paymentCopy.price && (
           <p className="shrink-0 text-2xl font-black tracking-tight text-slate-950">
@@ -49,7 +51,7 @@ function getPaymentCopy(order: AppOrder) {
 
   return {
     title: ORDER_DETAILS_COPY.payment.courierPayment,
-    hint: ORDER_DETAILS_COPY.payment.paymentOnDelivery,
+    hint: null,
     price: `${order.price} ₽`,
   };
 }

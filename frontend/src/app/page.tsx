@@ -39,7 +39,6 @@ export default function App() {
     items,
     isLoading: isCatalogLoading,
     error: catalogError,
-    source: catalogSource,
     reload: reloadCatalog,
   } = useItems();
   const { toast, showNotification } = useToast();
@@ -175,7 +174,6 @@ export default function App() {
           searchQuery={catalogFilter.searchQuery}
           activeCategory={catalogFilter.activeCategory}
           isLoading={isCatalogLoading}
-          catalogSource={catalogSource}
           catalogError={catalogError}
           onSearchChange={catalogFilter.setSearchQuery}
           onCategoryChange={catalogFilter.setActiveCategory}

@@ -38,7 +38,6 @@ export const ORDER_DETAILS_COPY = {
   payment: {
     title: "Оплата",
     courierPayment: "К оплате курьеру",
-    paymentOnDelivery: "Оплата при получении",
     returnedTotal: "Итого по аренде",
     returnedHint: "Аренда завершена",
     cancelledTitle: "Оплата не требуется",
@@ -58,7 +57,7 @@ export const ORDER_DETAILS_COPY = {
     delivery: [
       "Курьер готовит передачу",
       "Держите телефон рядом",
-      "Оплата при получении",
+      "Оплата курьеру",
     ],
     active: [
       "Пользуйтесь вещью",
