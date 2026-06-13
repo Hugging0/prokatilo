@@ -75,13 +75,9 @@ export function ReviewStep({
           value="Предварительно доступно. Оператор подтвердит бронь."
         />
         <ReviewRow
-          title="Доставка"
+          title="Адрес доставки"
           value={clarifyAddress ? "Адрес уточнит оператор" : deliveryAddress}
           onEdit={onEditAddress}
-        />
-        <ReviewRow
-          title="Оплата"
-          value="Оплата курьеру при получении товара. Сейчас деньги не списываются."
         />
       </div>
     </section>
