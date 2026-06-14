@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = "https://prokatilo.com";
+const SITE_URL = "https://ethicalbusiness.ru";
 
 const PUBLIC_ROUTES = [
   "/",

@@ -10,7 +10,7 @@ const contactsText = `# Контакты сервиса «ПРОКАТило»
 ИНН: 524712270089
 Email поддержки: Prokatilo.corp@gmail.com
 Email по персональным данным: Prokatilo.corp@gmail.com
-Сайт: https://prokatilo.com
+Сайт: https://ethicalbusiness.ru
 
 ## Обращения пользователей
 

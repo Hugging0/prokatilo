@@ -14,7 +14,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://prokatilo.com"),
+  metadataBase: new URL("https://ethicalbusiness.ru"),
   title: {
     default: APP_NAME,
     template: `%s · ${APP_NAME}`,
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: APP_NAME,
     description: APP_DESCRIPTION,
-    url: "https://prokatilo.com",
+    url: "https://ethicalbusiness.ru",
     siteName: APP_NAME,
     locale: "ru_RU",
     type: "website",

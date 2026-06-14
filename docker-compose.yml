@@ -42,8 +42,8 @@ services:
       ENVIRONMENT: production
       API_ROOT_PATH: "/api"
       CREATE_TABLES_ON_STARTUP: "false"
-      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://193.233.246.61,http://193.233.246.61:3000,https://prokatilo.com,https://www.prokatilo.com}"
-      YOOKASSA_RETURN_URL: "${YOOKASSA_RETURN_URL:-https://prokatilo.com}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://193.233.246.61,http://193.233.246.61:3000,https://ethicalbusiness.ru,https://www.ethicalbusiness.ru}"
+      YOOKASSA_RETURN_URL: "${YOOKASSA_RETURN_URL:-https://ethicalbusiness.ru}"
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -80,8 +80,8 @@ services:
   caddy:
     image: caddy:2-alpine
     environment:
-      APP_DOMAIN: "${APP_DOMAIN:-prokatilo.com}"
-      ACME_EMAIL: "${ACME_EMAIL:-admin@prokatilo.com}"
+      APP_DOMAIN: "${APP_DOMAIN:-ethicalbusiness.ru}"
+      ACME_EMAIL: "${ACME_EMAIL:-admin@ethicalbusiness.ru}"
     depends_on:
       frontend:
         condition: service_started
