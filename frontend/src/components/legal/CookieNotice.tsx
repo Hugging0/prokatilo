@@ -28,7 +28,7 @@ export function CookieNotice() {
   }
 
   return (
-    <div className="fixed inset-x-4 bottom-28 z-50 mx-auto max-w-lg rounded-[1.75rem] border border-slate-100 bg-white p-4 shadow-2xl shadow-slate-300">
+    <div className="fixed inset-x-4 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-lg rounded-[1.75rem] border border-slate-100 bg-white p-4 shadow-2xl shadow-slate-300 sm:inset-x-auto sm:top-5 sm:right-5 sm:bottom-auto sm:w-[26rem]">
       <p className="text-base font-bold leading-relaxed text-slate-600">
         Мы используем технические cookies для работы сайта, авторизации и
         безопасности. Продолжая пользоваться сайтом, вы соглашаетесь с их

@@ -22,29 +22,32 @@ export function AppNavigation({
   onNavigate,
 }: AppNavigationProps) {
   const activeClass = `${BRAND_GRADIENT} text-white shadow-lg`;
+  const itemClass =
+    "flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-[1.35rem] py-2 text-xs font-black transition active:scale-95";
+  const inactiveClass = "text-slate-400 hover:bg-slate-50 hover:text-slate-600";
 
   return (
-    <nav className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-[2rem] border border-slate-100 bg-white/95 p-2 shadow-xl shadow-slate-300/70 backdrop-blur">
+    <nav className="fixed inset-x-5 bottom-[calc(0.875rem+env(safe-area-inset-bottom))] z-40 mx-auto max-w-[25rem] rounded-[1.75rem] border border-slate-100 bg-white/95 p-1.5 shadow-xl shadow-slate-300/70 backdrop-blur">
       <div className="grid grid-cols-4 gap-1">
         <button
           type="button"
           onClick={() => onNavigate("home")}
-          className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
-            view === "home" ? activeClass : "text-slate-400"
+          className={`${itemClass} ${
+            view === "home" ? activeClass : inactiveClass
           }`}
         >
-          <Home size={20} />
+          <Home size={18} />
           Главная
         </button>
 
         <button
           type="button"
           onClick={() => onNavigate("orders")}
-          className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
-            view === "orders" ? activeClass : "text-slate-400"
+          className={`${itemClass} ${
+            view === "orders" ? activeClass : inactiveClass
           }`}
         >
-          <Package size={20} />
+          <Package size={18} />
           Брони
         </button>
 
@@ -52,24 +55,24 @@ export function AppNavigation({
           <button
             type="button"
             onClick={() => onNavigate("admin-dashboard")}
-            className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
+            className={`${itemClass} ${
               view === "admin-dashboard"
                 ? activeClass
-                : "text-slate-400"
+                : inactiveClass
             }`}
           >
-            <LayoutDashboard size={20} />
+            <LayoutDashboard size={18} />
             {UI_COPY.operator.navLabel}
           </button>
         ) : (
           <button
             type="button"
             onClick={() => onNavigate("bonuses")}
-            className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
-              view === "bonuses" ? activeClass : "text-slate-400"
+            className={`${itemClass} ${
+              view === "bonuses" ? activeClass : inactiveClass
             }`}
           >
-            <Gift size={20} />
+            <Gift size={18} />
             Бонусы
           </button>
         )}
@@ -77,11 +80,11 @@ export function AppNavigation({
         <button
           type="button"
           onClick={() => onNavigate("profile")}
-          className={`flex min-h-[4rem] flex-col items-center gap-1 rounded-3xl py-3 text-xs font-black ${
-            view === "profile" ? activeClass : "text-slate-400"
+          className={`${itemClass} ${
+            view === "profile" ? activeClass : inactiveClass
           }`}
         >
-          <UserIcon size={20} />
+          <UserIcon size={18} />
           Профиль
         </button>
       </div>

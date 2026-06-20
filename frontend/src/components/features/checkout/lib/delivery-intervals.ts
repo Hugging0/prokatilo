@@ -28,12 +28,17 @@ export function getQuickDateOptions() {
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
 
-  return [
+  const options = [
     { label: "Сегодня", value: formatDateInputValue(today) },
     { label: "Завтра", value: formatDateInputValue(tomorrow) },
     { label: "Сб", value: getNextWeekdayInputValue(6) },
     { label: "Вс", value: getNextWeekdayInputValue(0) },
   ];
+
+  return options.filter(
+    (option, index, allOptions) =>
+      allOptions.findIndex((item) => item.value === option.value) === index,
+  );
 }
 
 export function getNextWeekdayInputValue(weekday: number) {
