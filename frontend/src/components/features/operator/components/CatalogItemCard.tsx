@@ -1,4 +1,4 @@
-import { Pause, Pencil, RotateCcw, EyeOff } from "lucide-react";
+import { EyeOff, Pause, Pencil, RotateCcw, Trash2 } from "lucide-react";
 
 import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
@@ -11,11 +11,13 @@ export function CatalogItemCard({
   onEdit,
   onArchiveToggle,
   onAvailabilityToggle,
+  onDelete,
 }: {
   item: BackendItemDto;
   onEdit: () => void;
   onArchiveToggle: () => void;
   onAvailabilityToggle: () => void;
+  onDelete: () => void;
 }) {
   return (
     <AppCard className="flex flex-col gap-4">
@@ -49,7 +51,7 @@ export function CatalogItemCard({
         </div>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2">
         <AppButton type="button" variant="secondary" onClick={onEdit}>
           <Pencil size={18} />
           {UI_COPY.operator.editItem}
@@ -63,6 +65,10 @@ export function CatalogItemCard({
         <AppButton type="button" variant="secondary" onClick={onAvailabilityToggle}>
           <Pause size={18} />
           {item.is_available ? "Пауза аренды" : "Возобновить"}
+        </AppButton>
+        <AppButton type="button" variant="danger" onClick={onDelete}>
+          <Trash2 size={18} />
+          {UI_COPY.operator.deleteItem}
         </AppButton>
       </div>
     </AppCard>

@@ -10,6 +10,7 @@ import { AppSectionHeader } from "@/components/ui/AppSectionHeader";
 import {
   archiveAdminItem,
   createAdminItem,
+  deleteAdminItem,
   getAdminItems,
   setAdminItemAvailability,
   updateAdminItem,
@@ -163,6 +164,29 @@ export function CatalogManagement({
     }
   };
 
+  const deleteItem = async (item: BackendItemDto) => {
+    const shouldDelete = window.confirm(
+      `Удалить «${item.title}» из каталога? Если по вещи уже были брони, она будет скрыта из каталога.`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await deleteAdminItem(token, item.id);
+      await refreshItems();
+      await onCatalogChanged();
+      setMessage("Товар удалён из каталога");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Не удалось удалить товар",
+      );
+    }
+  };
+
   return (
     <section className="flex flex-col gap-5">
       <AppSectionHeader
@@ -213,6 +237,7 @@ export function CatalogManagement({
             onEdit={() => openEditForm(item)}
             onArchiveToggle={() => void toggleArchive(item)}
             onAvailabilityToggle={() => void toggleAvailability(item)}
+            onDelete={() => void deleteItem(item)}
           />
         ))}
 
