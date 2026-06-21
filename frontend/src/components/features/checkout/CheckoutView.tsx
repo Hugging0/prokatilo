@@ -193,6 +193,7 @@ export function CheckoutView({
             deliveryAddress={deliveryAddress}
             courierComment={courierComment}
             clarifyAddress={clarifyAddress}
+            deliveryEstimate={availability.deliveryEstimate}
             onDeliveryAddressChange={onDeliveryAddressChange}
             onCourierCommentChange={onCourierCommentChange}
             onClarifyAddressChange={onClarifyAddressChange}
@@ -205,6 +206,7 @@ export function CheckoutView({
               selectedItem={selectedItem}
               deliveryAddress={deliveryAddress}
               clarifyAddress={clarifyAddress}
+              deliveryEstimate={availability.deliveryEstimate}
               deliveryIntervalSummary={availability.deliveryIntervalSummary}
               rentalDurationSummary={availability.rentalDurationSummary}
               hasSelectedInterval={Boolean(availability.selectedInterval)}
@@ -224,7 +226,10 @@ export function CheckoutView({
             />
             <CheckoutPriceSummary
               subtotalPrice={availability.totalPrice}
-              deliveryPrice={0}
+              deliveryPriceLabel={availability.deliveryEstimate.priceLabel}
+              includeDeliveryInTotal={
+                availability.deliveryEstimate.isExactFree
+              }
               appliedPromoCode={appliedPromoCode}
               promoDiscountPreview={promoDiscountPreview}
               bonusSpendAmount={bonusSpendAmount}

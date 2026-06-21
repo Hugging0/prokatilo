@@ -11,6 +11,7 @@ import {
   formatDeliveryIntervalLabel,
   getAvailableDeliveryIntervals,
 } from "../lib/delivery-intervals";
+import { getDeliveryEstimate } from "../lib/delivery-zone";
 
 export function useCheckoutAvailability({
   selectedItem,
@@ -73,6 +74,10 @@ export function useCheckoutAvailability({
         selectedStartAt,
       )}, ${formatDeliveryIntervalLabel(selectedTime)}`
     : "Выберите интервал доставки";
+  const deliveryEstimate = getDeliveryEstimate({
+    address: deliveryAddress,
+    clarifyAddress,
+  });
 
   return {
     selectedInterval: selectedStartAt
@@ -84,6 +89,7 @@ export function useCheckoutAvailability({
     totalPrice,
     rentalDurationSummary,
     deliveryIntervalSummary,
+    deliveryEstimate,
     availableIntervals,
     hasConflict,
     isPeriodValid,

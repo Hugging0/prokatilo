@@ -5,7 +5,8 @@ import { SummaryRow } from "./SummaryRow";
 
 interface CheckoutPriceSummaryProps {
   subtotalPrice: number;
-  deliveryPrice?: number;
+  deliveryPriceLabel: string;
+  includeDeliveryInTotal: boolean;
   appliedPromoCode: string | null;
   promoDiscountPreview: number;
   bonusSpendAmount: number;
@@ -17,23 +18,23 @@ function formatMoney(amount: number) {
 
 export function CheckoutPriceSummary({
   subtotalPrice,
-  deliveryPrice,
+  deliveryPriceLabel,
+  includeDeliveryInTotal,
   appliedPromoCode,
   promoDiscountPreview,
   bonusSpendAmount,
 }: CheckoutPriceSummaryProps) {
-  const normalizedDeliveryPrice = deliveryPrice ?? 0;
   const normalizedPromoDiscount =
     appliedPromoCode && promoDiscountPreview > 0 ? promoDiscountPreview : 0;
   const normalizedBonusSpend =
     bonusSpendAmount > 0 ? bonusSpendAmount : 0;
   const totalToPay = Math.max(
     0,
-    subtotalPrice +
-      normalizedDeliveryPrice -
-      normalizedPromoDiscount -
-      normalizedBonusSpend,
+    subtotalPrice - normalizedPromoDiscount - normalizedBonusSpend,
   );
+  const totalLabel = includeDeliveryInTotal
+    ? formatMoney(totalToPay)
+    : `${formatMoney(totalToPay)} + доставка`;
 
   return (
     <CheckoutPanel>
@@ -53,14 +54,7 @@ export function CheckoutPriceSummary({
 
       <div className="mt-5">
         <SummaryRow label="Аренда" value={formatMoney(subtotalPrice)} />
-        <SummaryRow
-          label="Доставка"
-          value={
-            normalizedDeliveryPrice > 0
-              ? formatMoney(normalizedDeliveryPrice)
-              : "Бесплатно"
-          }
-        />
+        <SummaryRow label="Доставка" value={deliveryPriceLabel} />
         {normalizedPromoDiscount > 0 && (
           <SummaryRow
             label={`Промокод ${appliedPromoCode}`}
@@ -75,7 +69,7 @@ export function CheckoutPriceSummary({
         )}
         <SummaryRow
           label="К оплате курьеру"
-          value={formatMoney(totalToPay)}
+          value={totalLabel}
           strong
         />
       </div>

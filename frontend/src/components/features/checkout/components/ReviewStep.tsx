@@ -3,11 +3,13 @@ import type { AppItem } from "@/types";
 import { CheckoutPanel } from "./CheckoutPanel";
 import { ReviewRow } from "./ReviewRow";
 import { StepTitle } from "./StepTitle";
+import type { DeliveryEstimate } from "../lib/delivery-zone";
 
 export function ReviewStep({
   selectedItem,
   deliveryAddress,
   clarifyAddress,
+  deliveryEstimate,
   deliveryIntervalSummary,
   rentalDurationSummary,
   hasSelectedInterval,
@@ -17,6 +19,7 @@ export function ReviewStep({
   selectedItem: AppItem;
   deliveryAddress: string;
   clarifyAddress: boolean;
+  deliveryEstimate: DeliveryEstimate;
   deliveryIntervalSummary: string;
   rentalDurationSummary: string;
   hasSelectedInterval: boolean;
@@ -77,6 +80,11 @@ export function ReviewStep({
         <ReviewRow
           title="Адрес доставки"
           value={clarifyAddress ? "Адрес уточнит оператор" : deliveryAddress}
+          onEdit={onEditAddress}
+        />
+        <ReviewRow
+          title="Доставка"
+          value={`${deliveryEstimate.priceLabel}. ${deliveryEstimate.description}`}
           onEdit={onEditAddress}
         />
       </div>
