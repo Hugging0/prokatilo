@@ -12,6 +12,7 @@ export const EMPTY_CATALOG_FORM: CatalogItemFormState = {
   price_per_3h: "",
   price_per_6h: "",
   price_per_24h: "",
+  price_per_7d: "",
   image_url: "",
   icon_key: "package",
   sort_order: "100",
@@ -36,6 +37,7 @@ export function toCatalogFormState(item: BackendItemDto): CatalogItemFormState {
     price_per_3h: String(Number(item.price_per_3h)),
     price_per_6h: String(Number(item.price_per_6h)),
     price_per_24h: String(Number(item.price_per_24h)),
+    price_per_7d: String(Number(item.price_per_7d)),
     image_url: item.image_url ?? "",
     icon_key: item.icon_key,
     sort_order: String(item.sort_order),
@@ -52,8 +54,9 @@ export function normalizeCatalogPayload(
     description: form.description.trim() || null,
     category: form.category.trim(),
     price_per_3h: Number(form.price_per_3h),
-    price_per_6h: Number(form.price_per_6h),
+    price_per_6h: Number(form.price_per_24h),
     price_per_24h: Number(form.price_per_24h),
+    price_per_7d: Number(form.price_per_7d),
     image_url: form.image_url.trim() || null,
     icon_key: form.icon_key.trim() || "package",
     sort_order: Number(form.sort_order),
@@ -73,8 +76,8 @@ export function validateCatalogForm(form: CatalogItemFormState): string | null {
 
   const requiredPrices: Array<[keyof CatalogItemFormState, string]> = [
     ["price_per_3h", UI_COPY.operator.price3hLabel],
-    ["price_per_6h", UI_COPY.operator.price6hLabel],
     ["price_per_24h", UI_COPY.operator.price24hLabel],
+    ["price_per_7d", UI_COPY.operator.price7dLabel],
   ];
 
   for (const [field, label] of requiredPrices) {

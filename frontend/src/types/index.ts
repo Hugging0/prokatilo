@@ -56,6 +56,7 @@ export interface AppItem {
   price3h: number;
   price6h: number;
   price24h: number;
+  price7d: number;
   icon: LucideIcon;
   color: string;
   border: string;
@@ -114,6 +115,7 @@ export interface BackendItemDto {
   price_per_3h: string;
   price_per_6h: string;
   price_per_24h: string;
+  price_per_7d: string;
   image_url: string | null;
   icon_key: string;
   sort_order: number;
@@ -130,6 +132,7 @@ export interface AdminItemFormPayload {
   price_per_3h: number;
   price_per_6h: number;
   price_per_24h: number;
+  price_per_7d: number;
   image_url: string | null;
   icon_key: string;
   sort_order: number;
@@ -144,6 +147,7 @@ export interface CatalogItemFormState {
   price_per_3h: string;
   price_per_6h: string;
   price_per_24h: string;
+  price_per_7d: string;
   image_url: string;
   icon_key: string;
   sort_order: string;

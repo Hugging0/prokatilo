@@ -17,6 +17,7 @@ class ItemModel(Base):
     price_per_3h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     price_per_6h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     price_per_24h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    price_per_7d: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     

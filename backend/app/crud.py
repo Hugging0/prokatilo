@@ -1028,7 +1028,7 @@ def get_tariff_price(
         case schemas.TariffType.TWENTY_FOUR_HOURS:
             unit_price = item.price_per_24h
         case schemas.TariffType.SEVEN_DAYS:
-            unit_price = item.price_per_24h * Decimal("7")
+            unit_price = item.price_per_7d
 
     if rental_start_at is None or rental_end_at is None:
         return unit_price

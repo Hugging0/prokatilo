@@ -119,21 +119,21 @@ export function CatalogItemForm({
               className={fieldClass()}
             />
           </Field>
-          <Field label={UI_COPY.operator.price6hLabel}>
-            <input
-              value={form.price_per_6h}
-              onChange={(event) =>
-                onFieldChange("price_per_6h", event.target.value)
-              }
-              inputMode="decimal"
-              className={fieldClass()}
-            />
-          </Field>
           <Field label={UI_COPY.operator.price24hLabel}>
             <input
               value={form.price_per_24h}
               onChange={(event) =>
                 onFieldChange("price_per_24h", event.target.value)
+              }
+              inputMode="decimal"
+              className={fieldClass()}
+            />
+          </Field>
+          <Field label={UI_COPY.operator.price7dLabel}>
+            <input
+              value={form.price_per_7d}
+              onChange={(event) =>
+                onFieldChange("price_per_7d", event.target.value)
               }
               inputMode="decimal"
               className={fieldClass()}

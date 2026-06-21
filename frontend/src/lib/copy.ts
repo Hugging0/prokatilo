@@ -94,8 +94,8 @@ export const UI_COPY = {
     imageUrlLabel: "URL изображения",
     sortOrderLabel: "Порядок отображения",
     price3hLabel: "Цена за 3 часа",
-    price6hLabel: "Цена за 6 часов",
-    price24hLabel: "Цена за сутки",
+    price24hLabel: "Цена за день",
+    price7dLabel: "Цена за неделю",
     activeLabel: "Показывать в каталоге",
     availableLabel: "Доступен для аренды",
     catalogLoadError:

@@ -15,7 +15,7 @@ export const TARIFFS: TariffMeta[] = [
   {
     id: "24h",
     label: "1 день",
-    shortLabel: "24 ч",
+    shortLabel: "1 д",
   },
   {
     id: "7d",
@@ -44,7 +44,7 @@ export function getTariffShortLabel(tariff: TariffType): string {
     case "6h":
       return "6 ч";
     case "24h":
-      return "24 ч";
+      return "1 д";
     case "7d":
       return "7 д";
   }
@@ -59,7 +59,7 @@ export function getTariffPrice(item: AppItem, tariff: TariffType): number {
     case "24h":
       return item.price24h;
     case "7d":
-      return item.price24h * 7;
+      return item.price7d;
   }
 }
 

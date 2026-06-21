@@ -62,6 +62,7 @@ export function mapBackendItemToAppItem(
     price3h: Number(item.price_per_3h),
     price6h: Number(item.price_per_6h),
     price24h: Number(item.price_per_24h),
+    price7d: Number(item.price_per_7d),
     available: item.is_available && item.is_active,
     active: item.is_active,
     iconKey: item.icon_key,
