@@ -97,7 +97,7 @@
 7. README должен обновляться при изменении команд запуска, миграций или deployment flow.
 8. Production VPS использует локальный PostgreSQL в Docker Compose, а не внешний Supabase pooler.
 9. Production HTTP(S) вход идёт через Caddy reverse proxy: frontend на `/`, backend на `/api/*`.
-10. `ethicalbusiness.ru` и `www.ethicalbusiness.ru` должны указывать A-записями на актуальный production VPS; IP не должен быть захардкожен в приложении.
+10. `myprokatilo.ru` и `www.myprokatilo.ru` должны указывать A-записями на актуальный production VPS; IP не должен быть захардкожен в приложении.
 11. Новый production VPS разворачивается через `scripts/prod/bootstrap-vps.sh`, повторный deploy — через `scripts/prod/deploy.sh`, проверка — через `scripts/prod/smoke-test.sh`.
 12. Runtime env-файлы `.env`, `backend/.env` и `frontend/.env.local` не коммитятся; в git хранятся только `*.example`.
 

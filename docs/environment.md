@@ -9,16 +9,16 @@ Root `.env` читает Docker Compose.
 Минимальный production пример:
 
 ```env
-APP_DOMAIN=ethicalbusiness.ru
-ACME_EMAIL=admin@ethicalbusiness.ru
+APP_DOMAIN=myprokatilo.ru
+ACME_EMAIL=admin@myprokatilo.ru
 
 POSTGRES_DB=prokatilo
 POSTGRES_USER=prokatilo
 POSTGRES_PASSWORD=change-me-production-postgres-password
 
 NEXT_PUBLIC_API_URL=/api
-CORS_ORIGINS=https://ethicalbusiness.ru,https://www.ethicalbusiness.ru,http://ethicalbusiness.ru,http://www.ethicalbusiness.ru
-YOOKASSA_RETURN_URL=https://ethicalbusiness.ru
+CORS_ORIGINS=https://myprokatilo.ru,https://www.myprokatilo.ru,http://myprokatilo.ru,http://www.myprokatilo.ru
+YOOKASSA_RETURN_URL=https://myprokatilo.ru
 ```
 
 Что делает root `.env`:
@@ -33,14 +33,14 @@ YOOKASSA_RETURN_URL=https://ethicalbusiness.ru
 `backend/.env` хранит runtime-секреты backend.
 
 ```env
-ADMIN_EMAILS=admin@ethicalbusiness.ru
+ADMIN_EMAILS=admin@myprokatilo.ru
 AUTH_SECRET=change-me-production-auth-secret
 
 YOOKASSA_SHOP_ID=
 YOOKASSA_SECRET_KEY=
-YOOKASSA_RETURN_URL=https://ethicalbusiness.ru
+YOOKASSA_RETURN_URL=https://myprokatilo.ru
 
-CORS_ORIGINS=https://ethicalbusiness.ru,https://www.ethicalbusiness.ru,http://ethicalbusiness.ru,http://www.ethicalbusiness.ru
+CORS_ORIGINS=https://myprokatilo.ru,https://www.myprokatilo.ru,http://myprokatilo.ru,http://www.myprokatilo.ru
 ENVIRONMENT=production
 API_ROOT_PATH=/api
 CREATE_TABLES_ON_STARTUP=false

@@ -1,8 +1,8 @@
 {
-email {$ACME_EMAIL:admin@ethicalbusiness.ru}
+email {$ACME_EMAIL:admin@myprokatilo.ru}
 }
 
-{$APP_DOMAIN:ethicalbusiness.ru}, www.{$APP_DOMAIN:ethicalbusiness.ru} {
+{$APP_DOMAIN:myprokatilo.ru}, www.{$APP_DOMAIN:myprokatilo.ru} {
 	handle_path /api/* {
 		reverse_proxy backend:8000
 	}

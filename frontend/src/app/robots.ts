@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin", "/admin-dashboard", "/api"],
     },
-    sitemap: "https://ethicalbusiness.ru/sitemap.xml",
+    sitemap: "https://myprokatilo.ru/sitemap.xml",
   };
 }

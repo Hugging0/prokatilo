@@ -4,8 +4,8 @@ set -Eeuo pipefail
 REPO_URL_DEFAULT="https://github.com/Hugging0/prokatilo.git"
 PROJECT_DIR_DEFAULT="/opt/prokatilo"
 BRANCH_DEFAULT="main"
-DOMAIN_DEFAULT="ethicalbusiness.ru"
-ADMIN_EMAIL_DEFAULT="admin@ethicalbusiness.ru"
+DOMAIN_DEFAULT="myprokatilo.ru"
+ADMIN_EMAIL_DEFAULT="admin@myprokatilo.ru"
 
 log() {
   printf '\n\033[1;36m==> %s\033[0m\n' "$1"

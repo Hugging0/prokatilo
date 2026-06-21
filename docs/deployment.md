@@ -30,7 +30,7 @@ apt-get update && apt-get install -y curl
 
 - директорию проекта, по умолчанию `/opt/prokatilo`;
 - ветку, по умолчанию `main`;
-- домен, по умолчанию `ethicalbusiness.ru`;
+- домен, по умолчанию `myprokatilo.ru`;
 - email для Caddy/ACME;
 - admin email;
 - пароль PostgreSQL;
@@ -50,15 +50,15 @@ Bootstrap делает:
 До открытия сайта проверь:
 
 ```text
-ethicalbusiness.ru      A  <new-vps-ip>
-www.ethicalbusiness.ru  A  <new-vps-ip>
+myprokatilo.ru      A  <new-vps-ip>
+www.myprokatilo.ru  A  <new-vps-ip>
 ```
 
 Caddy читает домен из root `.env`:
 
 ```env
-APP_DOMAIN=ethicalbusiness.ru
-ACME_EMAIL=admin@ethicalbusiness.ru
+APP_DOMAIN=myprokatilo.ru
+ACME_EMAIL=admin@myprokatilo.ru
 ```
 
 Сертификаты выпускаются и обновляются Caddy автоматически.

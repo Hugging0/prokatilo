@@ -1,7 +1,7 @@
 # Политика обработки персональных данных сервиса «ПРОКАТило»
 
 Дата публикации: 07.06.2026
-Адрес сайта: https://ethicalbusiness.ru
+Адрес сайта: https://myprokatilo.ru
 
 ## 1. Общие положения
 
@@ -139,7 +139,7 @@ Prokatilo.corp@gmail.com
 
 Оператор вправе изменять настоящую Политику. Новая редакция публикуется на сайте по адресу:
 
-https://ethicalbusiness.ru/privacy
+https://myprokatilo.ru/privacy
 
 Если изменения являются существенными, оператор может дополнительно уведомить пользователей доступным способом.
 
@@ -149,4 +149,4 @@ https://ethicalbusiness.ru/privacy
 
 Оператор: Хапков Александр Арсеньевич
 Email: Prokatilo.corp@gmail.com
-Сайт: https://ethicalbusiness.ru
+Сайт: https://myprokatilo.ru
