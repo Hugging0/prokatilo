@@ -1,4 +1,4 @@
-import { Info, MapPin, Truck } from "lucide-react";
+import { Info, MapPin } from "lucide-react";
 import { useState } from "react";
 
 import { CheckoutPanel } from "./CheckoutPanel";
@@ -55,40 +55,27 @@ export function AddressStep({
               ))}
             </div>
           )}
-          <div className="mt-3 rounded-2xl border border-orange-100 bg-orange-50 px-4 py-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-white text-orange-600">
-                  <Truck size={17} />
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-base font-black text-slate-900">
-                      Доставка
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setIsDeliveryInfoOpen((isOpen) => !isOpen)
-                      }
-                      className="flex size-6 items-center justify-center rounded-full bg-white text-orange-700 transition hover:bg-orange-100"
-                      aria-label="Как считается доставка"
-                      aria-expanded={isDeliveryInfoOpen}
-                    >
-                      <Info size={14} />
-                    </button>
-                  </div>
-                  <p className="mt-1 text-sm font-bold leading-relaxed text-orange-800">
-                    {deliveryEstimate.shortNote}
-                  </p>
-                </div>
-              </div>
-              <span className="w-fit shrink-0 rounded-xl bg-white px-3 py-2 text-sm font-black text-orange-700">
+          <div className="mt-3">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-bold leading-relaxed text-slate-500">
+              <span>Ориентировочная доставка:</span>
+              <span className="font-black text-slate-900">
                 {deliveryEstimate.priceLabel}
               </span>
+              {deliveryEstimate.needsOperatorConfirmation && (
+                <span>· уточнит оператор</span>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsDeliveryInfoOpen((isOpen) => !isOpen)}
+                className="inline-flex size-6 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                aria-label="Как считается доставка"
+                aria-expanded={isDeliveryInfoOpen}
+              >
+                <Info size={14} />
+              </button>
             </div>
             {isDeliveryInfoOpen && (
-              <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-relaxed text-slate-600">
+              <p className="mt-2 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold leading-relaxed text-slate-600">
                 До 3 км от Малой Очаковской доставка бесплатная. До 7 км —
                 300–500 ₽. Остальные адреса оператор подтвердит после брони.
               </p>
