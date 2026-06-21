@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Any
 
 from pywebpush import WebPushException, webpush
@@ -7,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
 from app.settings import Settings
+
+logger = logging.getLogger(__name__)
 
 STATUS_PUSH_COPY: dict[schemas.OrderStatus, tuple[str, str]] = {
     schemas.OrderStatus.CONFIRMED: (
@@ -74,6 +77,16 @@ async def _send_to_subscriptions(
             if _is_expired_subscription(exc):
                 subscription.is_active = False
                 should_commit = True
+            else:
+                logger.warning(
+                    "Failed to send web push notification: %s",
+                    exc,
+                )
+        except Exception as exc:
+            logger.warning(
+                "Skipped web push notification because push configuration is invalid: %s",
+                exc,
+            )
 
     if should_commit:
         await db.commit()

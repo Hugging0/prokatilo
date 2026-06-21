@@ -12,7 +12,6 @@ import type { AppItem } from "@/types";
 
 import { OperatorHeader } from "./components/OperatorHeader";
 import { OperatorOrderCard } from "./components/OperatorOrderCard";
-import { OperatorQueueStats } from "./components/OperatorQueueStats";
 import { OperatorQueueTabs } from "./components/OperatorQueueTabs";
 import { OperatorSettingsPanel } from "./components/OperatorSettingsPanel";
 import { OperatorTabs } from "./components/OperatorTabs";
@@ -53,20 +52,18 @@ export function OperatorDashboard({
 
         {activeTab === "orders" && (
           <section className="flex flex-col gap-5">
-            <OperatorQueueStats counts={queueCounts} />
-
             <div className="flex items-center justify-between gap-3">
-            <h3 className="text-lg font-black tracking-tight text-slate-950">
-              {UI_COPY.operator.title}
-            </h3>
-            <button
-              type="button"
-              onClick={() => void adminOrders.refreshOrders()}
-              className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-xs font-black text-slate-500 shadow-sm"
-            >
-              <RefreshCw size={14} />
-              Обновить
-            </button>
+              <h3 className="text-lg font-black tracking-tight text-slate-950">
+                {UI_COPY.operator.title}
+              </h3>
+              <button
+                type="button"
+                onClick={() => void adminOrders.refreshOrders()}
+                className="inline-flex min-h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-xs font-black text-slate-500 shadow-sm"
+              >
+                <RefreshCw size={14} />
+                Обновить
+              </button>
             </div>
 
             <OperatorQueueTabs
