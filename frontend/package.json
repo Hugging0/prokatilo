@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "catalog:images": "node scripts/process-catalog-images.mjs",
     "lint": "eslint"
   },
   "dependencies": {
