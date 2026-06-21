@@ -28,7 +28,7 @@ export function AuthView({
   };
 
   return (
-    <main className="flex min-h-screen items-start justify-center bg-gradient-to-b from-white to-slate-50 px-5 py-10 sm:items-center sm:p-6">
+    <main className="flex min-h-screen items-start justify-center bg-gradient-to-b from-white to-slate-50 px-5 pt-10 pb-[calc(8rem+env(safe-area-inset-bottom))] sm:items-center sm:p-6">
       <AppCard variant="hero" className="w-full max-w-sm p-8">
         <div className="mb-8 flex size-24 rotate-3 items-center justify-center rounded-[2rem] bg-gradient-to-br from-amber-400 to-rose-600 text-white shadow-2xl shadow-rose-200">
           <ShoppingBag size={42} strokeWidth={2.5} />

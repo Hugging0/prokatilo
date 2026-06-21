@@ -295,6 +295,8 @@ export default function App() {
           view={view}
           isAdmin={Boolean(auth.user?.isAdmin)}
           onNavigate={(nextView) => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+
             if (nextView === "admin-dashboard" && !auth.user?.isAdmin) {
               setView("profile");
               return;

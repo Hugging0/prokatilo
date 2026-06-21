@@ -62,7 +62,7 @@ export function AddressStep({
                 {deliveryEstimate.priceLabel}
               </span>
               {deliveryEstimate.needsOperatorConfirmation && (
-                <span>· уточнит оператор</span>
+                <span>Стоимость уточнит оператор.</span>
               )}
               <button
                 type="button"
