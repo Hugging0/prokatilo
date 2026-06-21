@@ -11,6 +11,7 @@ export interface DeliveryEstimate {
   title: string;
   priceLabel: string;
   description: string;
+  shortNote: string;
   isExactFree: boolean;
   needsOperatorConfirmation: boolean;
 }
@@ -82,6 +83,24 @@ const MOSCOW_KEYWORDS = [
   "набережная",
 ];
 
+const MOSCOW_STREET_KEYWORDS = [
+  "профсоюзная",
+  "ленинский",
+  "кутузовский",
+  "вернадского",
+  "лобачевского",
+  "мичуринский",
+  "аминьевское",
+  "рублевское",
+  "можайское",
+  "варшавское",
+  "каширское",
+  "дмитровское",
+  "ленинградское",
+  "волоколамское",
+  "садовое",
+];
+
 function normalizeAddress(address: string) {
   return address
     .trim()
@@ -95,25 +114,43 @@ function containsAny(value: string, keywords: string[]) {
   return keywords.some((keyword) => value.includes(keyword));
 }
 
-export function getDeliveryEstimate({
-  address,
-  clarifyAddress,
-}: {
-  address: string;
-  clarifyAddress: boolean;
-}): DeliveryEstimate {
-  if (clarifyAddress) {
-    return {
-      kind: "manual",
-      title: "Адрес уточнит оператор",
-      priceLabel: "Уточним",
-      description:
-        "После брони оператор перезвонит, уточнит адрес, стоимость и время доставки.",
-      isExactFree: false,
-      needsOperatorConfirmation: true,
-    };
+function looksLikeStreetAndHouse(value: string) {
+  return /[а-яa-z]{3,}.*\d|\d.*[а-яa-z]{3,}/i.test(value);
+}
+
+function startsWithMoscow(value: string) {
+  return value.startsWith("москва") || value.startsWith("мск");
+}
+
+export function getAddressSuggestions(address: string): string[] {
+  const trimmedAddress = address.trim().replace(/\s+/g, " ");
+  const normalizedAddress = normalizeAddress(trimmedAddress);
+
+  if (
+    trimmedAddress.length < 3 ||
+    startsWithMoscow(normalizedAddress) ||
+    containsAny(normalizedAddress, OUTSIDE_MKAD_KEYWORDS)
+  ) {
+    return [];
   }
 
+  if (
+    looksLikeStreetAndHouse(normalizedAddress) ||
+    containsAny(normalizedAddress, FREE_ZONE_KEYWORDS) ||
+    containsAny(normalizedAddress, NEARBY_ZONE_KEYWORDS) ||
+    containsAny(normalizedAddress, MOSCOW_STREET_KEYWORDS)
+  ) {
+    return [`Москва, ${trimmedAddress}`];
+  }
+
+  return [];
+}
+
+export function getDeliveryEstimate({
+  address,
+}: {
+  address: string;
+}): DeliveryEstimate {
   const normalizedAddress = normalizeAddress(address);
 
   if (normalizedAddress.length < 5) {
@@ -122,7 +159,8 @@ export function getDeliveryEstimate({
       title: "Укажите адрес",
       priceLabel: "Пока не считаем",
       description:
-        "Введите улицу и дом. Мы покажем ориентир по стоимости доставки.",
+        "Введите улицу и дом, а оператор подтвердит заказ и детали доставки.",
+      shortNote: "Введите улицу и дом.",
       isExactFree: false,
       needsOperatorConfirmation: false,
     };
@@ -135,6 +173,7 @@ export function getDeliveryEstimate({
       priceLabel: "По согласованию",
       description:
         "Доставка и забор за пределами МКАД согласуются отдельно с оператором.",
+      shortNote: "Оператор согласует доставку.",
       isExactFree: false,
       needsOperatorConfirmation: true,
     };
@@ -147,6 +186,7 @@ export function getDeliveryEstimate({
       priceLabel: "Бесплатно",
       description:
         "До 3 км от Малой Очаковской. Обычно привозим быстрее обычного.",
+      shortNote: "Быстрая зона.",
       isExactFree: true,
       needsOperatorConfirmation: false,
     };
@@ -159,18 +199,24 @@ export function getDeliveryEstimate({
       priceLabel: "300–500 ₽",
       description:
         "До 7 км от Малой Очаковской. Оператор подтвердит точную стоимость.",
+      shortNote: "Точную стоимость подтвердит оператор.",
       isExactFree: false,
       needsOperatorConfirmation: true,
     };
   }
 
-  if (containsAny(normalizedAddress, MOSCOW_KEYWORDS)) {
+  if (
+    containsAny(normalizedAddress, MOSCOW_KEYWORDS) ||
+    containsAny(normalizedAddress, MOSCOW_STREET_KEYWORDS) ||
+    looksLikeStreetAndHouse(normalizedAddress)
+  ) {
     return {
       kind: "moscow",
       title: "Москва",
       priceLabel: "300–700 ₽",
       description:
         "В пределах МКАД стоимость зависит от маршрута. Оператор подтвердит после брони.",
+      shortNote: "Точную стоимость подтвердит оператор.",
       isExactFree: false,
       needsOperatorConfirmation: true,
     };
@@ -182,6 +228,7 @@ export function getDeliveryEstimate({
     priceLabel: "Уточним",
     description:
       "Если адрес не в быстрой зоне, оператор перезвонит и согласует доставку.",
+    shortNote: "Оператор уточнит доставку.",
     isExactFree: false,
     needsOperatorConfirmation: true,
   };

@@ -23,7 +23,6 @@ interface CheckoutViewProps {
   selectedTime: string;
   deliveryAddress: string;
   courierComment: string;
-  clarifyAddress: boolean;
   authToken: string;
   promoCode: string;
   appliedPromoCode: string | null;
@@ -41,7 +40,6 @@ interface CheckoutViewProps {
   onEndTimeChange: (time: string) => void;
   onDeliveryAddressChange: (address: string) => void;
   onCourierCommentChange: (comment: string) => void;
-  onClarifyAddressChange: (value: boolean) => void;
   onNotify: (message: string) => void;
   onPromoCodeChange: (code: string) => void;
   onPromoApplied: (code: string | null, discountAmount: number) => void;
@@ -56,7 +54,6 @@ export function CheckoutView({
   selectedTime,
   deliveryAddress,
   courierComment,
-  clarifyAddress,
   authToken,
   promoCode,
   appliedPromoCode,
@@ -74,7 +71,6 @@ export function CheckoutView({
   onEndTimeChange,
   onDeliveryAddressChange,
   onCourierCommentChange,
-  onClarifyAddressChange,
   onNotify,
   onPromoCodeChange,
   onPromoApplied,
@@ -89,7 +85,6 @@ export function CheckoutView({
     selectedDate,
     selectedTime,
     bookingSlots,
-    clarifyAddress,
     deliveryAddress,
   });
 
@@ -192,11 +187,9 @@ export function CheckoutView({
           <AddressStep
             deliveryAddress={deliveryAddress}
             courierComment={courierComment}
-            clarifyAddress={clarifyAddress}
             deliveryEstimate={availability.deliveryEstimate}
             onDeliveryAddressChange={onDeliveryAddressChange}
             onCourierCommentChange={onCourierCommentChange}
-            onClarifyAddressChange={onClarifyAddressChange}
           />
         )}
 
@@ -205,7 +198,6 @@ export function CheckoutView({
             <ReviewStep
               selectedItem={selectedItem}
               deliveryAddress={deliveryAddress}
-              clarifyAddress={clarifyAddress}
               deliveryEstimate={availability.deliveryEstimate}
               deliveryIntervalSummary={availability.deliveryIntervalSummary}
               rentalDurationSummary={availability.rentalDurationSummary}

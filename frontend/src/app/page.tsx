@@ -197,7 +197,6 @@ export default function App() {
           selectedTime={checkout.selectedTime}
           deliveryAddress={checkout.deliveryAddress}
           courierComment={checkout.courierComment}
-          clarifyAddress={checkout.clarifyAddress}
           authToken={auth.authToken ?? ""}
           promoCode={checkout.promoCode}
           appliedPromoCode={checkout.appliedPromoCode}
@@ -215,7 +214,6 @@ export default function App() {
           onEndTimeChange={checkout.setSelectedEndTime}
           onDeliveryAddressChange={checkout.setDeliveryAddress}
           onCourierCommentChange={checkout.setCourierComment}
-          onClarifyAddressChange={checkout.setClarifyAddress}
           onNotify={showNotification}
           onPromoCodeChange={checkout.setPromoCode}
           onPromoApplied={(code, discountAmount) => {

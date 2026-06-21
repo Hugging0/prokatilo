@@ -19,7 +19,6 @@ export function useCheckoutAvailability({
   selectedDate,
   selectedTime,
   bookingSlots,
-  clarifyAddress,
   deliveryAddress,
 }: {
   selectedItem: AppItem;
@@ -27,7 +26,6 @@ export function useCheckoutAvailability({
   selectedDate: string;
   selectedTime: string;
   bookingSlots: BookingSlot[];
-  clarifyAddress: boolean;
   deliveryAddress: string;
 }) {
   const selectedStartAt = getDateTimeFromInputs(selectedDate, selectedTime);
@@ -66,8 +64,7 @@ export function useCheckoutAvailability({
   );
   const canGoNextFromTiming =
     selectedItem.available && isPeriodValid && !hasConflict;
-  const canGoNextFromAddress =
-    clarifyAddress || deliveryAddress.trim().length >= 5;
+  const canGoNextFromAddress = deliveryAddress.trim().length >= 5;
   const rentalDurationSummary = getTariffLabel(selectedTariff);
   const deliveryIntervalSummary = selectedStartAt
     ? `${formatDeliveryDateLabel(
@@ -76,7 +73,6 @@ export function useCheckoutAvailability({
     : "Выберите интервал доставки";
   const deliveryEstimate = getDeliveryEstimate({
     address: deliveryAddress,
-    clarifyAddress,
   });
 
   return {

@@ -15,7 +15,6 @@ export function useCheckoutState() {
   const [selectedEndTime, setSelectedEndTime] = useState("15:00");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [courierComment, setCourierComment] = useState("");
-  const [clarifyAddress, setClarifyAddress] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [promoDiscountPreview, setPromoDiscountPreview] = useState(0);
@@ -50,7 +49,6 @@ export function useCheckoutState() {
   const resetCheckoutForm = () => {
     setDeliveryAddress("");
     setCourierComment("");
-    setClarifyAddress(false);
     setPromoCode("");
     setAppliedPromoCode(null);
     setPromoDiscountPreview(0);
@@ -66,7 +64,6 @@ export function useCheckoutState() {
     selectedEndTime,
     deliveryAddress,
     courierComment,
-    clarifyAddress,
     promoCode,
     appliedPromoCode,
     promoDiscountPreview,
@@ -77,7 +74,6 @@ export function useCheckoutState() {
     setSelectedEndTime,
     setDeliveryAddress,
     setCourierComment,
-    setClarifyAddress,
     setPromoCode,
     setAppliedPromoCode,
     setPromoDiscountPreview,
