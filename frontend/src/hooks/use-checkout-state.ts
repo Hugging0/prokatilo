@@ -19,6 +19,8 @@ export function useCheckoutState() {
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [promoDiscountPreview, setPromoDiscountPreview] = useState(0);
   const [bonusSpendAmount, setBonusSpendAmount] = useState(0);
+  const [checkoutStep, setCheckoutStep] = useState(1);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 
   const applyPresetEnd = (
     date: string,
@@ -38,6 +40,8 @@ export function useCheckoutState() {
   const openDetails = (item: AppItem) => {
     setSelectedItem(item);
     setSelectedTariff("24h");
+    setCheckoutStep(1);
+    setHasAcceptedTerms(false);
     applyPresetEnd(selectedDate, selectedTime, "24h");
   };
 
@@ -53,6 +57,8 @@ export function useCheckoutState() {
     setAppliedPromoCode(null);
     setPromoDiscountPreview(0);
     setBonusSpendAmount(0);
+    setCheckoutStep(1);
+    setHasAcceptedTerms(false);
   };
 
   return {
@@ -68,6 +74,8 @@ export function useCheckoutState() {
     appliedPromoCode,
     promoDiscountPreview,
     bonusSpendAmount,
+    checkoutStep,
+    hasAcceptedTerms,
     setSelectedDate,
     setSelectedTime,
     setSelectedEndDate,
@@ -78,6 +86,8 @@ export function useCheckoutState() {
     setAppliedPromoCode,
     setPromoDiscountPreview,
     setBonusSpendAmount,
+    setCheckoutStep,
+    setHasAcceptedTerms,
     openDetails,
     selectTariff,
     resetCheckoutForm,

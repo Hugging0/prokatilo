@@ -34,6 +34,8 @@ export default function App() {
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [isPushPromptOpen, setIsPushPromptOpen] = useState(false);
   const [isPushPromptSubmitting, setIsPushPromptSubmitting] = useState(false);
+  const [shouldReturnToCheckoutAfterAuth, setShouldReturnToCheckoutAfterAuth] =
+    useState(false);
 
   const {
     items,
@@ -42,6 +44,7 @@ export default function App() {
     reload: reloadCatalog,
   } = useItems();
   const { toast, showNotification } = useToast();
+  const checkout = useCheckoutState();
 
   const requestPushAfterAuth = async (token: string) => {
     const result = await enablePushNotifications(token);
@@ -63,17 +66,24 @@ export default function App() {
   const auth = useAuth({
     onNotify: showNotification,
     onAuthenticated: (token) => {
-      setView("home");
+      setView(
+        shouldReturnToCheckoutAfterAuth && checkout.selectedItem
+          ? "checkout"
+          : "home",
+      );
+      setShouldReturnToCheckoutAfterAuth(false);
       void requestPushAfterAuth(token);
     },
-    onLogout: () => setView("home"),
+    onLogout: () => {
+      setShouldReturnToCheckoutAfterAuth(false);
+      setView("home");
+    },
   });
   const ordersState = useOrders({
     authToken: auth.authToken,
     items,
     onNotify: showNotification,
   });
-  const checkout = useCheckoutState();
   const catalogFilter = useCatalogFilter(items);
   const bookingSlotsState = useBookingSlots(checkout.selectedItem?.id ?? null);
 
@@ -89,6 +99,7 @@ export default function App() {
     }
 
     if (!auth.user || !auth.authToken) {
+      setShouldReturnToCheckoutAfterAuth(true);
       setView("auth");
       showNotification(UI_COPY.toast.loginRequired);
       return;
@@ -206,6 +217,11 @@ export default function App() {
           isBookingsLoading={bookingSlotsState.isBookingsLoading}
           bookingsError={bookingSlotsState.bookingsError}
           isSubmitting={isBookingSubmitting}
+          requiresAuth={!auth.user || !auth.authToken}
+          step={checkout.checkoutStep}
+          hasAcceptedTerms={checkout.hasAcceptedTerms}
+          onStepChange={checkout.setCheckoutStep}
+          onAcceptedTermsChange={checkout.setHasAcceptedTerms}
           onBack={() => setView("details")}
           onTariffChange={checkout.selectTariff}
           onDateChange={checkout.setSelectedDate}

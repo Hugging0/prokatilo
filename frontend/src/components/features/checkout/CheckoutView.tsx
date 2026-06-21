@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import { useCallback, useEffect } from "react";
 import Link from "next/link";
 
 import { getPresetEndInputValues } from "@/lib/booking-time";
@@ -14,7 +15,6 @@ import { NextStepsStep } from "./components/NextStepsStep";
 import { ReviewStep } from "./components/ReviewStep";
 import { TimingStep } from "./components/TimingStep";
 import { useCheckoutAvailability } from "./hooks/useCheckoutAvailability";
-import { useCheckoutStep } from "./hooks/useCheckoutStep";
 
 interface CheckoutViewProps {
   selectedItem: AppItem;
@@ -32,6 +32,11 @@ interface CheckoutViewProps {
   isBookingsLoading: boolean;
   bookingsError: string | null;
   isSubmitting: boolean;
+  requiresAuth: boolean;
+  step: number;
+  hasAcceptedTerms: boolean;
+  onStepChange: Dispatch<SetStateAction<number>>;
+  onAcceptedTermsChange: (accepted: boolean) => void;
   onBack: () => void;
   onTariffChange: (tariff: TariffType) => void;
   onDateChange: (date: string) => void;
@@ -63,6 +68,11 @@ export function CheckoutView({
   isBookingsLoading,
   bookingsError,
   isSubmitting,
+  requiresAuth,
+  step,
+  hasAcceptedTerms,
+  onStepChange,
+  onAcceptedTermsChange,
   onBack,
   onTariffChange,
   onDateChange,
@@ -77,8 +87,6 @@ export function CheckoutView({
   onBonusSpendChange,
   onSubmit,
 }: CheckoutViewProps) {
-  const [step, setStep] = useCheckoutStep();
-  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const availability = useCheckoutAvailability({
     selectedItem,
     selectedTariff,
@@ -150,7 +158,7 @@ export function CheckoutView({
       return;
     }
 
-    setStep((current) => current - 1);
+    onStepChange((current) => current - 1);
   };
 
   const goNext = () => {
@@ -159,7 +167,7 @@ export function CheckoutView({
       return;
     }
 
-    setStep((current) => current + 1);
+    onStepChange((current) => current + 1);
   };
 
   return (
@@ -202,8 +210,8 @@ export function CheckoutView({
               deliveryIntervalSummary={availability.deliveryIntervalSummary}
               rentalDurationSummary={availability.rentalDurationSummary}
               hasSelectedInterval={Boolean(availability.selectedInterval)}
-              onEditTiming={() => setStep(1)}
-              onEditAddress={() => setStep(2)}
+              onEditTiming={() => onStepChange(1)}
+              onEditAddress={() => onStepChange(2)}
             />
             <CheckoutLoyaltyCard
               authToken={authToken}
@@ -238,7 +246,7 @@ export function CheckoutView({
                   type="checkbox"
                   checked={hasAcceptedTerms}
                   onChange={(event) =>
-                    setHasAcceptedTerms(event.target.checked)
+                    onAcceptedTermsChange(event.target.checked)
                   }
                   className="mt-1 size-5 rounded border-slate-300 accent-orange-500"
                 />
@@ -275,6 +283,7 @@ export function CheckoutView({
       <CheckoutFooter
         step={step}
         isSubmitting={isSubmitting}
+        requiresAuth={requiresAuth}
         disabled={
           isSubmitting ||
           (step === 1 &&

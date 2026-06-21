@@ -1,7 +1,7 @@
 import { AppButton } from "@/components/ui/AppButton";
 import { BRAND_GRADIENT } from "@/lib/brand";
 
-function getStepButtonLabel(step: number) {
+function getStepButtonLabel(step: number, requiresAuth: boolean) {
   switch (step) {
     case 1:
       return "Далее: адрес";
@@ -10,19 +10,21 @@ function getStepButtonLabel(step: number) {
     case 3:
       return "Далее";
     default:
-      return "Создать бронь";
+      return requiresAuth ? "Войти для брони" : "Создать бронь";
   }
 }
 
 export function CheckoutFooter({
   step,
   isSubmitting,
+  requiresAuth,
   disabled,
   onBack,
   onNext,
 }: {
   step: number;
   isSubmitting: boolean;
+  requiresAuth: boolean;
   disabled: boolean;
   onBack: () => void;
   onNext: () => void;
@@ -38,7 +40,7 @@ export function CheckoutFooter({
         disabled={disabled}
         className={`flex-[1.4] ${BRAND_GRADIENT} shadow-rose-200`}
       >
-        {isSubmitting ? "Создаём бронь…" : getStepButtonLabel(step)}
+        {isSubmitting ? "Создаём бронь…" : getStepButtonLabel(step, requiresAuth)}
       </AppButton>
     </footer>
   );
