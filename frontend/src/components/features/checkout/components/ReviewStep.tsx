@@ -24,6 +24,10 @@ export function ReviewStep({
   onEditTiming: () => void;
   onEditAddress: () => void;
 }) {
+  const deliveryValue = deliveryEstimate.needsOperatorConfirmation
+    ? deliveryEstimate.priceLabel
+    : `${deliveryEstimate.priceLabel}. ${deliveryEstimate.shortNote}`;
+
   return (
     <section>
       <StepTitle
@@ -82,7 +86,7 @@ export function ReviewStep({
         />
         <ReviewRow
           title="Доставка"
-          value={`${deliveryEstimate.priceLabel}. ${deliveryEstimate.shortNote}`}
+          value={deliveryValue}
           onEdit={onEditAddress}
         />
       </div>

@@ -16,6 +16,11 @@ export interface DeliveryEstimate {
   needsOperatorConfirmation: boolean;
 }
 
+type DeliveryPricingRule = {
+  keywords: string[];
+  price: number;
+};
+
 const FREE_ZONE_KEYWORDS = [
   "очаково",
   "матвеевск",
@@ -31,16 +36,30 @@ const FREE_ZONE_KEYWORDS = [
   "аминьевская",
 ];
 
-const NEARBY_ZONE_KEYWORDS = [
-  "солнцево",
-  "раменки",
-  "никулино",
-  "тропарево",
-  "тропарёво",
-  "мичуринский",
-  "верейская",
-  "ломоносовский",
-  "давыдково",
+const NEARBY_ZONE_RULES: DeliveryPricingRule[] = [
+  { keywords: ["верейская", "давыдково", "никулино"], price: 300 },
+  { keywords: ["раменки", "мичуринский"], price: 400 },
+  { keywords: ["солнцево", "тропарево", "тропарёво", "ломоносовский"], price: 500 },
+];
+
+const NEARBY_ZONE_KEYWORDS = NEARBY_ZONE_RULES.flatMap(
+  (rule) => rule.keywords,
+);
+
+const MOSCOW_STREET_RULES: DeliveryPricingRule[] = [
+  { keywords: ["вернадского", "лобачевского", "рублевское", "рублёвское"], price: 500 },
+  { keywords: ["ленинский", "кутузовский", "можайское", "волоколамское"], price: 600 },
+  {
+    keywords: [
+      "профсоюзная",
+      "варшавское",
+      "каширское",
+      "дмитровское",
+      "ленинградское",
+      "садовое",
+    ],
+    price: 700,
+  },
 ];
 
 const OUTSIDE_MKAD_KEYWORDS = [
@@ -83,23 +102,9 @@ const MOSCOW_KEYWORDS = [
   "набережная",
 ];
 
-const MOSCOW_STREET_KEYWORDS = [
-  "профсоюзная",
-  "ленинский",
-  "кутузовский",
-  "вернадского",
-  "лобачевского",
-  "мичуринский",
-  "аминьевское",
-  "рублевское",
-  "можайское",
-  "варшавское",
-  "каширское",
-  "дмитровское",
-  "ленинградское",
-  "волоколамское",
-  "садовое",
-];
+const MOSCOW_STREET_KEYWORDS = MOSCOW_STREET_RULES.flatMap(
+  (rule) => rule.keywords,
+);
 
 function normalizeAddress(address: string) {
   return address
@@ -120,6 +125,17 @@ function looksLikeStreetAndHouse(value: string) {
 
 function startsWithMoscow(value: string) {
   return value.startsWith("москва") || value.startsWith("мск");
+}
+
+function formatDeliveryPrice(price: number) {
+  return `${price} ₽`;
+}
+
+function findDeliveryPrice(
+  value: string,
+  rules: DeliveryPricingRule[],
+): number | null {
+  return rules.find((rule) => containsAny(value, rule.keywords))?.price ?? null;
 }
 
 export function getAddressSuggestions(address: string): string[] {
@@ -157,10 +173,10 @@ export function getDeliveryEstimate({
     return {
       kind: "empty",
       title: "Укажите адрес",
-      priceLabel: "Пока не считаем",
+      priceLabel: formatDeliveryPrice(0),
       description: "Введите улицу и дом — покажем условия доставки.",
       shortNote: "Введите улицу и дом.",
-      isExactFree: false,
+      isExactFree: true,
       needsOperatorConfirmation: false,
     };
   }
@@ -169,7 +185,7 @@ export function getDeliveryEstimate({
     return {
       kind: "outside",
       title: "За городом",
-      priceLabel: "По согласованию",
+      priceLabel: "Стоимость доставки уточнит оператор",
       description: "Доставку и забор согласуем отдельно.",
       shortNote: "Согласуем доставку отдельно.",
       isExactFree: false,
@@ -181,7 +197,7 @@ export function getDeliveryEstimate({
     return {
       kind: "free",
       title: "Рядом с нами",
-      priceLabel: "Бесплатно",
+      priceLabel: formatDeliveryPrice(0),
       description: "Если адрес в быстрой зоне, привезём без доплаты.",
       shortNote: "Доставка без доплаты.",
       isExactFree: true,
@@ -189,29 +205,44 @@ export function getDeliveryEstimate({
     };
   }
 
-  if (containsAny(normalizedAddress, NEARBY_ZONE_KEYWORDS)) {
+  const nearbyPrice = findDeliveryPrice(normalizedAddress, NEARBY_ZONE_RULES);
+
+  if (nearbyPrice !== null) {
     return {
       kind: "nearby",
       title: "Ближняя зона",
-      priceLabel: "300–500 ₽",
-      description: "Стоимость зависит от адреса. Подтвердим её после брони.",
-      shortNote: "Стоимость подтвердим после брони.",
+      priceLabel: formatDeliveryPrice(nearbyPrice),
+      description: "Стоимость зависит от адреса и маршрута.",
+      shortNote: "Стоимость зависит от маршрута.",
       isExactFree: false,
-      needsOperatorConfirmation: true,
+      needsOperatorConfirmation: false,
+    };
+  }
+
+  const moscowPrice = findDeliveryPrice(normalizedAddress, MOSCOW_STREET_RULES);
+
+  if (moscowPrice !== null) {
+    return {
+      kind: "moscow",
+      title: "По городу",
+      priceLabel: formatDeliveryPrice(moscowPrice),
+      description: "Стоимость зависит от адреса и маршрута.",
+      shortNote: "Стоимость зависит от маршрута.",
+      isExactFree: false,
+      needsOperatorConfirmation: false,
     };
   }
 
   if (
     containsAny(normalizedAddress, MOSCOW_KEYWORDS) ||
-    containsAny(normalizedAddress, MOSCOW_STREET_KEYWORDS) ||
     looksLikeStreetAndHouse(normalizedAddress)
   ) {
     return {
-      kind: "moscow",
-      title: "По городу",
-      priceLabel: "300–700 ₽",
-      description: "Стоимость зависит от маршрута. Подтвердим её после брони.",
-      shortNote: "Стоимость подтвердим после брони.",
+      kind: "manual",
+      title: "Уточним район",
+      priceLabel: "Стоимость доставки уточнит оператор",
+      description: "Адрес проверим отдельно.",
+      shortNote: "Стоимость доставки уточнит оператор.",
       isExactFree: false,
       needsOperatorConfirmation: true,
     };
@@ -220,9 +251,9 @@ export function getDeliveryEstimate({
   return {
     kind: "manual",
     title: "Уточним район",
-    priceLabel: "Уточним",
-    description: "После брони проверим адрес и условия доставки.",
-    shortNote: "Проверим условия доставки.",
+    priceLabel: "Стоимость доставки уточнит оператор",
+    description: "Адрес проверим отдельно.",
+    shortNote: "Стоимость доставки уточнит оператор.",
     isExactFree: false,
     needsOperatorConfirmation: true,
   };

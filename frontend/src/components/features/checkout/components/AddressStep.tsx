@@ -29,7 +29,7 @@ export function AddressStep({
     <section>
       <StepTitle
         title="Куда привезти?"
-        subtitle="Улица, дом и квартира"
+        subtitle="Укажите адрес доставки и оставьте комментарий для курьера"
       />
 
       <div className="mt-7 space-y-5">
@@ -57,13 +57,10 @@ export function AddressStep({
           )}
           <div className="mt-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-bold leading-relaxed text-slate-500">
-              <span>Ориентировочная доставка:</span>
+              <span>Ориентировочная стоимость доставки:</span>
               <span className="font-black text-slate-900">
                 {deliveryEstimate.priceLabel}
               </span>
-              {deliveryEstimate.needsOperatorConfirmation && (
-                <span>Стоимость уточним после брони.</span>
-              )}
               <button
                 type="button"
                 onClick={() => setIsDeliveryInfoOpen((isOpen) => !isOpen)}
@@ -77,7 +74,7 @@ export function AddressStep({
             {isDeliveryInfoOpen && (
               <p className="mt-2 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold leading-relaxed text-slate-600">
                 Для ближайших адресов доставка без доплаты. В остальных зонах
-                стоимость зависит от маршрута, уточним её после брони.
+                стоимость зависит от маршрута.
               </p>
             )}
           </div>
