@@ -190,6 +190,18 @@ export interface BackendBookingDto {
   status: OrderStatus;
 }
 
+export interface BackendDeliveryEstimateDto {
+  kind: string;
+  title: string;
+  price_label: string;
+  description: string;
+  short_note: string;
+  is_exact_free: boolean;
+  needs_operator_confirmation: boolean;
+  distance_m: number | null;
+  matched_address: string | null;
+}
+
 export interface BookingSlot {
   orderId: number;
   itemId: number;

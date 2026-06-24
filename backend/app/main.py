@@ -302,6 +302,18 @@ async def read_item(
     return await crud.get_public_item_by_id(db, item_id=item_id)
 
 
+@app.get(
+    "/delivery/estimate",
+    response_model=schemas.DeliveryEstimateRead,
+    tags=["Delivery"],
+)
+async def estimate_delivery(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    address: str = Query(..., min_length=1, max_length=500),
+) -> schemas.DeliveryEstimateRead:
+    return await crud.estimate_delivery(db=db, address=address)
+
+
 @app.post(
     "/admin/items/",
     response_model=schemas.AdminItemRead,

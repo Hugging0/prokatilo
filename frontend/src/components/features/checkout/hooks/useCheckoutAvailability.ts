@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
+
 import {
   getDateTimeFromInputs,
   getPresetEndInputValues,
   intervalsOverlap,
 } from "@/lib/booking-time";
+import { getDeliveryEstimateByAddress } from "@/lib/api/delivery";
 import { getRentalTotalPrice, getTariffLabel } from "@/lib/tariffs";
 import type { AppItem, BookingSlot, TariffType } from "@/types";
 
@@ -12,6 +15,10 @@ import {
   getAvailableDeliveryIntervals,
 } from "../lib/delivery-intervals";
 import { getDeliveryEstimate } from "../lib/delivery-zone";
+import {
+  mapBackendDeliveryEstimate,
+  type DeliveryEstimate,
+} from "../lib/delivery-zone";
 
 export function useCheckoutAvailability({
   selectedItem,
@@ -28,6 +35,10 @@ export function useCheckoutAvailability({
   bookingSlots: BookingSlot[];
   deliveryAddress: string;
 }) {
+  const [remoteDeliveryEstimate, setRemoteDeliveryEstimate] = useState<{
+    address: string;
+    estimate: DeliveryEstimate;
+  } | null>(null);
   const selectedStartAt = getDateTimeFromInputs(selectedDate, selectedTime);
   const selectedPresetEnd = getPresetEndInputValues(
     selectedDate,
@@ -71,9 +82,47 @@ export function useCheckoutAvailability({
         selectedStartAt,
       )}, ${formatDeliveryIntervalLabel(selectedTime)}`
     : "Выберите интервал доставки";
-  const deliveryEstimate = getDeliveryEstimate({
+  const fallbackDeliveryEstimate = getDeliveryEstimate({
     address: deliveryAddress,
   });
+  const trimmedDeliveryAddress = deliveryAddress.trim();
+  const deliveryEstimate =
+    remoteDeliveryEstimate?.address === trimmedDeliveryAddress
+      ? remoteDeliveryEstimate.estimate
+      : fallbackDeliveryEstimate;
+
+  useEffect(() => {
+    const trimmedAddress = deliveryAddress.trim();
+    let isActive = true;
+
+    if (trimmedAddress.length < 5) {
+      return () => {
+        isActive = false;
+      };
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void getDeliveryEstimateByAddress(trimmedAddress)
+        .then((estimate) => {
+          if (isActive) {
+            setRemoteDeliveryEstimate({
+              address: trimmedAddress,
+              estimate: mapBackendDeliveryEstimate(estimate),
+            });
+          }
+        })
+        .catch(() => {
+          if (isActive) {
+            setRemoteDeliveryEstimate(null);
+          }
+        });
+    }, 350);
+
+    return () => {
+      isActive = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [deliveryAddress]);
 
   return {
     selectedInterval: selectedStartAt

@@ -1,3 +1,5 @@
+import math
+import re
 from datetime import datetime, time, timedelta
 from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 from zoneinfo import ZoneInfo
@@ -43,6 +45,143 @@ SERVICE_SETTINGS_DEFAULTS = {
     "max_bonus_spend_percent": 30,
     "bonus_to_ruble_rate": 1,
 }
+DELIVERY_BASE_LAT = 55.6692987
+DELIVERY_BASE_LON = 37.4376738
+DELIVERY_AUTO_MAX_DISTANCE_M = 10_000
+DELIVERY_FREE_DISTANCE_M = 3_000
+DELIVERY_NEAR_DISTANCE_M = 7_000
+
+
+def normalize_delivery_text(value: str) -> str:
+    normalized = value.lower().replace("ё", "е")
+    normalized = re.sub(r"[.,;:()\"'«»]", " ", normalized)
+    normalized = normalized.replace("-", " ")
+    normalized = re.sub(r"\b(москва|мск|россия|г|город)\b", " ", normalized)
+    normalized = re.sub(
+        r"\b(улица|ул|шоссе|ш|проспект|пр т|пр кт|пр|переулок|пер|"
+        r"бульвар|бул|б р|набережная|наб|проезд|пр д|площадь|пл|дом|д)\b",
+        " ",
+        normalized,
+    )
+    normalized = re.sub(r"\b(\d+)\s*(?:ая|я|ый|ой|ий)\b", r"\1", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    return normalized
+
+
+def normalize_delivery_house(value: str | None) -> str | None:
+    if not value:
+        return None
+
+    normalized = value.lower().replace("ё", "е")
+    normalized = re.sub(r"\s+", "", normalized)
+    normalized = normalized.replace("корпус", "к").replace("строение", "с")
+    normalized = normalized.replace("к.", "к").replace("с.", "с")
+    return normalized or None
+
+
+def parse_delivery_address(value: str) -> tuple[str, str | None]:
+    normalized = normalize_delivery_text(value)
+    house_match = re.search(
+        r"\b(\d+[а-яa-z]?(?:\s*(?:к|корп|корпус|с|стр|строение)\s*\d+[а-яa-z]?)?)\b",
+        normalized,
+    )
+
+    if not house_match:
+        return normalized, None
+
+    house = normalize_delivery_house(house_match.group(1))
+    street = (
+        normalized[: house_match.start()] + " " + normalized[house_match.end() :]
+    )
+    street = re.sub(r"\s+", " ", street).strip()
+    return street, house
+
+
+def calculate_distance_m(
+    first_lat: float,
+    first_lon: float,
+    second_lat: float,
+    second_lon: float,
+) -> int:
+    earth_radius_m = 6_371_000
+    first_phi = math.radians(first_lat)
+    second_phi = math.radians(second_lat)
+    delta_phi = math.radians(second_lat - first_lat)
+    delta_lambda = math.radians(second_lon - first_lon)
+    haversine = (
+        math.sin(delta_phi / 2) ** 2
+        + math.cos(first_phi)
+        * math.cos(second_phi)
+        * math.sin(delta_lambda / 2) ** 2
+    )
+    return round(
+        earth_radius_m
+        * 2
+        * math.atan2(math.sqrt(haversine), math.sqrt(1 - haversine)),
+    )
+
+
+def calculate_delivery_price(distance_m: int) -> int | None:
+    if distance_m <= DELIVERY_FREE_DISTANCE_M:
+        return 0
+
+    if distance_m <= DELIVERY_NEAR_DISTANCE_M:
+        ratio = (distance_m - DELIVERY_FREE_DISTANCE_M) / (
+            DELIVERY_NEAR_DISTANCE_M - DELIVERY_FREE_DISTANCE_M
+        )
+        return round((300 + ratio * 200) / 100) * 100
+
+    if distance_m <= DELIVERY_AUTO_MAX_DISTANCE_M:
+        ratio = (distance_m - DELIVERY_NEAR_DISTANCE_M) / (
+            DELIVERY_AUTO_MAX_DISTANCE_M - DELIVERY_NEAR_DISTANCE_M
+        )
+        return round((500 + ratio * 200) / 100) * 100
+
+    return None
+
+
+def build_delivery_estimate(
+    price: int | None,
+    distance_m: int | None,
+    matched_address: str | None,
+) -> schemas.DeliveryEstimateRead:
+    if price == 0:
+        return schemas.DeliveryEstimateRead(
+            kind="free",
+            title="Рядом с нами",
+            price_label="0 ₽",
+            description="Для ближайших адресов доставка без доплаты.",
+            short_note="Доставка без доплаты.",
+            is_exact_free=True,
+            needs_operator_confirmation=False,
+            distance_m=distance_m,
+            matched_address=matched_address,
+        )
+
+    if price is not None:
+        return schemas.DeliveryEstimateRead(
+            kind="local",
+            title="В зоне доставки",
+            price_label=f"{price} ₽",
+            description="Стоимость зависит от адреса и маршрута.",
+            short_note="Стоимость зависит от маршрута.",
+            is_exact_free=False,
+            needs_operator_confirmation=False,
+            distance_m=distance_m,
+            matched_address=matched_address,
+        )
+
+    return schemas.DeliveryEstimateRead(
+        kind="manual",
+        title="Уточним район",
+        price_label="Стоимость доставки уточнит оператор",
+        description="Адрес проверим отдельно.",
+        short_note="Стоимость доставки уточнит оператор.",
+        is_exact_free=False,
+        needs_operator_confirmation=True,
+        distance_m=distance_m,
+        matched_address=matched_address,
+    )
 
 
 def _parse_settings_time(value: str) -> time:
@@ -123,6 +262,63 @@ async def update_service_settings(
     await db.commit()
     await db.refresh(settings)
     return settings
+
+
+async def estimate_delivery(
+    db: AsyncSession,
+    address: str,
+) -> schemas.DeliveryEstimateRead:
+    street, house = parse_delivery_address(address)
+
+    if len(street) < 3:
+        return schemas.DeliveryEstimateRead(
+            kind="empty",
+            title="Укажите адрес",
+            price_label="0 ₽",
+            description="Введите улицу и дом — покажем условия доставки.",
+            short_note="Введите улицу и дом.",
+            is_exact_free=True,
+            needs_operator_confirmation=False,
+        )
+
+    matched_address: models.DeliveryAddressModel | None = None
+
+    if house:
+        exact_result = await db.execute(
+            select(models.DeliveryAddressModel)
+            .where(
+                models.DeliveryAddressModel.normalized_street == street,
+                models.DeliveryAddressModel.normalized_house == house,
+            )
+            .order_by(models.DeliveryAddressModel.distance_m.asc())
+            .limit(1),
+        )
+        matched_address = exact_result.scalar_one_or_none()
+
+    if matched_address is None:
+        street_result = await db.execute(
+            select(models.DeliveryAddressModel)
+            .where(models.DeliveryAddressModel.normalized_street == street)
+            .order_by(models.DeliveryAddressModel.distance_m.asc())
+            .limit(1),
+        )
+        matched_address = street_result.scalar_one_or_none()
+
+    if matched_address is None:
+        return build_delivery_estimate(
+            price=None,
+            distance_m=None,
+            matched_address=None,
+        )
+
+    distance_m = matched_address.distance_m
+    price = calculate_delivery_price(distance_m)
+
+    return build_delivery_estimate(
+        price=price,
+        distance_m=distance_m,
+        matched_address=matched_address.display_name,
+    )
 
 
 async def upsert_push_subscription(

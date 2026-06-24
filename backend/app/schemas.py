@@ -201,6 +201,18 @@ class BookingRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class DeliveryEstimateRead(BaseModel):
+    kind: str
+    title: str
+    price_label: str
+    description: str
+    short_note: str
+    is_exact_free: bool
+    needs_operator_confirmation: bool
+    distance_m: int | None = None
+    matched_address: str | None = None
+
+
 class LoyaltyAccountRead(BaseModel):
     balance: Decimal
     lifetime_earned: Decimal

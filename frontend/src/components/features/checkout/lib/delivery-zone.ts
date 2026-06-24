@@ -1,3 +1,5 @@
+import type { BackendDeliveryEstimateDto } from "@/types";
+
 export type DeliveryZoneKind =
   | "empty"
   | "free"
@@ -14,6 +16,8 @@ export interface DeliveryEstimate {
   shortNote: string;
   isExactFree: boolean;
   needsOperatorConfirmation: boolean;
+  distanceM: number | null;
+  matchedAddress: string | null;
 }
 
 type DeliveryPricingRule = {
@@ -178,6 +182,8 @@ export function getDeliveryEstimate({
       shortNote: "Введите улицу и дом.",
       isExactFree: true,
       needsOperatorConfirmation: false,
+      distanceM: null,
+      matchedAddress: null,
     };
   }
 
@@ -190,6 +196,8 @@ export function getDeliveryEstimate({
       shortNote: "Согласуем доставку отдельно.",
       isExactFree: false,
       needsOperatorConfirmation: true,
+      distanceM: null,
+      matchedAddress: null,
     };
   }
 
@@ -202,6 +210,8 @@ export function getDeliveryEstimate({
       shortNote: "Доставка без доплаты.",
       isExactFree: true,
       needsOperatorConfirmation: false,
+      distanceM: null,
+      matchedAddress: null,
     };
   }
 
@@ -216,6 +226,8 @@ export function getDeliveryEstimate({
       shortNote: "Стоимость зависит от маршрута.",
       isExactFree: false,
       needsOperatorConfirmation: false,
+      distanceM: null,
+      matchedAddress: null,
     };
   }
 
@@ -230,6 +242,8 @@ export function getDeliveryEstimate({
       shortNote: "Стоимость зависит от маршрута.",
       isExactFree: false,
       needsOperatorConfirmation: false,
+      distanceM: null,
+      matchedAddress: null,
     };
   }
 
@@ -245,6 +259,8 @@ export function getDeliveryEstimate({
       shortNote: "Стоимость доставки уточнит оператор.",
       isExactFree: false,
       needsOperatorConfirmation: true,
+      distanceM: null,
+      matchedAddress: null,
     };
   }
 
@@ -256,5 +272,23 @@ export function getDeliveryEstimate({
     shortNote: "Стоимость доставки уточнит оператор.",
     isExactFree: false,
     needsOperatorConfirmation: true,
+    distanceM: null,
+    matchedAddress: null,
+  };
+}
+
+export function mapBackendDeliveryEstimate(
+  estimate: BackendDeliveryEstimateDto,
+): DeliveryEstimate {
+  return {
+    kind: estimate.kind as DeliveryZoneKind,
+    title: estimate.title,
+    priceLabel: estimate.price_label,
+    description: estimate.description,
+    shortNote: estimate.short_note,
+    isExactFree: estimate.is_exact_free,
+    needsOperatorConfirmation: estimate.needs_operator_confirmation,
+    distanceM: estimate.distance_m,
+    matchedAddress: estimate.matched_address,
   };
 }

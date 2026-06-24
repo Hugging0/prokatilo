@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
@@ -198,6 +198,45 @@ class ServiceSettingsModel(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class DeliveryAddressModel(Base):
+    __tablename__ = "delivery_addresses"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    osm_type: Mapped[str] = mapped_column(String(20))
+    osm_id: Mapped[str] = mapped_column(String(50))
+    display_name: Mapped[str] = mapped_column(String(500))
+    street: Mapped[str] = mapped_column(String(255), index=True)
+    house_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    normalized_street: Mapped[str] = mapped_column(String(255), index=True)
+    normalized_house: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    lat: Mapped[float] = mapped_column(Float)
+    lon: Mapped[float] = mapped_column(Float)
+    distance_m: Mapped[int] = mapped_column(Integer, index=True)
+    source: Mapped[str] = mapped_column(String(50), default="osm")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+Index(
+    "ix_delivery_addresses_street_house",
+    DeliveryAddressModel.normalized_street,
+    DeliveryAddressModel.normalized_house,
+)
+Index(
+    "ix_delivery_addresses_osm_ref",
+    DeliveryAddressModel.osm_type,
+    DeliveryAddressModel.osm_id,
+    unique=True,
+)
 
 
 class PushSubscriptionModel(Base):
