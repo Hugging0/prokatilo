@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
+from sqlalchemy.engine import make_url
 
 
 BASE_LAT = 55.6692987
@@ -173,10 +174,16 @@ def iter_address_rows(payload: dict[str, Any]) -> list[tuple[Any, ...]]:
     return rows
 
 
-def normalize_database_url(database_url: str) -> str:
-    if database_url.startswith("postgresql+asyncpg://"):
-        return database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
-    return database_url
+def build_connection_kwargs(database_url: str) -> dict[str, Any]:
+    url = make_url(database_url)
+
+    return {
+        "dbname": url.database,
+        "user": url.username,
+        "password": url.password,
+        "host": url.host,
+        "port": url.port or 5432,
+    }
 
 
 def import_rows(rows: list[tuple[Any, ...]], database_url: str, refresh: bool) -> None:
@@ -210,7 +217,7 @@ def import_rows(rows: list[tuple[Any, ...]], database_url: str, refresh: bool) -
             updated_at = now()
     """
 
-    with psycopg.connect(normalize_database_url(database_url)) as conn:
+    with psycopg.connect(**build_connection_kwargs(database_url)) as conn:
         with conn.cursor() as cursor:
             if refresh:
                 cursor.execute("TRUNCATE delivery_addresses")
