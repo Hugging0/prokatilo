@@ -295,6 +295,13 @@ async def estimate_delivery(
         )
         matched_address = exact_result.scalar_one_or_none()
 
+        if matched_address is None:
+            return build_delivery_estimate(
+                price=None,
+                distance_m=None,
+                matched_address=None,
+            )
+
     if matched_address is None:
         street_result = await db.execute(
             select(models.DeliveryAddressModel)
