@@ -66,11 +66,11 @@ export function DetailsView({
             </AppBadge>
             <AppBadge>
               <CreditCard size={14} />
-              Оплата курьеру
+              Оплата при получении
             </AppBadge>
             <AppBadge>
               <Truck size={14} />
-              Курьер привезёт и заберёт
+              Привезём и заберём
             </AppBadge>
           </div>
 
@@ -97,7 +97,7 @@ export function DetailsView({
             fullWidth
             className="mt-7 bg-slate-900 shadow-slate-200 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
           >
-            Выбрать дату и доставку
+            Забронировать
           </AppButton>
         </AppCard>
       </section>

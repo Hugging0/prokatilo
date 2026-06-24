@@ -158,8 +158,7 @@ export function getDeliveryEstimate({
       kind: "empty",
       title: "Укажите адрес",
       priceLabel: "Пока не считаем",
-      description:
-        "Введите улицу и дом, а оператор подтвердит заказ и детали доставки.",
+      description: "Введите улицу и дом — покажем условия доставки.",
       shortNote: "Введите улицу и дом.",
       isExactFree: false,
       needsOperatorConfirmation: false,
@@ -169,11 +168,10 @@ export function getDeliveryEstimate({
   if (containsAny(normalizedAddress, OUTSIDE_MKAD_KEYWORDS)) {
     return {
       kind: "outside",
-      title: "За МКАД",
+      title: "За городом",
       priceLabel: "По согласованию",
-      description:
-        "Доставка и забор за пределами МКАД согласуются отдельно с оператором.",
-      shortNote: "Оператор согласует доставку.",
+      description: "Доставку и забор согласуем отдельно.",
+      shortNote: "Согласуем доставку отдельно.",
       isExactFree: false,
       needsOperatorConfirmation: true,
     };
@@ -182,11 +180,10 @@ export function getDeliveryEstimate({
   if (containsAny(normalizedAddress, FREE_ZONE_KEYWORDS)) {
     return {
       kind: "free",
-      title: "Быстрая зона",
+      title: "Рядом с нами",
       priceLabel: "Бесплатно",
-      description:
-        "До 3 км от Малой Очаковской. Обычно привозим быстрее обычного.",
-      shortNote: "Быстрая зона.",
+      description: "Если адрес в быстрой зоне, привезём без доплаты.",
+      shortNote: "Доставка без доплаты.",
       isExactFree: true,
       needsOperatorConfirmation: false,
     };
@@ -197,9 +194,8 @@ export function getDeliveryEstimate({
       kind: "nearby",
       title: "Ближняя зона",
       priceLabel: "300–500 ₽",
-      description:
-        "До 7 км от Малой Очаковской. Оператор подтвердит точную стоимость.",
-      shortNote: "Точную стоимость подтвердит оператор.",
+      description: "Стоимость зависит от адреса. Подтвердим её после брони.",
+      shortNote: "Стоимость подтвердим после брони.",
       isExactFree: false,
       needsOperatorConfirmation: true,
     };
@@ -212,11 +208,10 @@ export function getDeliveryEstimate({
   ) {
     return {
       kind: "moscow",
-      title: "Москва",
+      title: "По городу",
       priceLabel: "300–700 ₽",
-      description:
-        "В пределах МКАД стоимость зависит от маршрута. Оператор подтвердит после брони.",
-      shortNote: "Точную стоимость подтвердит оператор.",
+      description: "Стоимость зависит от маршрута. Подтвердим её после брони.",
+      shortNote: "Стоимость подтвердим после брони.",
       isExactFree: false,
       needsOperatorConfirmation: true,
     };
@@ -224,11 +219,10 @@ export function getDeliveryEstimate({
 
   return {
     kind: "manual",
-    title: "Нужно уточнить район",
+    title: "Уточним район",
     priceLabel: "Уточним",
-    description:
-      "Если адрес не в быстрой зоне, оператор перезвонит и согласует доставку.",
-    shortNote: "Оператор уточнит доставку.",
+    description: "После брони проверим адрес и условия доставки.",
+    shortNote: "Проверим условия доставки.",
     isExactFree: false,
     needsOperatorConfirmation: true,
   };

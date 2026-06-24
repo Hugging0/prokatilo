@@ -27,8 +27,8 @@ export function ReviewStep({
   return (
     <section>
       <StepTitle
-        title="Проверьте бронь"
-        subtitle="Убедитесь, что всё указано верно"
+        title="Проверьте детали"
+        subtitle="Если всё верно — отправим бронь"
       />
 
       <div className="mt-7 space-y-4">
@@ -73,7 +73,7 @@ export function ReviewStep({
         />
         <ReviewRow
           title="Наличие"
-          value="Предварительно доступно. Оператор подтвердит бронь."
+          value="Проверим и закрепим вещь за вами."
         />
         <ReviewRow
           title="Адрес доставки"

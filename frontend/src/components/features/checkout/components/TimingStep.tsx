@@ -42,7 +42,7 @@ export function TimingStep({
     <section>
       <StepTitle
         title="Когда привезти?"
-        subtitle="Выберите окно доставки и срок аренды"
+        subtitle="Выберите удобный интервал"
       />
 
       <div className="mt-7 space-y-6">

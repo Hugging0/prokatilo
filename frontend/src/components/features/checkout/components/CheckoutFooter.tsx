@@ -4,13 +4,13 @@ import { BRAND_GRADIENT } from "@/lib/brand";
 function getStepButtonLabel(step: number, requiresAuth: boolean) {
   switch (step) {
     case 1:
-      return "Далее: адрес";
-    case 2:
-      return "Далее: проверить";
-    case 3:
       return "Далее";
+    case 2:
+      return "Далее";
+    case 3:
+      return "Всё верно";
     default:
-      return requiresAuth ? "Войти для брони" : "Создать бронь";
+      return requiresAuth ? "Войти для брони" : "Забронировать";
   }
 }
 
@@ -40,7 +40,7 @@ export function CheckoutFooter({
         disabled={disabled}
         className={`flex-[1.4] ${BRAND_GRADIENT} shadow-rose-200`}
       >
-        {isSubmitting ? "Создаём бронь…" : getStepButtonLabel(step, requiresAuth)}
+        {isSubmitting ? "Бронируем…" : getStepButtonLabel(step, requiresAuth)}
       </AppButton>
     </footer>
   );

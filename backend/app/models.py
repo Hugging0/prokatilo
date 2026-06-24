@@ -15,7 +15,6 @@ class ItemModel(Base):
     icon_key: Mapped[str] = mapped_column(String(50), default="package")
     sort_order: Mapped[int] = mapped_column(Integer, default=100)
     price_per_3h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
-    price_per_6h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     price_per_24h: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     price_per_7d: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)

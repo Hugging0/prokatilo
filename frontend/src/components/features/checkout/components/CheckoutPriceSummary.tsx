@@ -47,7 +47,7 @@ export function CheckoutPriceSummary({
             Итого
           </h3>
           <p className="mt-1 text-base font-bold leading-relaxed text-slate-500">
-            Сумма к оплате при получении товара.
+            Оплата при получении вещи.
           </p>
         </div>
       </div>
@@ -68,7 +68,7 @@ export function CheckoutPriceSummary({
           />
         )}
         <SummaryRow
-          label="К оплате курьеру"
+          label="К оплате при получении"
           value={totalLabel}
           strong
         />

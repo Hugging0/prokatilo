@@ -38,7 +38,6 @@ def upgrade() -> None:
             sa.Column("title", sa.String(length=255), nullable=False),
             sa.Column("description", sa.String(length=1000), nullable=True),
             sa.Column("price_per_3h", sa.Numeric(10, 2), nullable=False),
-            sa.Column("price_per_6h", sa.Numeric(10, 2), nullable=False),
             sa.Column("price_per_24h", sa.Numeric(10, 2), nullable=False),
             sa.Column("price_per_7d", sa.Numeric(10, 2), nullable=False),
             sa.Column("is_available", sa.Boolean(), nullable=False),

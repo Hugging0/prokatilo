@@ -251,7 +251,7 @@ export function CheckoutView({
                   className="mt-1 size-5 rounded border-slate-300 accent-orange-500"
                 />
                 <span className="text-base font-bold leading-relaxed text-slate-600">
-                  Нажимая «Создать бронь», я подтверждаю согласие с{" "}
+                  Нажимая «Забронировать», я подтверждаю согласие с{" "}
                   <Link
                     href="/terms"
                     className="font-black text-orange-600 hover:text-orange-700"

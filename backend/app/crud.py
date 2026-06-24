@@ -23,7 +23,6 @@ BOOKING_BLOCKING_STATUSES = (
 )
 TARIFF_DURATIONS = {
     schemas.TariffType.THREE_HOURS: timedelta(hours=3),
-    schemas.TariffType.SIX_HOURS: timedelta(hours=6),
     schemas.TariffType.TWENTY_FOUR_HOURS: timedelta(hours=24),
     schemas.TariffType.SEVEN_DAYS: timedelta(days=7),
 }
@@ -1023,8 +1022,6 @@ def get_tariff_price(
     match tariff_type:
         case schemas.TariffType.THREE_HOURS:
             unit_price = item.price_per_3h
-        case schemas.TariffType.SIX_HOURS:
-            unit_price = item.price_per_6h
         case schemas.TariffType.TWENTY_FOUR_HOURS:
             unit_price = item.price_per_24h
         case schemas.TariffType.SEVEN_DAYS:

@@ -3,7 +3,7 @@ import type { AppOrder, OrderStatus } from "@/types";
 export function getDeliveryHint(status: OrderStatus) {
   switch (status) {
     case "pending":
-      return "Оператор подтвердит детали доставки";
+      return "Подтвердим детали доставки";
     case "confirmed":
       return "Доставим в выбранный интервал";
     case "delivery":
@@ -32,7 +32,7 @@ export function getCourierPaymentHint(status: OrderStatus) {
 export function getStatusInfoTitle(status: OrderStatus) {
   switch (status) {
     case "pending":
-      return "Оператор проверит наличие";
+      return "Проверим наличие";
     case "confirmed":
       return "Бронь подтверждена";
     case "delivery":
@@ -59,6 +59,6 @@ export function getStatusInfoText(order: AppOrder) {
     case "returned":
       return "Спасибо за аренду. Можно повторить бронь или оставить оценку.";
     case "cancelled":
-      return "Эта заявка закрыта. Можно выбрать вещь и оформить новую бронь.";
+      return "Эта бронь отменена. Можно выбрать вещь и забронировать снова.";
   }
 }

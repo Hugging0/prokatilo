@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type TariffType = "3h" | "6h" | "24h" | "7d";
+export type TariffType = "3h" | "24h" | "7d";
 
 export type OrderStatus =
   | "pending"
@@ -54,7 +54,6 @@ export interface AppItem {
   title: string;
   desc: string;
   price3h: number;
-  price6h: number;
   price24h: number;
   price7d: number;
   icon: LucideIcon;
@@ -113,7 +112,6 @@ export interface BackendItemDto {
   description: string | null;
   category: string;
   price_per_3h: string;
-  price_per_6h: string;
   price_per_24h: string;
   price_per_7d: string;
   image_url: string | null;
@@ -130,7 +128,6 @@ export interface AdminItemFormPayload {
   description: string | null;
   category: string;
   price_per_3h: number;
-  price_per_6h: number;
   price_per_24h: number;
   price_per_7d: number;
   image_url: string | null;
@@ -145,7 +142,6 @@ export interface CatalogItemFormState {
   description: string;
   category: string;
   price_per_3h: string;
-  price_per_6h: string;
   price_per_24h: string;
   price_per_7d: string;
   image_url: string;

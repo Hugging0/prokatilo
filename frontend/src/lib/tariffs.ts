@@ -28,8 +28,6 @@ export function getTariffLabel(tariff: TariffType): string {
   switch (tariff) {
     case "3h":
       return "3 часа";
-    case "6h":
-      return "6 часов";
     case "24h":
       return "1 день";
     case "7d":
@@ -41,8 +39,6 @@ export function getTariffShortLabel(tariff: TariffType): string {
   switch (tariff) {
     case "3h":
       return "3 ч";
-    case "6h":
-      return "6 ч";
     case "24h":
       return "1 д";
     case "7d":
@@ -54,8 +50,6 @@ export function getTariffPrice(item: AppItem, tariff: TariffType): number {
   switch (tariff) {
     case "3h":
       return item.price3h;
-    case "6h":
-      return item.price6h;
     case "24h":
       return item.price24h;
     case "7d":
@@ -67,8 +61,6 @@ export function getTariffDurationMs(tariff: TariffType): number {
   switch (tariff) {
     case "3h":
       return 3 * 60 * 60 * 1000;
-    case "6h":
-      return 6 * 60 * 60 * 1000;
     case "24h":
       return 24 * 60 * 60 * 1000;
     case "7d":

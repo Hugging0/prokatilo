@@ -7,7 +7,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class TariffType(StrEnum):
     THREE_HOURS = "3h"
-    SIX_HOURS = "6h"
     TWENTY_FOUR_HOURS = "24h"
     SEVEN_DAYS = "7d"
 
@@ -54,7 +53,6 @@ class ItemBase(BaseModel):
     description: str | None = Field(None, max_length=2000)
     category: str = Field(default="Техника", min_length=1, max_length=100)
     price_per_3h: Decimal = Field(..., ge=0)
-    price_per_6h: Decimal = Field(default=Decimal("0"), ge=0)
     price_per_24h: Decimal = Field(..., ge=0)
     price_per_7d: Decimal = Field(..., ge=0)
     image_url: str | None = Field(None, max_length=2048)
@@ -73,7 +71,6 @@ class ItemUpdate(BaseModel):
     description: str | None = Field(None, max_length=2000)
     category: str | None = Field(None, min_length=1, max_length=100)
     price_per_3h: Decimal | None = Field(None, ge=0)
-    price_per_6h: Decimal | None = Field(None, ge=0)
     price_per_24h: Decimal | None = Field(None, ge=0)
     price_per_7d: Decimal | None = Field(None, ge=0)
     image_url: str | None = Field(None, max_length=2048)

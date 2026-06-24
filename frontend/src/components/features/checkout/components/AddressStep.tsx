@@ -28,8 +28,8 @@ export function AddressStep({
   return (
     <section>
       <StepTitle
-        title="Куда доставить?"
-        subtitle="Укажите адрес, оператор подтвердит заказ"
+        title="Куда привезти?"
+        subtitle="Улица, дом и квартира"
       />
 
       <div className="mt-7 space-y-5">
@@ -62,7 +62,7 @@ export function AddressStep({
                 {deliveryEstimate.priceLabel}
               </span>
               {deliveryEstimate.needsOperatorConfirmation && (
-                <span>Стоимость уточнит оператор.</span>
+                <span>Стоимость уточним после брони.</span>
               )}
               <button
                 type="button"
@@ -76,8 +76,8 @@ export function AddressStep({
             </div>
             {isDeliveryInfoOpen && (
               <p className="mt-2 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold leading-relaxed text-slate-600">
-                До 3 км от Малой Очаковской доставка бесплатная. До 7 км —
-                300–500 ₽. Остальные адреса оператор подтвердит после брони.
+                Для ближайших адресов доставка без доплаты. В остальных зонах
+                стоимость зависит от маршрута, уточним её после брони.
               </p>
             )}
           </div>
