@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { getItems } from "@/lib/api/items";
 import { mapBackendItemsToAppItems } from "@/lib/mappers/items";
 import type { AppItem } from "@/types";
@@ -18,66 +19,56 @@ export function useItems(): UseItemsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadItems() {
-    setIsLoading(true);
+  const loadItems = useCallback(
+    async ({
+      showLoading = true,
+      clearOnError = false,
+    }: {
+      showLoading?: boolean;
+      clearOnError?: boolean;
+    } = {}) => {
+      if (showLoading) {
+        setIsLoading(true);
+      }
 
-    try {
-      const backendItems = await getItems();
-      const appItems = mapBackendItemsToAppItems(backendItems);
+      try {
+        const backendItems = await getItems();
+        const appItems = mapBackendItemsToAppItems(backendItems);
 
-      setItems(appItems);
-      setError(null);
-    } catch (requestError) {
-      setItems([]);
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Не удалось загрузить каталог",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    let isMounted = true;
-
-    void getItems()
-      .then((backendItems) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setItems(mapBackendItemsToAppItems(backendItems));
+        setItems(appItems);
         setError(null);
-      })
-      .catch((requestError) => {
-        if (!isMounted) {
-          return;
+      } catch (requestError) {
+        if (clearOnError) {
+          setItems([]);
         }
 
-        setItems([]);
         setError(
           requestError instanceof Error
             ? requestError.message
             : "Не удалось загрузить каталог",
         );
-      })
-      .finally(() => {
-        if (isMounted) {
+      } finally {
+        if (showLoading) {
           setIsLoading(false);
         }
-      });
+      }
+    },
+    [],
+  );
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  useEffect(() => {
+    void Promise.resolve().then(() => loadItems({ clearOnError: true }));
+  }, [loadItems]);
+
+  useAutoRefresh({
+    intervalMs: 5 * 60 * 1_000,
+    onRefresh: () => loadItems({ showLoading: false }),
+  });
 
   return {
     items,
     isLoading,
     error,
-    reload: loadItems,
+    reload: () => loadItems(),
   };
 }

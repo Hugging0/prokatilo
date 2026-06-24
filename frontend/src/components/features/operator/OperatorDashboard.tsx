@@ -39,6 +39,7 @@ export function OperatorDashboard({
   const adminOrders = useAdminOrders({
     authToken,
     items,
+    isAutoRefreshEnabled: activeTab === "orders",
     onCatalogChanged,
   });
   const queueCounts = getQueueCounts(adminOrders.orders);

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { getItemBookings } from "@/lib/api/items";
 import type { BookingSlot } from "@/types";
 
@@ -24,14 +25,19 @@ export function useBookingSlots(itemId: number | null) {
   const [isBookingsLoading, setIsBookingsLoading] = useState(false);
   const [bookingsError, setBookingsError] = useState<string | null>(null);
 
-  const reloadBookingSlots = useCallback(async () => {
+  const reloadBookingSlots = useCallback(async (
+    { showLoading = true }: { showLoading?: boolean } = {},
+  ) => {
     if (!itemId) {
       setBookingSlots([]);
       setBookingsError(null);
       return;
     }
 
-    setIsBookingsLoading(true);
+    if (showLoading) {
+      setIsBookingsLoading(true);
+    }
+
     setBookingsError(null);
 
     try {
@@ -45,13 +51,21 @@ export function useBookingSlots(itemId: number | null) {
           : "Не удалось загрузить занятость",
       );
     } finally {
-      setIsBookingsLoading(false);
+      if (showLoading) {
+        setIsBookingsLoading(false);
+      }
     }
   }, [itemId]);
 
   useEffect(() => {
     void Promise.resolve().then(() => reloadBookingSlots());
   }, [reloadBookingSlots]);
+
+  useAutoRefresh({
+    enabled: Boolean(itemId),
+    intervalMs: 60_000,
+    onRefresh: () => reloadBookingSlots({ showLoading: false }),
+  });
 
   return {
     bookingSlots,

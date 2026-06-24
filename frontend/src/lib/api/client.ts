@@ -39,6 +39,7 @@ export async function apiRequest<T>(
 
   try {
     response = await fetch(url, {
+      cache: "no-store",
       ...requestOptions,
       headers: {
         "Content-Type": "application/json",

@@ -5,6 +5,7 @@ import {
   getMyOrders,
   updateMyOrderAddress,
 } from "@/lib/api/orders";
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { UI_COPY } from "@/lib/copy";
 import {
   mapBackendOrderToAppOrder,
@@ -15,10 +16,12 @@ import type { AppItem, AppOrder, BackendOrderDto } from "@/types";
 export function useOrders({
   authToken,
   items,
+  isAutoRefreshEnabled = false,
   onNotify,
 }: {
   authToken: string | null;
   items: AppItem[];
+  isAutoRefreshEnabled?: boolean;
   onNotify: (message: string) => void;
 }) {
   const [orders, setOrders] = useState<AppOrder[]>([]);
@@ -26,14 +29,20 @@ export function useOrders({
   const [ordersError, setOrdersError] = useState<string | null>(null);
 
   const reloadOrders = useCallback(
-    async (token = authToken) => {
+    async (
+      token = authToken,
+      { showLoading = true }: { showLoading?: boolean } = {},
+    ) => {
       if (!token) {
         setOrders([]);
         setOrdersError(null);
         return;
       }
 
-      setIsOrdersLoading(true);
+      if (showLoading) {
+        setIsOrdersLoading(true);
+      }
+
       setOrdersError(null);
 
       try {
@@ -48,7 +57,9 @@ export function useOrders({
             : UI_COPY.orders.loadError,
         );
       } finally {
-        setIsOrdersLoading(false);
+        if (showLoading) {
+          setIsOrdersLoading(false);
+        }
       }
     },
     [authToken, items],
@@ -57,6 +68,13 @@ export function useOrders({
   useEffect(() => {
     void Promise.resolve().then(() => reloadOrders());
   }, [reloadOrders]);
+
+  useAutoRefresh({
+    enabled: Boolean(authToken) && isAutoRefreshEnabled,
+    intervalMs: 45_000,
+    onRefresh: () => reloadOrders(authToken, { showLoading: false }),
+    refreshOnEnable: true,
+  });
 
   const leaveReview = (
     orderId: number,

@@ -82,6 +82,7 @@ export default function App() {
   const ordersState = useOrders({
     authToken: auth.authToken,
     items,
+    isAutoRefreshEnabled: view === "orders",
     onNotify: showNotification,
   });
   const catalogFilter = useCatalogFilter(items);

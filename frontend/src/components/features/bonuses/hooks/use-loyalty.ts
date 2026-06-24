@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { getLoyaltySummary } from "@/lib/api/loyalty";
 import { activatePromoCode } from "@/lib/api/promo-codes";
 import { UI_COPY } from "@/lib/copy";
@@ -18,8 +19,13 @@ export function useLoyalty({ authToken, onNotify }: UseLoyaltyParams) {
   const [isActivating, setIsActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    setIsLoading(true);
+  const refresh = useCallback(async (
+    { showLoading = true }: { showLoading?: boolean } = {},
+  ) => {
+    if (showLoading) {
+      setIsLoading(true);
+    }
+
     setError(null);
 
     try {
@@ -32,7 +38,9 @@ export function useLoyalty({ authToken, onNotify }: UseLoyaltyParams) {
           : UI_COPY.bonus.loadError,
       );
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
   }, [authToken]);
 
@@ -43,6 +51,11 @@ export function useLoyalty({ authToken, onNotify }: UseLoyaltyParams) {
 
     return () => window.clearTimeout(timerId);
   }, [refresh]);
+
+  useAutoRefresh({
+    intervalMs: 2 * 60 * 1_000,
+    onRefresh: () => refresh({ showLoading: false }),
+  });
 
   const setPromoCode = (value: string) => {
     setPromoCodeState(value.toUpperCase());

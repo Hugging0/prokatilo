@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { getAdminOrders, updateAdminOrderStatus } from "@/lib/api/admin-orders";
+import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { UI_COPY } from "@/lib/copy";
 import { mapBackendOrdersToAppOrders } from "@/lib/mappers/orders";
 import type { AppItem, AppOrder, OrderStatus } from "@/types";
@@ -8,18 +9,25 @@ import type { AppItem, AppOrder, OrderStatus } from "@/types";
 export function useAdminOrders({
   authToken,
   items,
+  isAutoRefreshEnabled = true,
   onCatalogChanged,
 }: {
   authToken: string;
   items: AppItem[];
+  isAutoRefreshEnabled?: boolean;
   onCatalogChanged: () => Promise<void>;
 }) {
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [isOrdersLoading, setIsOrdersLoading] = useState(true);
   const [ordersMessage, setOrdersMessage] = useState<string | null>(null);
 
-  const refreshOrders = useCallback(async () => {
-    setIsOrdersLoading(true);
+  const refreshOrders = useCallback(async (
+    { showLoading = true }: { showLoading?: boolean } = {},
+  ) => {
+    if (showLoading) {
+      setIsOrdersLoading(true);
+    }
+
     setOrdersMessage(null);
 
     try {
@@ -34,13 +42,22 @@ export function useAdminOrders({
           : UI_COPY.operator.ordersLoadError,
       );
     } finally {
-      setIsOrdersLoading(false);
+      if (showLoading) {
+        setIsOrdersLoading(false);
+      }
     }
   }, [authToken, items]);
 
   useEffect(() => {
     void Promise.resolve().then(() => refreshOrders());
   }, [refreshOrders]);
+
+  useAutoRefresh({
+    enabled: isAutoRefreshEnabled,
+    intervalMs: 20_000,
+    onRefresh: () => refreshOrders({ showLoading: false }),
+    refreshOnEnable: true,
+  });
 
   const updateOrderStatus = async (
     orderId: number,
