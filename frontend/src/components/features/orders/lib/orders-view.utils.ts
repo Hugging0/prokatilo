@@ -1,5 +1,4 @@
 import { getDateTimeFromInputs } from "@/lib/booking-time";
-import { getTariffLabel } from "@/lib/tariffs";
 import type { AppOrder, OrderStatus } from "@/types";
 
 import type { OrdersTab } from "../types";
@@ -57,5 +56,5 @@ export function getNextOrder(activeOrders: AppOrder[]) {
 }
 
 export function formatPricePerDay(order: AppOrder) {
-  return `${order.price} ₽ · ${getTariffLabel(order.tariff)}`;
+  return `${order.price} ₽`;
 }
