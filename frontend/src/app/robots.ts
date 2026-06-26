@@ -1,12 +1,15 @@
 import type { MetadataRoute } from "next";
 
+import { SEO_PRIVATE_ROUTES } from "@/lib/seo/routes";
+import { SEO_SITE_URL } from "@/lib/seo/site";
+
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/admin-dashboard", "/api"],
+      disallow: SEO_PRIVATE_ROUTES,
     },
-    sitemap: "https://myprokatilo.ru/sitemap.xml",
+    sitemap: `${SEO_SITE_URL}/sitemap.xml`,
   };
 }

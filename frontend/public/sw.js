@@ -2,7 +2,7 @@ self.addEventListener("push", (event) => {
   let payload = {
     title: "ПРОКАТило",
     body: "У вас новое уведомление",
-    url: "/",
+    url: "/app",
   };
 
   if (event.data) {
@@ -26,7 +26,7 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const targetUrl = new URL(event.notification.data?.url || "/", self.location.origin).href;
+  const targetUrl = new URL(event.notification.data?.url || "/app", self.location.origin).href;
 
   event.waitUntil(
     self.clients

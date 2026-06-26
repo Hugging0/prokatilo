@@ -1,0 +1,278 @@
+import Image from "next/image";
+import Link from "next/link";
+import type { ReactNode } from "react";
+
+import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { SEO_BLOG_POSTS, SEO_CATALOG_ITEMS } from "@/lib/seo/content";
+import { buildJsonLd } from "@/lib/seo/jsonld";
+import type { SeoPageConfig } from "@/lib/seo/site";
+
+interface SeoPageProps {
+  page: SeoPageConfig;
+}
+
+function SeoLink({
+  href,
+  children,
+  variant = "secondary",
+}: {
+  href: string;
+  children: ReactNode;
+  variant?: "primary" | "secondary";
+}) {
+  const className =
+    variant === "primary"
+      ? "inline-flex min-h-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600 px-5 text-base font-black text-white shadow-lg shadow-rose-100 transition hover:brightness-105"
+      : "inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 text-base font-black text-slate-700 shadow-sm transition hover:border-orange-200";
+
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
+}
+
+function ProductGrid() {
+  return (
+    <section className="border-y border-slate-100 bg-white">
+      <div className="mx-auto grid max-w-6xl gap-5 px-5 py-12 md:grid-cols-2 lg:grid-cols-4">
+        {SEO_CATALOG_ITEMS.map((item) => (
+          <Link
+            key={item.slug}
+            href={`/rent/${item.slug}`}
+            className="group overflow-hidden rounded-[1.5rem] border border-slate-100 bg-slate-50 shadow-sm transition hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg"
+          >
+            <div className="aspect-square bg-white">
+              <Image
+                src={item.image}
+                alt={item.imageAlt}
+                width={512}
+                height={512}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="space-y-3 p-5">
+              <p className="text-xs font-black uppercase tracking-wide text-orange-600">
+                {item.categoryTitle}
+              </p>
+              <h2 className="text-xl font-black tracking-tight text-slate-950">
+                {item.shortTitle}
+              </h2>
+              <p className="text-base font-semibold leading-relaxed text-slate-600">
+                {item.description}
+              </p>
+              <span className="inline-flex rounded-full bg-white px-3 py-1 text-sm font-black text-slate-700 shadow-sm">
+                {item.fromPrice}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BlogLinks() {
+  return (
+    <section className="bg-slate-50">
+      <div className="mx-auto max-w-6xl px-5 py-12">
+        <div className="mb-6 flex flex-col gap-2">
+          <p className="text-sm font-black uppercase tracking-wide text-orange-600">
+            Блог
+          </p>
+          <h2 className="text-3xl font-black tracking-tight text-slate-950">
+            Идеи для редких задач
+          </h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {SEO_BLOG_POSTS.map((post) => (
+            <Link
+              key={post.slug}
+              href={`/blog/${post.slug}`}
+              className="rounded-[1.5rem] border border-slate-100 bg-white p-5 shadow-sm transition hover:border-orange-200"
+            >
+              <h3 className="text-xl font-black tracking-tight text-slate-950">
+                {post.h1}
+              </h3>
+              <p className="mt-2 text-base font-semibold leading-relaxed text-slate-600">
+                {post.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function SeoPage({ page }: SeoPageProps) {
+  const jsonLd = buildJsonLd(page);
+  const isHome = page.path === "/";
+  const isCatalog = page.path === "/catalog";
+  const isBlog = page.path === "/blog";
+
+  return (
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <JsonLdScript entities={jsonLd} />
+
+      <header className="border-b border-slate-100 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
+          <Link
+            href="/"
+            className="text-xl font-black italic tracking-tighter text-slate-950"
+          >
+            ПРОКАТило
+          </Link>
+          <nav className="hidden items-center gap-5 text-sm font-black text-slate-600 sm:flex">
+            <Link href="/catalog">Каталог</Link>
+            <Link href="/delivery-area">Доставка</Link>
+            <Link href="/faq">FAQ</Link>
+          </nav>
+          <Link
+            href="/app"
+            className="rounded-2xl bg-slate-950 px-4 py-2 text-sm font-black text-white"
+          >
+            В приложение
+          </Link>
+        </div>
+      </header>
+
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-14 md:grid-cols-[1.05fr_0.95fr] md:items-center">
+          <div>
+            {page.breadcrumbs.length > 1 && (
+              <nav
+                aria-label="Хлебные крошки"
+                className="mb-5 flex flex-wrap gap-2 text-sm font-bold text-slate-500"
+              >
+                {page.breadcrumbs.map((item, index) => (
+                  <span key={item.path} className="flex items-center gap-2">
+                    {index > 0 && <span>/</span>}
+                    <Link href={item.path}>{item.name}</Link>
+                  </span>
+                ))}
+              </nav>
+            )}
+            {page.eyebrow && (
+              <p className="mb-3 text-sm font-black uppercase tracking-wide text-orange-600">
+                {page.eyebrow}
+              </p>
+            )}
+            <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+              {page.h1}
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg font-semibold leading-relaxed text-slate-600">
+              {page.intro}
+            </p>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              {page.ctaLabel && page.ctaHref && (
+                <SeoLink href={page.ctaHref} variant="primary">
+                  {page.ctaLabel}
+                </SeoLink>
+              )}
+              {page.secondaryCtaLabel && page.secondaryCtaHref && (
+                <SeoLink href={page.secondaryCtaHref}>
+                  {page.secondaryCtaLabel}
+                </SeoLink>
+              )}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-[1.75rem] border border-slate-100 bg-slate-50 shadow-sm">
+            <Image
+              src={page.image ?? "/icons/prokatilo-icon-512.png"}
+              alt={page.imageAlt ?? page.h1}
+              width={512}
+              height={512}
+              className="h-full min-h-72 w-full object-cover"
+            />
+          </div>
+        </div>
+      </section>
+
+      {isCatalog && <ProductGrid />}
+
+      <section className="mx-auto grid max-w-6xl gap-5 px-5 py-12 md:grid-cols-2">
+        {page.sections.map((section) => (
+          <article
+            key={section.title}
+            className="rounded-[1.5rem] border border-slate-100 bg-white p-6 shadow-sm"
+          >
+            <h2 className="text-2xl font-black tracking-tight text-slate-950">
+              {section.title}
+            </h2>
+            <p className="mt-3 text-base font-semibold leading-relaxed text-slate-600">
+              {section.body}
+            </p>
+            {section.items && (
+              <ul className="mt-5 space-y-2">
+                {section.items.map((item) => (
+                  <li
+                    key={item}
+                    className="rounded-2xl bg-slate-50 px-4 py-3 text-base font-bold text-slate-700"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+        ))}
+      </section>
+
+      {page.faqs && (
+        <section className="border-y border-slate-100 bg-white">
+          <div className="mx-auto max-w-4xl px-5 py-12">
+            <h2 className="text-3xl font-black tracking-tight text-slate-950">
+              Частые вопросы
+            </h2>
+            <div className="mt-6 grid gap-4">
+              {page.faqs.map((faq) => (
+                <article
+                  key={faq.question}
+                  className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-5"
+                >
+                  <h3 className="text-lg font-black text-slate-950">
+                    {faq.question}
+                  </h3>
+                  <p className="mt-2 text-base font-semibold leading-relaxed text-slate-600">
+                    {faq.answer}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {isHome && <ProductGrid />}
+      {(isHome || isBlog) && <BlogLinks />}
+
+      {page.relatedLinks && (
+        <section className="mx-auto max-w-6xl px-5 py-12">
+          <h2 className="text-2xl font-black tracking-tight text-slate-950">
+            Полезные ссылки
+          </h2>
+          <div className="mt-5 flex flex-wrap gap-3">
+            {page.relatedLinks.map((link) => (
+              <SeoLink key={link.path} href={link.path}>
+                {link.name}
+              </SeoLink>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <footer className="border-t border-slate-100 bg-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm font-bold text-slate-500 md:flex-row md:items-center md:justify-between">
+          <p>ПРОКАТило — аренда вещей для редких задач рядом с домом.</p>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/contacts">Контакты</Link>
+            <Link href="/terms">Пользовательское соглашение</Link>
+            <Link href="/privacy">Политика данных</Link>
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
+}
