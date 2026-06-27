@@ -1,11 +1,15 @@
+import {
+  BUSINESS_PHONE_HREF,
+  BUSINESS_TELEGRAM_URL,
+} from "@/lib/business";
 import type { OrderStatus } from "@/types";
 
 export const ORDER_DETAILS_COPY = {
   support: {
     title: "Поддержка",
     description: "Напишите нам в Telegram или позвоните — поможем с бронью.",
-    telegramUrl: "https://t.me/xapkoofff",
-    phoneHref: "tel:+79159505944",
+    telegramUrl: BUSINESS_TELEGRAM_URL,
+    phoneHref: BUSINESS_PHONE_HREF,
     telegramButton: "Написать в Telegram",
     phoneButton: "Позвонить",
   },

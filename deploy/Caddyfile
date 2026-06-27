@@ -1,5 +1,5 @@
 {
-email {$ACME_EMAIL:admin@myprokatilo.ru}
+	email {$ACME_EMAIL:admin@myprokatilo.ru}
 }
 
 {$APP_DOMAIN:myprokatilo.ru}, www.{$APP_DOMAIN:myprokatilo.ru} {
@@ -8,8 +8,11 @@ email {$ACME_EMAIL:admin@myprokatilo.ru}
 	}
 
 	handle {
-		@html not path /_next/static/* /favicon.ico /manifest.webmanifest
-		header @html >Cache-Control "no-store, max-age=0, must-revalidate"
+		@private_html path /app /app/* /admin /admin/* /admin-dashboard /admin-dashboard/*
+		header @private_html >Cache-Control "no-store, max-age=0, must-revalidate"
+
+		@public_html path / /catalog /catalog/* /rent/* /delivery-area /faq /about /blog /blog/* /privacy /terms /consent /contacts /delivery-payment /llms.txt /llms-full.txt /robots.txt /sitemap.xml
+		header @public_html >Cache-Control "public, max-age=300, stale-while-revalidate=3600"
 		reverse_proxy frontend:3000
 	}
 }

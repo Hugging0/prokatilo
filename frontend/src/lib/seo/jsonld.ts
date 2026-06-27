@@ -1,5 +1,15 @@
 import { SEO_CATALOG_ITEMS } from "./content";
 import {
+  BUSINESS_AREA_SERVED,
+  BUSINESS_EMAIL,
+  BUSINESS_LATITUDE,
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_LONGITUDE,
+  BUSINESS_PHONE,
+  BUSINESS_SOCIAL_URLS,
+  BUSINESS_STREET_ADDRESS,
+} from "@/lib/business";
+import {
   SEO_DEFAULT_IMAGE,
   SEO_SITE_NAME,
   SEO_SITE_URL,
@@ -11,14 +21,40 @@ function absoluteUrl(path: string) {
   return new URL(path, SEO_SITE_URL).toString();
 }
 
+const ORGANIZATION_ID = absoluteUrl("/#organization");
+const LOCAL_BUSINESS_ID = absoluteUrl("/#local-business");
+
+function postalAddressJsonLd(): JsonLdEntity {
+  return {
+    "@type": "PostalAddress",
+    streetAddress: BUSINESS_STREET_ADDRESS,
+    addressLocality: "Москва",
+    addressRegion: "Москва",
+    addressCountry: "RU",
+  };
+}
+
 function organizationJsonLd(): JsonLdEntity {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": ORGANIZATION_ID,
     name: SEO_SITE_NAME,
+    legalName: BUSINESS_LEGAL_NAME,
     url: SEO_SITE_URL,
     logo: absoluteUrl(SEO_DEFAULT_IMAGE),
-    sameAs: [],
+    email: BUSINESS_EMAIL,
+    telephone: BUSINESS_PHONE,
+    address: postalAddressJsonLd(),
+    sameAs: [...BUSINESS_SOCIAL_URLS],
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: BUSINESS_PHONE,
+      email: BUSINESS_EMAIL,
+      contactType: "customer support",
+      availableLanguage: "Russian",
+      areaServed: "RU",
+    },
   };
 }
 
@@ -62,20 +98,16 @@ function itemServiceJsonLd(page: SeoPageConfig): JsonLdEntity | null {
     description: page.catalogItem.description,
     image: [absoluteUrl(page.catalogItem.image)],
     provider: {
-      "@type": "Organization",
+      "@type": "LocalBusiness",
+      "@id": LOCAL_BUSINESS_ID,
       name: SEO_SITE_NAME,
       url: SEO_SITE_URL,
     },
-    areaServed: [
-      "Очаково-Матвеевское",
-      "ЖК Мичуринский парк",
-      "Раменки",
-      "Никулино",
-      "Солнцево",
-    ],
+    areaServed: [...BUSINESS_AREA_SERVED],
     category: page.catalogItem.categoryTitle,
     serviceType: "Аренда вещей и техники",
     url: absoluteUrl(page.path),
+    inLanguage: "ru-RU",
   };
 }
 
@@ -114,12 +146,16 @@ function articleJsonLd(page: SeoPageConfig): JsonLdEntity | null {
     description: page.description,
     dateModified: page.updatedAt,
     datePublished: page.updatedAt,
+    image: absoluteUrl(page.image ?? SEO_DEFAULT_IMAGE),
+    inLanguage: "ru-RU",
     author: {
       "@type": "Organization",
+      "@id": ORGANIZATION_ID,
       name: SEO_SITE_NAME,
     },
     publisher: {
       "@type": "Organization",
+      "@id": ORGANIZATION_ID,
       name: SEO_SITE_NAME,
       logo: {
         "@type": "ImageObject",
@@ -136,16 +172,25 @@ function localBusinessJsonLd(page: SeoPageConfig): JsonLdEntity | null {
   return {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
+    "@id": LOCAL_BUSINESS_ID,
     name: SEO_SITE_NAME,
+    legalName: BUSINESS_LEGAL_NAME,
     url: SEO_SITE_URL,
     image: absoluteUrl(SEO_DEFAULT_IMAGE),
-    areaServed: [
-      "Очаково-Матвеевское",
-      "ЖК Мичуринский парк",
-      "Раменки",
-      "Никулино",
-      "Солнцево",
-    ],
+    parentOrganization: {
+      "@id": ORGANIZATION_ID,
+    },
+    telephone: BUSINESS_PHONE,
+    email: BUSINESS_EMAIL,
+    address: postalAddressJsonLd(),
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: BUSINESS_LATITUDE,
+      longitude: BUSINESS_LONGITUDE,
+    },
+    areaServed: [...BUSINESS_AREA_SERVED],
+    sameAs: [...BUSINESS_SOCIAL_URLS],
+    priceRange: "₽–₽₽",
     description: page.description,
   };
 }

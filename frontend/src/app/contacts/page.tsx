@@ -1,15 +1,29 @@
 import type { Metadata } from "next";
 
 import { LegalPage } from "@/components/legal/LegalPage";
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_EMAIL,
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_LEGAL_STATUS,
+  BUSINESS_PHONE_DISPLAY,
+  BUSINESS_TAX_ID,
+  BUSINESS_TELEGRAM_URL,
+} from "@/lib/business";
 
 const title = "Контакты";
 
 const contactsText = `# Контакты сервиса «ПРОКАТило»
 
-Оператор сервиса: Хапков Александр Арсеньевич
-ИНН: 524712270089
-Email поддержки: Prokatilo.corp@gmail.com
-Email по персональным данным: Prokatilo.corp@gmail.com
+Дата публикации: 27.06.2026
+
+Оператор сервиса: ${BUSINESS_LEGAL_NAME} (${BUSINESS_LEGAL_STATUS})
+ИНН: ${BUSINESS_TAX_ID}
+Адрес: ${BUSINESS_ADDRESS}
+Телефон: ${BUSINESS_PHONE_DISPLAY}
+Email поддержки: ${BUSINESS_EMAIL}
+Email по персональным данным: ${BUSINESS_EMAIL}
+Telegram: ${BUSINESS_TELEGRAM_URL}
 Сайт: https://myprokatilo.ru
 
 ## Обращения пользователей

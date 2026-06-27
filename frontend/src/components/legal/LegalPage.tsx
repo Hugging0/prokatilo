@@ -54,6 +54,10 @@ function parseLegalText(text: string): LegalBlock[] {
       continue;
     }
 
+    if (/^Дата (публикации|редакции):/i.test(line)) {
+      continue;
+    }
+
     if (line.startsWith("### ")) {
       flushParagraph();
       flushList();
@@ -91,9 +95,18 @@ function parseLegalText(text: string): LegalBlock[] {
   return blocks;
 }
 
-function getPublishedAt(text: string) {
-  const match = text.match(/Дата публикации:\s*(.+)/);
-  return match?.[1]?.trim() ?? null;
+function getDocumentDate(text: string) {
+  const updatedMatch = text.match(/Дата редакции:\s*(.+)/);
+  if (updatedMatch?.[1]) {
+    return { label: "Дата редакции", value: updatedMatch[1].trim() };
+  }
+
+  const publishedMatch = text.match(/Дата публикации:\s*(.+)/);
+  if (publishedMatch?.[1]) {
+    return { label: "Дата публикации", value: publishedMatch[1].trim() };
+  }
+
+  return null;
 }
 
 export function LegalPage({
@@ -102,22 +115,22 @@ export function LegalPage({
   description,
 }: LegalPageProps) {
   const blocks = parseLegalText(text);
-  const publishedAt = getPublishedAt(text);
+  const documentDate = getDocumentDate(text);
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-8 sm:py-12">
       <article className="mx-auto max-w-3xl rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-10">
         <div className="flex items-center justify-between gap-4">
           <Link
-            href="/"
+            href="/app"
             className="rounded-2xl bg-slate-50 p-3 text-slate-900 shadow-sm active:scale-95"
             aria-label="Вернуться в приложение"
           >
             <ArrowLeft size={21} />
           </Link>
           <Link
-            href="/"
-            className="text-sm font-black uppercase tracking-wide text-orange-600"
+            href="/app"
+            className="text-sm font-black uppercase tracking-wide text-orange-700"
           >
             {APP_NAME}
           </Link>
@@ -132,9 +145,9 @@ export function LegalPage({
               {description}
             </p>
           )}
-          {publishedAt && (
+          {documentDate && (
             <p className="mt-4 text-sm font-extrabold text-slate-400">
-              Дата публикации: {publishedAt}
+              {documentDate.label}: {documentDate.value}
             </p>
           )}
         </header>

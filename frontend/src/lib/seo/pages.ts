@@ -11,7 +11,7 @@ const homePage: SeoPageConfig = {
   path: "/",
   title: "ПРОКАТило — аренда вещей и техники рядом с домом",
   description:
-    "Арендуйте редкую технику рядом с домом: PS5, VR, робот-мойщик окон и моющий пылесос. Попользовались — вернули, без лишнего хлама дома.",
+    "Арендуйте редкую технику рядом с домом на западе Москвы: PS5, VR, робот-мойщик окон и моющий пылесос. Попользовались — вернули, без лишнего хлама.",
   h1: "Аренда вещей рядом с домом",
   eyebrow: "ПРОКАТило",
   intro:
@@ -52,9 +52,9 @@ const homePage: SeoPageConfig = {
 
 const catalogPage: SeoPageConfig = {
   path: "/catalog",
-  title: "Каталог аренды вещей и техники — ПРОКАТило",
+  title: "Аренда вещей и техники в Москве | ПРОКАТило",
   description:
-    "Каталог вещей в аренду: игровые приставки, VR, робот-мойщик окон и техника для уборки рядом с домом.",
+    "Каталог вещей и техники в аренду на западе Москвы: PS5, VR, робот-мойщик окон и моющий пылесос. Выберите срок и оформите бронь онлайн.",
   h1: "Каталог аренды",
   eyebrow: "Каталог",
   intro:
@@ -88,8 +88,11 @@ const catalogPage: SeoPageConfig = {
 
 const categoryPages = SEO_CATEGORIES.map((category) => ({
   path: `/catalog/${category.slug}` as SeoRoute,
-  title: `${category.title} в аренду — ПРОКАТило`,
-  description: category.description,
+  title:
+    category.slug === "uborka"
+      ? "Техника для уборки в аренду в Москве | ПРОКАТило"
+      : "Игровые приставки в аренду в Москве | ПРОКАТило",
+  description: category.metaDescription,
   h1: `${category.title} в аренду`,
   eyebrow: "Категория",
   intro: category.description,
@@ -123,8 +126,15 @@ const categoryPages = SEO_CATEGORIES.map((category) => ({
 
 const itemPages = SEO_CATALOG_ITEMS.map((item) => ({
   path: `/rent/${item.slug}` as SeoRoute,
-  title: `${item.title} в аренду рядом с домом — ПРОКАТило`,
-  description: item.description,
+  title:
+    item.slug === "ps5"
+      ? "Аренда PS5 на вечер и сутки в Москве | ПРОКАТило"
+      : item.slug === "playstation-vr"
+        ? "Аренда PlayStation VR в Москве | ПРОКАТило"
+        : item.slug === "robot-moyshchik-okon"
+          ? "Аренда робота-мойщика окон в Москве | ПРОКАТило"
+          : "Аренда моющего пылесоса для мебели | ПРОКАТило",
+  description: item.metaDescription,
   h1: `${item.title} в аренду`,
   eyebrow: item.categoryTitle,
   intro: item.description,
@@ -169,9 +179,9 @@ const itemPages = SEO_CATALOG_ITEMS.map((item) => ({
 
 const deliveryAreaPage: SeoPageConfig = {
   path: "/delivery-area",
-  title: "Зона доставки ПРОКАТило — Очаково, Раменки, Никулино, Солнцево",
+  title: "Доставка аренды техники по западу Москвы | ПРОКАТило",
   description:
-    "Зона обслуживания ПРОКАТило вокруг Очаково-Матвеевского, ЖК Мичуринский парк, Раменок, Никулино, Солнцево и соседних районов.",
+    "Доставка аренды техники по Очаково-Матвеевскому, Раменкам, Никулино, Солнцево и соседним районам. Условия зависят от адреса и маршрута.",
   h1: "Зона доставки и обслуживания",
   eyebrow: "Доставка",
   intro:
@@ -208,9 +218,9 @@ const deliveryAreaPage: SeoPageConfig = {
 
 const faqPage: SeoPageConfig = {
   path: "/faq",
-  title: "Вопросы об аренде вещей — ПРОКАТило",
+  title: "Вопросы об аренде вещей и доставке | ПРОКАТило",
   description:
-    "Ответы на частые вопросы о бронировании, доставке, сроках аренды и возврате вещей в ПРОКАТило.",
+    "Ответы на частые вопросы о бронировании вещей, сроках аренды, доставке, оплате курьеру и возврате техники в локальном сервисе ПРОКАТило.",
   h1: "Вопросы и ответы",
   eyebrow: "FAQ",
   intro:
@@ -248,9 +258,9 @@ const faqPage: SeoPageConfig = {
 
 const aboutPage: SeoPageConfig = {
   path: "/about",
-  title: "О ПРОКАТило — локальный сервис аренды вещей",
+  title: "О сервисе аренды вещей ПРОКАТило в Москве",
   description:
-    "ПРОКАТило помогает брать технику для редких задач рядом с домом: без лишних покупок, хранения и хлама.",
+    "ПРОКАТило — локальный B2C-сервис аренды вещей на западе Москвы. Техника для редких задач без лишних покупок, хранения и хлама дома.",
   h1: "О ПРОКАТило",
   eyebrow: "О сервисе",
   intro:
@@ -279,9 +289,9 @@ const aboutPage: SeoPageConfig = {
 
 const blogPage: SeoPageConfig = {
   path: "/blog",
-  title: "Блог ПРОКАТило — аренда вещей, уборка и разумное потребление",
+  title: "Блог об аренде вещей и техники | ПРОКАТило",
   description:
-    "Материалы о том, когда арендовать технику выгоднее покупки, как подготовиться к уборке и как брать вещи для редких задач.",
+    "Практичные статьи об аренде техники, домашней уборке и разумном потреблении: когда вещь выгоднее взять на время, чем покупать и хранить.",
   h1: "Блог о разумной аренде",
   eyebrow: "Блог",
   intro:
@@ -308,8 +318,15 @@ const blogPage: SeoPageConfig = {
 
 const blogPostPages = SEO_BLOG_POSTS.map((post) => ({
   path: `/blog/${post.slug}` as SeoRoute,
-  title: `${post.title} — ПРОКАТило`,
-  description: post.description,
+  title:
+    post.slug === "arenda-ili-pokupka-tehniki"
+      ? "Аренда или покупка техники: как выбрать | ПРОКАТило"
+      : post.slug === "arenda-ps5-na-vecher"
+        ? "Аренда PS5 на вечер: идеи и советы | ПРОКАТило"
+        : post.slug === "kak-pochistit-divan-doma"
+          ? "Как почистить диван моющим пылесосом | ПРОКАТило"
+          : "Робот-мойщик окон в аренду: когда брать | ПРОКАТило",
+  description: post.metaDescription,
   h1: post.h1,
   eyebrow: "Блог",
   intro: post.intro,
@@ -331,7 +348,7 @@ const blogPostPages = SEO_BLOG_POSTS.map((post) => ({
   ],
 })) satisfies SeoPageConfig[];
 
-export const SEO_PAGES = [
+export const SEO_PAGES: SeoPageConfig[] = [
   homePage,
   catalogPage,
   ...categoryPages,
@@ -341,7 +358,7 @@ export const SEO_PAGES = [
   aboutPage,
   blogPage,
   ...blogPostPages,
-] satisfies SeoPageConfig[];
+];
 
 export const SEO_PAGE_BY_PATH = new Map<SeoRoute, SeoPageConfig>(
   SEO_PAGES.map((page) => [page.path, page]),

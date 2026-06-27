@@ -17,6 +17,7 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { BRAND_GRADIENT } from "@/lib/brand";
+import { BUSINESS_EMAIL } from "@/lib/business";
 import { UI_COPY } from "@/lib/copy";
 import {
   disablePushNotifications,
@@ -33,8 +34,6 @@ const LEGAL_LINKS = [
   { href: "/consent", label: "Согласие на обработку данных" },
   { href: "/delivery-payment", label: "Доставка и оплата" },
 ];
-
-const SUPPORT_EMAIL = "Prokatilo.corp@gmail.com";
 
 interface ProfileViewProps {
   user: User;
@@ -158,7 +157,7 @@ export function ProfileView({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <a
-              href={`mailto:${SUPPORT_EMAIL}`}
+              href={`mailto:${BUSINESS_EMAIL}`}
               className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-base font-black text-slate-700 shadow-sm transition active:scale-95"
             >
               <Mail size={18} />

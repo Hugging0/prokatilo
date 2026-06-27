@@ -12,7 +12,9 @@ export function buildSeoMetadata(page: SeoPageConfig): Metadata {
   const image = new URL(page.image ?? SEO_DEFAULT_IMAGE, SEO_SITE_URL).toString();
 
   return {
-    title: page.title,
+    title: {
+      absolute: page.title,
+    },
     description: page.description,
     alternates: {
       canonical,
@@ -34,7 +36,7 @@ export function buildSeoMetadata(page: SeoPageConfig): Metadata {
       ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: page.title,
       description: page.description,
       images: [image],

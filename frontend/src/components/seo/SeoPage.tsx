@@ -3,6 +3,11 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_PHONE_DISPLAY,
+  BUSINESS_PHONE_HREF,
+} from "@/lib/business";
 import { SEO_BLOG_POSTS, SEO_CATALOG_ITEMS } from "@/lib/seo/content";
 import { buildJsonLd } from "@/lib/seo/jsonld";
 import type { SeoPageConfig } from "@/lib/seo/site";
@@ -48,11 +53,12 @@ function ProductGrid() {
                 alt={item.imageAlt}
                 width={512}
                 height={512}
+                sizes="(max-width: 767px) calc(100vw - 2.5rem), (max-width: 1023px) calc(50vw - 2rem), 25vw"
                 className="h-full w-full object-cover"
               />
             </div>
             <div className="space-y-3 p-5">
-              <p className="text-xs font-black uppercase tracking-wide text-orange-600">
+              <p className="text-xs font-black uppercase tracking-wide text-orange-700">
                 {item.categoryTitle}
               </p>
               <h2 className="text-xl font-black tracking-tight text-slate-950">
@@ -77,7 +83,7 @@ function BlogLinks() {
     <section className="bg-slate-50">
       <div className="mx-auto max-w-6xl px-5 py-12">
         <div className="mb-6 flex flex-col gap-2">
-          <p className="text-sm font-black uppercase tracking-wide text-orange-600">
+          <p className="text-sm font-black uppercase tracking-wide text-orange-700">
             Блог
           </p>
           <h2 className="text-3xl font-black tracking-tight text-slate-950">
@@ -154,7 +160,7 @@ export function SeoPage({ page }: SeoPageProps) {
               </nav>
             )}
             {page.eyebrow && (
-              <p className="mb-3 text-sm font-black uppercase tracking-wide text-orange-600">
+              <p className="mb-3 text-sm font-black uppercase tracking-wide text-orange-700">
                 {page.eyebrow}
               </p>
             )}
@@ -184,6 +190,9 @@ export function SeoPage({ page }: SeoPageProps) {
               alt={page.imageAlt ?? page.h1}
               width={512}
               height={512}
+              priority
+              fetchPriority="high"
+              sizes="(max-width: 767px) calc(100vw - 2.5rem), 45vw"
               className="h-full min-h-72 w-full object-cover"
             />
           </div>
@@ -265,7 +274,13 @@ export function SeoPage({ page }: SeoPageProps) {
 
       <footer className="border-t border-slate-100 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm font-bold text-slate-500 md:flex-row md:items-center md:justify-between">
-          <p>ПРОКАТило — аренда вещей для редких задач рядом с домом.</p>
+          <div className="space-y-1">
+            <p>ПРОКАТило — аренда вещей для редких задач рядом с домом.</p>
+            <address className="font-semibold not-italic text-slate-500">
+              {BUSINESS_ADDRESS} ·{" "}
+              <a href={BUSINESS_PHONE_HREF}>{BUSINESS_PHONE_DISPLAY}</a>
+            </address>
+          </div>
           <div className="flex flex-wrap gap-4">
             <Link href="/contacts">Контакты</Link>
             <Link href="/terms">Пользовательское соглашение</Link>
