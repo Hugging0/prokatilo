@@ -66,5 +66,9 @@ docker compose run --rm backend alembic upgrade head
 log "Starting services"
 docker compose up -d postgres backend frontend caddy
 
+log "Reloading Caddy configuration"
+docker compose exec -T caddy \
+  caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+
 log "Deployment finished"
 docker compose ps
