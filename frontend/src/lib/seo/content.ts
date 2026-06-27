@@ -32,7 +32,7 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
       "Аренда PlayStation 5 на вечер, сутки или неделю, когда хочется поиграть без покупки консоли.",
     metaDescription:
       "Возьмите PlayStation 5 в аренду на 3 часа, сутки или неделю на западе Москвы. Доставка, поддержка оператора и удобная бронь онлайн в ПРОКАТило.",
-    image: "/uploads/catalog/items/playstation-5.webp",
+    image: "/uploads/catalog/items/transparent/playstation-5.webp",
     imageAlt: "PlayStation 5 и геймпад для аренды рядом с домом",
     fromPrice: "от 3 часов",
     prices: { short: 1000, day: 1500, week: 4500 },
@@ -63,7 +63,7 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
       "VR-шлем для вечеринки, знакомства с виртуальной реальностью и редких игровых сценариев без покупки устройства.",
     metaDescription:
       "Арендуйте PlayStation VR для вечеринки или первого знакомства с виртуальной реальностью. Бронь онлайн и доставка по западу Москвы оператором.",
-    image: "/uploads/catalog/items/vr-headset.webp",
+    image: "/uploads/catalog/items/transparent/vr-headset.webp",
     imageAlt: "PlayStation VR комплект для аренды",
     fromPrice: "от 3 часов",
     prices: { short: 900, day: 1500, week: 3500 },
@@ -94,7 +94,7 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
       "Робот-мойщик окон для сезонной уборки, больших окон и задач, ради которых покупать устройство не хочется.",
     metaDescription:
       "Возьмите робот-мойщик окон в аренду для сезонной уборки, лоджии и больших окон. Срок от 3 часов, бронь онлайн и доставка по западу Москвы.",
-    image: "/uploads/catalog/items/domashi-window-cleaner.webp",
+    image: "/uploads/catalog/items/transparent/domashi-window-cleaner.webp",
     imageAlt: "Робот-мойщик окон для аренды",
     fromPrice: "от 3 часов",
     prices: { short: 400, day: 600, week: 1500 },
@@ -125,7 +125,7 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
       "Моющий пылесос для дивана, кресла, матраса и локальной уборки, когда нужна техника для редкой задачи.",
     metaDescription:
       "Арендуйте моющий пылесос для чистки дивана, кресла или матраса. Срок от 3 часов, бронь онлайн и доставка по западу Москвы рядом с домом.",
-    image: "/uploads/catalog/items/komiko-extractor.webp",
+    image: "/uploads/catalog/items/transparent/komiko-extractor.webp",
     imageAlt: "Моющий пылесос для мебели в аренду",
     fromPrice: "от 3 часов",
     prices: { short: 500, day: 700, week: 2000 },
