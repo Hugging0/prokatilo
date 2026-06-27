@@ -38,9 +38,12 @@ export interface BreadcrumbItem {
 export type JsonLdEntity = Record<string, unknown>;
 
 export interface SeoCatalogItem {
+  appItemId: number;
   slug: string;
   title: string;
   shortTitle: string;
+  orbitTitle: string;
+  orbitDescription: string;
   categorySlug: "igrovye-pristavki" | "uborka";
   categoryTitle: string;
   description: string;
@@ -48,6 +51,11 @@ export interface SeoCatalogItem {
   image: string;
   imageAlt: string;
   fromPrice: string;
+  prices: {
+    short: number;
+    day: number;
+    week: number;
+  };
   bestFor: string[];
   faqs: SeoFaqItem[];
 }

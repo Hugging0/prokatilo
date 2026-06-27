@@ -20,9 +20,12 @@ export const SEO_HOME_FAQS: SeoFaqItem[] = [
 
 export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
   {
+    appItemId: 3,
     slug: "ps5",
     title: "PlayStation 5",
     shortTitle: "PS5",
+    orbitTitle: "PS5 Slim, 2 джойстика",
+    orbitDescription: "Для игрового вечера дома.",
     categorySlug: "igrovye-pristavki",
     categoryTitle: "Игровые приставки",
     description:
@@ -32,6 +35,7 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
     image: "/uploads/catalog/items/playstation-5.webp",
     imageAlt: "PlayStation 5 и геймпад для аренды рядом с домом",
     fromPrice: "от 3 часов",
+    prices: { short: 1000, day: 1500, week: 4500 },
     bestFor: ["вечер с друзьями", "семейные выходные", "проверить консоль перед покупкой"],
     faqs: [
       {
@@ -47,9 +51,12 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
     ],
   },
   {
+    appItemId: 5,
     slug: "playstation-vr",
     title: "PlayStation VR",
     shortTitle: "PlayStation VR",
+    orbitTitle: "PlayStation VR",
+    orbitDescription: "Для необычного игрового вечера.",
     categorySlug: "igrovye-pristavki",
     categoryTitle: "Игровые приставки",
     description:
@@ -59,6 +66,7 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
     image: "/uploads/catalog/items/vr-headset.webp",
     imageAlt: "PlayStation VR комплект для аренды",
     fromPrice: "от 3 часов",
+    prices: { short: 900, day: 1500, week: 3500 },
     bestFor: ["вечеринка", "первое знакомство с VR", "игровой вечер дома"],
     faqs: [
       {
@@ -74,9 +82,12 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
     ],
   },
   {
+    appItemId: 4,
     slug: "robot-moyshchik-okon",
     title: "Робот-мойщик окон",
     shortTitle: "Робот-мойщик окон",
+    orbitTitle: "Робот-мойщик окон",
+    orbitDescription: "Для окон, зеркал и сезонной уборки.",
     categorySlug: "uborka",
     categoryTitle: "Уборка",
     description:
@@ -86,6 +97,7 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
     image: "/uploads/catalog/items/domashi-window-cleaner.webp",
     imageAlt: "Робот-мойщик окон для аренды",
     fromPrice: "от 3 часов",
+    prices: { short: 400, day: 600, week: 1500 },
     bestFor: ["сезонная мойка окон", "лоджия или балкон", "редкая уборка без лишней техники дома"],
     faqs: [
       {
@@ -101,9 +113,12 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
     ],
   },
   {
+    appItemId: 6,
     slug: "moyushchiy-pylesos-dlya-mebeli",
     title: "Моющий пылесос для мебели",
     shortTitle: "Моющий пылесос",
+    orbitTitle: "Моющий пылесос для мебели",
+    orbitDescription: "Для дивана, кресел и матраса.",
     categorySlug: "uborka",
     categoryTitle: "Уборка",
     description:
@@ -113,6 +128,7 @@ export const SEO_CATALOG_ITEMS: SeoCatalogItem[] = [
     image: "/uploads/catalog/items/komiko-extractor.webp",
     imageAlt: "Моющий пылесос для мебели в аренду",
     fromPrice: "от 3 часов",
+    prices: { short: 500, day: 700, week: 2000 },
     bestFor: ["почистить диван", "освежить матрас", "убрать следы после гостей"],
     faqs: [
       {

@@ -55,10 +55,8 @@ const catalogPage: SeoPageConfig = {
   title: "Аренда вещей и техники в Москве | ПРОКАТило",
   description:
     "Каталог вещей и техники в аренду на западе Москвы: PS5, VR, робот-мойщик окон и моющий пылесос. Выберите срок и оформите бронь онлайн.",
-  h1: "Каталог аренды",
-  eyebrow: "Каталог",
-  intro:
-    "Выберите вещь для редкой задачи: на 3 часа, сутки или неделю. Подробное бронирование проходит в приложении.",
+  h1: "Аренда вещей рядом с домом",
+  intro: "Для редких задач. Попользовались — вернули.",
   updatedAt: SEO_UPDATED_AT,
   changeFrequency: "weekly",
   priority: 0.9,
@@ -80,6 +78,13 @@ const catalogPage: SeoPageConfig = {
     },
   ],
   relatedLinks: [
+    { name: "Аренда PlayStation 5", path: "/rent/ps5" },
+    { name: "Аренда PlayStation VR", path: "/rent/playstation-vr" },
+    { name: "Аренда робота-мойщика окон", path: "/rent/robot-moyshchik-okon" },
+    {
+      name: "Аренда моющего пылесоса",
+      path: "/rent/moyushchiy-pylesos-dlya-mebeli",
+    },
     { name: "Игровые приставки", path: "/catalog/igrovye-pristavki" },
     { name: "Уборка", path: "/catalog/uborka" },
     { name: "Зона доставки", path: "/delivery-area" },

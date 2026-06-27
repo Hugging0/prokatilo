@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { CatalogOrbit } from "@/components/seo/catalog/CatalogOrbit";
 import {
   BUSINESS_ADDRESS,
   BUSINESS_PHONE_DISPLAY,
@@ -15,6 +16,8 @@ import type { SeoPageConfig } from "@/lib/seo/site";
 interface SeoPageProps {
   page: SeoPageConfig;
 }
+
+const CATALOG_ORBIT_ITEM_IDS = [3, 4, 6, 5] as const;
 
 function SeoLink({
   href,
@@ -116,18 +119,42 @@ export function SeoPage({ page }: SeoPageProps) {
   const isHome = page.path === "/";
   const isCatalog = page.path === "/catalog";
   const isBlog = page.path === "/blog";
+  const catalogOrbitItems = CATALOG_ORBIT_ITEM_IDS.flatMap((itemId) => {
+    const item = SEO_CATALOG_ITEMS.find((candidate) => candidate.appItemId === itemId);
+    if (!item) return [];
+
+    return [{
+      appItemId: item.appItemId,
+      title: item.orbitTitle,
+      description: item.orbitDescription,
+      image: item.image,
+      imageAlt: item.imageAlt,
+      prices: item.prices,
+    }];
+  });
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <JsonLdScript entities={jsonLd} />
 
-      <header className="border-b border-slate-100 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
+      <header className={`relative z-50 border-b border-slate-100 bg-white ${isCatalog ? "h-[68px] sm:h-[78px]" : ""}`}>
+        <div className={`mx-auto flex h-full items-center justify-between gap-4 px-5 ${isCatalog ? "max-w-none sm:px-8 lg:px-[52px]" : "max-w-6xl py-4"}`}>
           <Link
             href="/"
-            className="text-xl font-black italic tracking-tighter text-slate-950"
+            aria-label={isCatalog ? "ПРОКАТило — главная" : undefined}
+            className={`inline-flex items-center font-black text-slate-950 ${isCatalog ? "gap-3 text-xl" : "text-xl italic tracking-tighter"}`}
           >
-            ПРОКАТило
+            {isCatalog && (
+              <Image
+                src="/icons/prokatilo-icon-192.png"
+                alt=""
+                width={44}
+                height={44}
+                priority
+                className="rounded-xl shadow-lg shadow-rose-100"
+              />
+            )}
+            <span className={isCatalog ? "hidden sm:inline" : ""}>ПРОКАТило</span>
           </Link>
           <nav className="hidden items-center gap-5 text-sm font-black text-slate-600 sm:flex">
             <Link href="/catalog">Каталог</Link>
@@ -136,13 +163,22 @@ export function SeoPage({ page }: SeoPageProps) {
           </nav>
           <Link
             href="/app"
-            className="rounded-2xl bg-slate-950 px-4 py-2 text-sm font-black text-white"
+            className={isCatalog
+              ? "inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600 px-4 text-sm font-black text-white shadow-lg shadow-rose-100 transition hover:-translate-y-0.5 sm:min-h-12 sm:px-5"
+              : "rounded-2xl bg-slate-950 px-4 py-2 text-sm font-black text-white"}
           >
-            В приложение
+            {isCatalog ? "Открыть приложение" : "В приложение"}
           </Link>
         </div>
       </header>
 
+      {isCatalog ? (
+        <CatalogOrbit
+          heading={page.h1}
+          intro={page.intro}
+          items={catalogOrbitItems}
+        />
+      ) : (
       <section className="bg-white">
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-14 md:grid-cols-[1.05fr_0.95fr] md:items-center">
           <div>
@@ -198,8 +234,7 @@ export function SeoPage({ page }: SeoPageProps) {
           </div>
         </div>
       </section>
-
-      {isCatalog && <ProductGrid />}
+      )}
 
       <section className="mx-auto grid max-w-6xl gap-5 px-5 py-12 md:grid-cols-2">
         {page.sections.map((section) => (
