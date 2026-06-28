@@ -136,6 +136,11 @@ export function SeoPage({ page }: SeoPageProps) {
         <CatalogOrbit
           heading={page.h1}
           intro={page.intro}
+          mobileIntro={
+            isHome
+              ? "Для редких задач. Попользовались — вернули."
+              : undefined
+          }
           items={catalogOrbitItems}
         />
       ) : (

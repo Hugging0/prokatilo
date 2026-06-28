@@ -20,6 +20,7 @@ interface CatalogOrbitProps {
   items: CatalogOrbitItem[];
   heading: string;
   intro: string;
+  mobileIntro?: string;
 }
 
 interface OrbitStyle extends CSSProperties {
@@ -52,7 +53,12 @@ function positionClass(relativeIndex: number) {
   return styles.productBack;
 }
 
-export function CatalogOrbit({ items, heading, intro }: CatalogOrbitProps) {
+export function CatalogOrbit({
+  items,
+  heading,
+  intro,
+  mobileIntro,
+}: CatalogOrbitProps) {
   const router = useRouter();
   const planeRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef(0);
@@ -169,7 +175,14 @@ export function CatalogOrbit({ items, heading, intro }: CatalogOrbitProps) {
     <section className={styles.catalogHero} aria-labelledby="catalog-orbit-title">
       <div className={styles.heroCopy}>
         <h1 id="catalog-orbit-title">{heading}</h1>
-        <p>{intro}</p>
+        <p>
+          <span className={mobileIntro ? styles.desktopIntro : undefined}>
+            {intro}
+          </span>
+          {mobileIntro && (
+            <span className={styles.mobileIntro}>{mobileIntro}</span>
+          )}
+        </p>
       </div>
 
       <div
@@ -220,9 +233,7 @@ export function CatalogOrbit({ items, heading, intro }: CatalogOrbitProps) {
         }}
       >
         <div ref={planeRef} className={styles.orbitPlane}>
-          <div className={styles.orbitLine} aria-hidden="true">
-            <span />
-          </div>
+          <div className={styles.orbitLine} aria-hidden="true" />
           <div className={styles.products}>
             {items.map((item, index) => {
               const relativeIndex = normalizeRelativeIndex(
