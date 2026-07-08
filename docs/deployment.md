@@ -63,6 +63,8 @@ ACME_EMAIL=admin@myprokatilo.ru
 
 Сертификаты выпускаются и обновляются Caddy автоматически.
 
+`www.$APP_DOMAIN` перенаправляется на root-домен постоянным редиректом. Основной canonical-домен проекта сейчас `https://myprokatilo.ru`.
+
 ## Повторный deploy
 
 На уже настроенном VPS:
@@ -75,7 +77,7 @@ cd /opt/prokatilo
 Deploy script:
 
 - не коммитит и не удаляет `backend/.env`;
-- останавливается, если есть изменения кроме runtime `backend/.env`;
+- останавливается, если есть неожиданные изменения в рабочем дереве;
 - подтягивает `origin/main`;
 - пересобирает backend/frontend;
 - запускает Alembic migrations;

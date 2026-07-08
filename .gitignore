@@ -4,6 +4,10 @@
 !.env.local.example
 backend/.env
 frontend/.env.local
+context-export/
+*.bak.codex_*
+.serena/
+.impeccable/live/
 
 __pycache__/
 *.py[cod]

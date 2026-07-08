@@ -2,7 +2,11 @@
 	email {$ACME_EMAIL:admin@myprokatilo.ru}
 }
 
-{$APP_DOMAIN:myprokatilo.ru}, www.{$APP_DOMAIN:myprokatilo.ru} {
+www.{$APP_DOMAIN:myprokatilo.ru} {
+	redir https://{$APP_DOMAIN:myprokatilo.ru}{uri} permanent
+}
+
+{$APP_DOMAIN:myprokatilo.ru} {
 	handle_path /api/* {
 		reverse_proxy backend:8000
 	}

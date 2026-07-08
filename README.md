@@ -56,13 +56,16 @@ cd /opt/prokatilo
 
 ## Документация
 
+- [LLM agent handbook](docs/agent-handbook.md)
 - [Deployment runbook](docs/deployment.md)
 - [Environment variables](docs/environment.md)
 - [Project context](docs/project-context.md)
+- [Context ignore guide](docs/context-ignore.md)
 - [Frontend map](frontend/docs/frontend-map.md)
 - [UI style guide](frontend/docs/ui-style-guide.md)
 - [Frontend refactoring rules](frontend/docs/refactoring-rules.md)
 - [Frontend code style](frontend/docs/code-style.md)
+- [Catalog images](frontend/docs/catalog-images.md)
 
 ## Важное
 
@@ -70,3 +73,4 @@ cd /opt/prokatilo
 - Production schema changes выполняются только через Alembic migrations.
 - Production backend работает за Caddy на `/api`.
 - Frontend production build использует `NEXT_PUBLIC_API_URL=/api`.
+- Публичный SEO-сайт живет на `/`, PWA-приложение — на `/app`.

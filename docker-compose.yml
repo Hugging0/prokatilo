@@ -42,7 +42,7 @@ services:
       ENVIRONMENT: production
       API_ROOT_PATH: "/api"
       CREATE_TABLES_ON_STARTUP: "false"
-      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,http://193.233.246.61,http://193.233.246.61:3000,https://myprokatilo.ru,https://www.myprokatilo.ru}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost,http://localhost:3000,http://127.0.0.1,http://127.0.0.1:3000,https://myprokatilo.ru,https://www.myprokatilo.ru}"
       YOOKASSA_RETURN_URL: "${YOOKASSA_RETURN_URL:-https://myprokatilo.ru}"
     ports:
       - "127.0.0.1:8000:8000"

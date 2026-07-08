@@ -2,11 +2,12 @@
 
 ## Назначение frontend
 
-Frontend — mobile-first клиентское приложение сервиса ПРОКАТило.
+Frontend — Next.js проект с двумя слоями: индексируемый SEO-сайт и mobile-first PWA-приложение сервиса ПРОКАТило.
 
 Основные зоны:
 
-- каталог;
+- SEO-главная и публичный каталог;
+- PWA-каталог;
 - карточка товара;
 - checkout;
 - мои брони;
@@ -18,7 +19,12 @@ Frontend — mobile-first клиентское приложение сервис
 
 ### `src/app`
 
-Next.js app entry point. Здесь не должна жить бизнес-логика приложения. `page.tsx` должен быть тонким composition layer: подключить hooks, выбрать view и передать props.
+Next.js app entry point. Здесь не должна жить бизнес-логика приложения.
+
+- `src/app/page.tsx` — server-rendered SEO-главная.
+- `src/app/app/page.tsx` — вход в клиентское PWA-приложение.
+- `src/app/catalog/*`, `src/app/rent/*`, `src/app/blog/*` и соседние routes — SEO-страницы.
+- `src/app/sitemap.ts`, `src/app/robots.ts`, `src/app/llms.txt/route.ts` — индексирование и LLM discovery.
 
 ### `src/components/features`
 
@@ -30,6 +36,8 @@ Next.js app entry point. Здесь не должна жить бизнес-ло
 - `orders`
 - `operator`
 - `profile`
+
+SEO-компоненты отдельно лежат в `src/components/seo`.
 
 ### `src/components/ui`
 
@@ -80,7 +88,7 @@ Hooks для состояния и сценариев:
 
 ## Правило
 
-Если Codex добавляет новую фичу, он должен сначала определить её домен:
+Если Codex добавляет новую PWA-фичу, он должен сначала определить её домен:
 
 - catalog;
 - checkout;
@@ -90,3 +98,5 @@ Hooks для состояния и сценариев:
 - auth.
 
 После этого код должен попасть в соответствующую feature-папку, а не в `page.tsx`.
+
+Если задача касается SEO-сайта, сначала проверить `src/lib/seo/*` и `src/components/seo/*`, а не менять PWA-тексты.

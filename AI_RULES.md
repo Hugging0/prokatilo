@@ -9,7 +9,7 @@
 - **Архитектура:** Раздельный Fullstack (Next.js на фронтенде, FastAPI на бэкенде).
 
 ## 2. Технологический стек
-- **Frontend:** Next.js (App Router), React, Tailwind CSS, TypeScript, Zustand (стейт), Lucide React (иконки).
+- **Frontend:** Next.js (App Router), React, Tailwind CSS, TypeScript, Lucide React (иконки).
 - **Backend:** FastAPI, Python, SQLAlchemy, Pydantic.
 
 ## 3. Железные правила написания кода (НЕ НАРУШАТЬ)
@@ -42,7 +42,7 @@
 1. Backend DTO-типы и UI-типы не смешиваются напрямую.
 2. Статусы заказов и тарифы хранятся в `src/lib`, а не внутри страниц.
 3. Mock-данные хранятся в `src/lib/mock-data.ts`.
-4. `src/app/page.tsx` может временно быть orchestration-файлом, но бизнес-константы и доменные типы должны быть вынесены.
+4. `src/app/page.tsx` — server-rendered SEO-главная. Клиентский PWA-flow живет в `src/app/app/page.tsx` и feature-компонентах.
 5. Стартовый mock-каталог должен соответствовать B2C-модели ПРОКАТило и стартовому инвентарю из мастер-контекста.
 
 ## 7. Brand/UI правила
@@ -71,7 +71,7 @@
 
 ## 10. Frontend component architecture rules
 
-1. `src/app/page.tsx` должен быть orchestration-файлом: state, handlers, выбор текущего экрана.
+1. `src/app/app/page.tsx` должен оставаться тонким orchestration-файлом: state, handlers, выбор текущего экрана.
 2. Feature JSX-экраны должны жить в `src/components/features/*`.
 3. Нижняя навигация живёт в `src/components/layout/AppNavigation.tsx`.
 4. Toast/переиспользуемые небольшие UI-элементы живут в `src/components/ui`.
@@ -98,8 +98,9 @@
 8. Production VPS использует локальный PostgreSQL в Docker Compose, а не внешний Supabase pooler.
 9. Production HTTP(S) вход идёт через Caddy reverse proxy: frontend на `/`, backend на `/api/*`.
 10. `myprokatilo.ru` и `www.myprokatilo.ru` должны указывать A-записями на актуальный production VPS; IP не должен быть захардкожен в приложении.
-11. Новый production VPS разворачивается через `scripts/prod/bootstrap-vps.sh`, повторный deploy — через `scripts/prod/deploy.sh`, проверка — через `scripts/prod/smoke-test.sh`.
-12. Runtime env-файлы `.env`, `backend/.env` и `frontend/.env.local` не коммитятся; в git хранятся только `*.example`.
+11. `www.myprokatilo.ru` редиректится на root-домен через Caddy.
+12. Новый production VPS разворачивается через `scripts/prod/bootstrap-vps.sh`, повторный deploy — через `scripts/prod/deploy.sh`, проверка — через `scripts/prod/smoke-test.sh`.
+13. Runtime env-файлы `.env`, `backend/.env` и `frontend/.env.local` не коммитятся; в git хранятся только `*.example`.
 
 ## 13. Admin/catalog management rules
 
