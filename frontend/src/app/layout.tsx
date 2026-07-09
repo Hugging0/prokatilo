@@ -29,6 +29,9 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  verification: {
+    yandex: "3218e18242e89133",
+  },
   icons: {
     icon: [
       {
