@@ -176,9 +176,36 @@ const itemPages = SEO_CATALOG_ITEMS.map((item) => ({
   ],
   faqs: item.faqs,
   relatedLinks: [
-    { name: "Каталог", path: "/catalog" as SeoRoute },
-    { name: item.categoryTitle, path: `/catalog/${item.categorySlug}` as SeoRoute },
+    {
+      name: item.categoryTitle,
+      path: `/catalog/${item.categorySlug}` as SeoRoute,
+    },
+    { name: "Зона доставки", path: "/delivery-area" as SeoRoute },
     { name: "FAQ", path: "/faq" as SeoRoute },
+    ...(item.slug === "ps5"
+      ? [
+          {
+            name: "Как устроить вечер с PS5",
+            path: "/blog/arenda-ps5-na-vecher" as SeoRoute,
+          },
+        ]
+      : []),
+    ...(item.slug === "robot-moyshchik-okon"
+      ? [
+          {
+            name: "Когда брать робота-мойщика",
+            path: "/blog/robot-moyshchik-okon-arenda" as SeoRoute,
+          },
+        ]
+      : []),
+    ...(item.slug === "moyushchiy-pylesos-dlya-mebeli"
+      ? [
+          {
+            name: "Как почистить диван дома",
+            path: "/blog/kak-pochistit-divan-doma" as SeoRoute,
+          },
+        ]
+      : []),
   ],
 })) satisfies SeoPageConfig[];
 
@@ -203,8 +230,8 @@ const deliveryAreaPage: SeoPageConfig = {
   jsonLdType: "area",
   sections: [
     {
-      title: "Основные районы",
-      body: "В первую очередь работаем вокруг Очаково-Матвеевского и близких районов на западе Москвы.",
+      title: "Основная зона доставки",
+      body: "В первую очередь работаем вокруг Очаково-Матвеевского и ближайших районов на западе Москвы.",
       items: [
         "Очаково-Матвеевское",
         "ЖК Мичуринский парк",
@@ -215,8 +242,16 @@ const deliveryAreaPage: SeoPageConfig = {
       ],
     },
     {
-      title: "Как считается доставка",
-      body: "Для ближайших адресов доставка может быть без доплаты. В остальных зонах стоимость зависит от маршрута и подтверждается оператором.",
+      title: "Стоимость доставки",
+      body: "Для ближайших адресов доставка может быть бесплатной. Для остальных адресов стоимость зависит от маршрута и подтверждается оператором до финального согласования заказа.",
+    },
+    {
+      title: "Если адрес вне зоны",
+      body: "Оставьте заявку в приложении или свяжитесь с оператором. Мы проверим адрес и заранее скажем, сможем ли привезти вещь и сколько будет стоить доставка.",
+    },
+    {
+      title: "Возврат",
+      body: "Перед окончанием аренды оператор свяжется с вами и уточнит удобное время возврата. Курьер заберет вещь и проверит комплектность.",
     },
   ],
 };

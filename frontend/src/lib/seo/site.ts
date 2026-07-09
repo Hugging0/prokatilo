@@ -5,7 +5,7 @@ export const SEO_SITE_NAME = "ПРОКАТило";
 export const SEO_SITE_DESCRIPTION =
   "Локальный сервис аренды вещей и техники рядом с домом: для редких задач, разумного потребления и жизни без лишнего хлама дома.";
 export const SEO_DEFAULT_IMAGE = "/icons/prokatilo-icon-512.png";
-export const SEO_UPDATED_AT = "2026-06-27";
+export const SEO_UPDATED_AT = "2026-07-09";
 
 export type SeoRoute =
   | "/"
@@ -56,6 +56,8 @@ export interface SeoCatalogItem {
     day: number;
     week: number;
   };
+  includedItems: string[];
+  importantNotes: string[];
   bestFor: string[];
   faqs: SeoFaqItem[];
 }

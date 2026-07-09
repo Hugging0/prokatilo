@@ -2,7 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { SeoItemDetails } from "@/components/seo/SeoItemDetails";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { SeoRentalConditions } from "@/components/seo/SeoRentalConditions";
 import { CatalogOrbit } from "@/components/seo/catalog/CatalogOrbit";
 import {
   BUSINESS_ADDRESS,
@@ -79,6 +81,7 @@ export function SeoPage({ page }: SeoPageProps) {
   const isCatalog = page.path === "/catalog";
   const hasCatalogHero = isHome || isCatalog;
   const isBlog = page.path === "/blog";
+  const shouldShowRentalConditions = isHome || isCatalog || Boolean(page.catalogItem);
   const catalogOrbitItems = CATALOG_ORBIT_ITEM_IDS.flatMap((itemId) => {
     const item = SEO_CATALOG_ITEMS.find((candidate) => candidate.appItemId === itemId);
     if (!item) return [];
@@ -201,6 +204,8 @@ export function SeoPage({ page }: SeoPageProps) {
       </section>
       )}
 
+      {shouldShowRentalConditions && <SeoRentalConditions />}
+
       <section className="mx-auto grid max-w-6xl gap-5 px-5 py-12 md:grid-cols-2">
         {page.sections.map((section) => (
           <article
@@ -228,6 +233,8 @@ export function SeoPage({ page }: SeoPageProps) {
           </article>
         ))}
       </section>
+
+      {page.catalogItem && <SeoItemDetails item={page.catalogItem} />}
 
       {page.faqs && (
         <section className="border-y border-slate-100 bg-white">
