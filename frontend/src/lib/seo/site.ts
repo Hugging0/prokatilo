@@ -73,6 +73,22 @@ export interface SeoSection {
   items?: string[];
 }
 
+export interface SeoBlogPost {
+  slug:
+    | "arenda-ili-pokupka-tehniki"
+    | "arenda-ps5-na-vecher"
+    | "kak-pochistit-divan-doma"
+    | "robot-moyshchik-okon-arenda";
+  title: string;
+  description: string;
+  metaDescription: string;
+  h1: string;
+  intro: string;
+  sections: SeoSection[];
+  faqs: SeoFaqItem[];
+  relatedLinks: BreadcrumbItem[];
+}
+
 export interface SeoPageConfig {
   path: SeoRoute;
   title: string;

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { SeoArticleGuide } from "@/components/seo/SeoArticleGuide";
 import { SeoItemDetails } from "@/components/seo/SeoItemDetails";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { SeoRentalConditions } from "@/components/seo/SeoRentalConditions";
@@ -81,6 +82,7 @@ export function SeoPage({ page }: SeoPageProps) {
   const isCatalog = page.path === "/catalog";
   const hasCatalogHero = isHome || isCatalog;
   const isBlog = page.path === "/blog";
+  const isArticle = page.jsonLdType === "article";
   const shouldShowRentalConditions = isHome || isCatalog || Boolean(page.catalogItem);
   const catalogOrbitItems = CATALOG_ORBIT_ITEM_IDS.flatMap((itemId) => {
     const item = SEO_CATALOG_ITEMS.find((candidate) => candidate.appItemId === itemId);
@@ -206,33 +208,37 @@ export function SeoPage({ page }: SeoPageProps) {
 
       {shouldShowRentalConditions && <SeoRentalConditions />}
 
-      <section className="mx-auto grid max-w-6xl gap-5 px-5 py-12 md:grid-cols-2">
-        {page.sections.map((section) => (
-          <article
-            key={section.title}
-            className="rounded-[1.5rem] border border-slate-100 bg-white p-6 shadow-sm"
-          >
-            <h2 className="text-2xl font-black tracking-tight text-slate-950">
-              {section.title}
-            </h2>
-            <p className="mt-3 text-base font-semibold leading-relaxed text-slate-600">
-              {section.body}
-            </p>
-            {section.items && (
-              <ul className="mt-5 space-y-2">
-                {section.items.map((item) => (
-                  <li
-                    key={item}
-                    className="rounded-2xl bg-slate-50 px-4 py-3 text-base font-bold text-slate-700"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </article>
-        ))}
-      </section>
+      {isArticle ? (
+        <SeoArticleGuide page={page} />
+      ) : (
+        <section className="mx-auto grid max-w-6xl gap-5 px-5 py-12 md:grid-cols-2">
+          {page.sections.map((section) => (
+            <article
+              key={section.title}
+              className="rounded-[1.5rem] border border-slate-100 bg-white p-6 shadow-sm"
+            >
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+                {section.title}
+              </h2>
+              <p className="mt-3 text-base font-semibold leading-relaxed text-slate-600">
+                {section.body}
+              </p>
+              {section.items && (
+                <ul className="mt-5 space-y-2">
+                  {section.items.map((item) => (
+                    <li
+                      key={item}
+                      className="rounded-2xl bg-slate-50 px-4 py-3 text-base font-bold text-slate-700"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+          ))}
+        </section>
+      )}
 
       {page.catalogItem && <SeoItemDetails item={page.catalogItem} />}
 
@@ -263,7 +269,7 @@ export function SeoPage({ page }: SeoPageProps) {
 
       {(isHome || isBlog) && <BlogLinks />}
 
-      {page.relatedLinks && (
+      {page.relatedLinks && !isArticle && (
         <section className="mx-auto max-w-6xl px-5 py-12">
           <h2 className="text-2xl font-black tracking-tight text-slate-950">
             Полезные ссылки

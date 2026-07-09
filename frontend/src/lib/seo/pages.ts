@@ -382,10 +382,8 @@ const blogPostPages = SEO_BLOG_POSTS.map((post) => ({
   ctaHref: "/catalog" as SeoRoute,
   jsonLdType: "article" as const,
   sections: post.sections,
-  relatedLinks: [
-    { name: "Каталог", path: "/catalog" as SeoRoute },
-    { name: "FAQ", path: "/faq" as SeoRoute },
-  ],
+  faqs: post.faqs,
+  relatedLinks: post.relatedLinks,
 })) satisfies SeoPageConfig[];
 
 export const SEO_PAGES: SeoPageConfig[] = [

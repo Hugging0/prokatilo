@@ -24,6 +24,12 @@ function absoluteUrl(path: string) {
 const ORGANIZATION_ID = absoluteUrl("/#organization");
 const LOCAL_BUSINESS_ID = absoluteUrl("/#local-business");
 
+const RENTAL_OFFERS = [
+  { key: "short", name: "Аренда на 3 часа" },
+  { key: "day", name: "Аренда на сутки" },
+  { key: "week", name: "Аренда на неделю" },
+] as const;
+
 function postalAddressJsonLd(): JsonLdEntity {
   return {
     "@type": "PostalAddress",
@@ -91,12 +97,27 @@ function faqJsonLd(page: SeoPageConfig): JsonLdEntity | null {
 function itemServiceJsonLd(page: SeoPageConfig): JsonLdEntity | null {
   if (!page.catalogItem) return null;
 
+  const item = page.catalogItem;
+  const offers = RENTAL_OFFERS.map((offer) => ({
+    "@type": "Offer",
+    name: `${offer.name}: ${item.title}`,
+    price: item.prices[offer.key],
+    priceCurrency: "RUB",
+    availability: "https://schema.org/LimitedAvailability",
+    url: absoluteUrl(page.path),
+    offeredBy: {
+      "@type": "LocalBusiness",
+      "@id": LOCAL_BUSINESS_ID,
+      name: SEO_SITE_NAME,
+    },
+  }));
+
   return {
     "@context": "https://schema.org",
     "@type": "Service",
-    name: page.catalogItem.title,
-    description: page.catalogItem.description,
-    image: [absoluteUrl(page.catalogItem.image)],
+    name: item.title,
+    description: item.description,
+    image: [absoluteUrl(item.image)],
     provider: {
       "@type": "LocalBusiness",
       "@id": LOCAL_BUSINESS_ID,
@@ -104,10 +125,11 @@ function itemServiceJsonLd(page: SeoPageConfig): JsonLdEntity | null {
       url: SEO_SITE_URL,
     },
     areaServed: [...BUSINESS_AREA_SERVED],
-    category: page.catalogItem.categoryTitle,
+    category: item.categoryTitle,
     serviceType: "Аренда вещей и техники",
     url: absoluteUrl(page.path),
     inLanguage: "ru-RU",
+    offers,
   };
 }
 
