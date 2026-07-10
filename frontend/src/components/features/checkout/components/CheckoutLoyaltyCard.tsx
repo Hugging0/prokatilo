@@ -37,7 +37,10 @@ export function CheckoutLoyaltyCard({
   const [summary, setSummary] = useState<AppLoyaltySummary | null>(null);
   const [preview, setPreview] = useState<AppPromoCodePreview | null>(null);
   const [isApplying, setIsApplying] = useState(false);
-  const maxBonusSpend = Math.floor(subtotalPrice * 0.3);
+  const maxBonusSpendPercent = summary?.maxBonusSpendPercent ?? 30;
+  const maxBonusSpend = Math.floor(
+    subtotalPrice * (maxBonusSpendPercent / 100),
+  );
   const availableBonusSpend = Math.min(
     Math.floor(summary?.account.balance ?? 0),
     maxBonusSpend,
@@ -162,6 +165,7 @@ export function CheckoutLoyaltyCard({
         />
         <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
           Доступно к списанию: {availableBonusSpend} ₽
+          {summary ? `, до ${summary.maxBonusSpendPercent}% суммы` : ""}
         </p>
       </div>
     </CheckoutPanel>

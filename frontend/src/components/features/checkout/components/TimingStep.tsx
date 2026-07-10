@@ -1,7 +1,7 @@
 import { CalendarDays, Clock3, PackageCheck } from "lucide-react";
 
 import { getTariffPrice, TARIFFS } from "@/lib/tariffs";
-import type { AppItem, TariffType } from "@/types";
+import type { AppItem, PublicServiceSettingsDto, TariffType } from "@/types";
 
 import { DatePickerButton } from "./DatePickerButton";
 import { CheckoutPanel } from "./CheckoutPanel";
@@ -18,6 +18,7 @@ export function TimingStep({
   selectedTariff,
   selectedDate,
   selectedTime,
+  serviceSettings,
   availableIntervals,
   isBookingsLoading,
   bookingsError,
@@ -30,6 +31,7 @@ export function TimingStep({
   selectedTariff: TariffType;
   selectedDate: string;
   selectedTime: string;
+  serviceSettings: PublicServiceSettingsDto;
   availableIntervals: string[];
   isBookingsLoading: boolean;
   bookingsError: string | null;
@@ -95,7 +97,7 @@ export function TimingStep({
                       : "border-slate-100 bg-slate-50 text-slate-700"
                   }`}
                 >
-                  {formatDeliveryIntervalLabel(time)}
+                  {formatDeliveryIntervalLabel(time, serviceSettings)}
                 </button>
               ))}
               {availableIntervals.length === 0 && (

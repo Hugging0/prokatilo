@@ -7,7 +7,12 @@ import {
 } from "@/lib/booking-time";
 import { getDeliveryEstimateByAddress } from "@/lib/api/delivery";
 import { getRentalTotalPrice, getTariffLabel } from "@/lib/tariffs";
-import type { AppItem, BookingSlot, TariffType } from "@/types";
+import type {
+  AppItem,
+  BookingSlot,
+  PublicServiceSettingsDto,
+  TariffType,
+} from "@/types";
 
 import {
   formatDeliveryDateLabel,
@@ -27,6 +32,7 @@ export function useCheckoutAvailability({
   selectedTime,
   bookingSlots,
   deliveryAddress,
+  serviceSettings,
 }: {
   selectedItem: AppItem;
   selectedTariff: TariffType;
@@ -34,6 +40,7 @@ export function useCheckoutAvailability({
   selectedTime: string;
   bookingSlots: BookingSlot[];
   deliveryAddress: string;
+  serviceSettings: PublicServiceSettingsDto;
 }) {
   const [remoteDeliveryEstimate, setRemoteDeliveryEstimate] = useState<{
     address: string;
@@ -69,6 +76,7 @@ export function useCheckoutAvailability({
     selectedDate,
     selectedTariff,
     bookingSlots,
+    settings: serviceSettings,
   });
   const isSelectedTimeAvailable = availableIntervals.includes(
     selectedTime as (typeof availableIntervals)[number],
@@ -78,9 +86,9 @@ export function useCheckoutAvailability({
   const canGoNextFromAddress = deliveryAddress.trim().length >= 5;
   const rentalDurationSummary = getTariffLabel(selectedTariff);
   const deliveryIntervalSummary = selectedStartAt
-    ? `${formatDeliveryDateLabel(
+      ? `${formatDeliveryDateLabel(
         selectedStartAt,
-      )}, ${formatDeliveryIntervalLabel(selectedTime)}`
+      )}, ${formatDeliveryIntervalLabel(selectedTime, serviceSettings)}`
     : "Выберите интервал доставки";
   const fallbackDeliveryEstimate = getDeliveryEstimate({
     address: deliveryAddress,

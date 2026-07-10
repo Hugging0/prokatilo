@@ -12,7 +12,7 @@ export function OperatorHeader() {
           Оператор / Админ
         </p>
         <h2 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950">
-          Заявки и управление
+          Операторская панель
         </h2>
         <p className="mt-2 text-base font-bold leading-relaxed text-slate-600">
           {UI_COPY.operator.subtitle}

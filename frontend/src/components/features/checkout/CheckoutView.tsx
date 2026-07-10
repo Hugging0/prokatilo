@@ -3,7 +3,13 @@ import { useCallback, useEffect } from "react";
 import Link from "next/link";
 
 import { getPresetEndInputValues } from "@/lib/booking-time";
-import type { AppItem, BookingSlot, TariffType } from "@/types";
+import type {
+  AppItem,
+  BookingSlot,
+  PublicServiceSettingsDto,
+  TariffType,
+} from "@/types";
+import { AppNotice } from "@/components/ui/AppNotice";
 
 import { AddressStep } from "./components/AddressStep";
 import { CheckoutFooter } from "./components/CheckoutFooter";
@@ -29,6 +35,8 @@ interface CheckoutViewProps {
   promoDiscountPreview: number;
   bonusSpendAmount: number;
   bookingSlots: BookingSlot[];
+  serviceSettings: PublicServiceSettingsDto;
+  serviceSettingsError: string | null;
   isBookingsLoading: boolean;
   bookingsError: string | null;
   isSubmitting: boolean;
@@ -65,6 +73,8 @@ export function CheckoutView({
   promoDiscountPreview,
   bonusSpendAmount,
   bookingSlots,
+  serviceSettings,
+  serviceSettingsError,
   isBookingsLoading,
   bookingsError,
   isSubmitting,
@@ -94,6 +104,7 @@ export function CheckoutView({
     selectedTime,
     bookingSlots,
     deliveryAddress,
+    serviceSettings,
   });
 
   const updateStart = useCallback(
@@ -175,12 +186,27 @@ export function CheckoutView({
       <CheckoutHeader step={step} onBack={goBack} />
 
       <div className="mx-auto max-w-2xl px-6 pt-7">
+        {serviceSettingsError && (
+          <AppNotice className="mb-4">
+            Настройки сервиса временно не загрузились. Используем базовое
+            расписание.
+          </AppNotice>
+        )}
+
+        {!serviceSettings.service_is_active && (
+          <AppNotice tone="danger" className="mb-4">
+            {serviceSettings.service_pause_message ||
+              "Сервис временно не принимает новые заказы."}
+          </AppNotice>
+        )}
+
         {step === 1 && (
           <TimingStep
             selectedItem={selectedItem}
             selectedTariff={selectedTariff}
             selectedDate={selectedDate}
             selectedTime={selectedTime}
+            serviceSettings={serviceSettings}
             availableIntervals={availability.availableIntervals}
             isBookingsLoading={isBookingsLoading}
             bookingsError={bookingsError}
@@ -290,7 +316,8 @@ export function CheckoutView({
             (!availability.canGoNextFromTiming ||
               availability.availableIntervals.length === 0)) ||
           (step === 2 && !availability.canGoNextFromAddress) ||
-          (step === 4 && !hasAcceptedTerms)
+          (step === 4 && !hasAcceptedTerms) ||
+          !serviceSettings.service_is_active
         }
         onBack={goBack}
         onNext={goNext}

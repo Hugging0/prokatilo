@@ -4,24 +4,43 @@ import {
   getPresetEndInputValues,
   intervalsOverlap,
 } from "@/lib/booking-time";
-import type { BookingSlot, TariffType } from "@/types";
-
-export const DELIVERY_INTERVALS = [
-  "08:00",
-  "10:00",
-  "12:00",
-  "14:00",
-  "16:00",
-  "18:00",
-] as const;
-
-export const DELIVERY_INTERVAL_HOURS = 2;
+import { DEFAULT_PUBLIC_SERVICE_SETTINGS } from "@/lib/service-settings";
+import type { BookingSlot, PublicServiceSettingsDto, TariffType } from "@/types";
 
 const checkoutDateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "numeric",
   month: "long",
   timeZone: "Europe/Moscow",
 });
+
+function parseTimeToMinutes(value: string) {
+  const [hoursValue, minutesValue] = value.split(":");
+  const hours = Number(hoursValue);
+  const minutes = Number(minutesValue);
+
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
+function formatMinutesAsTime(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function getSafeServiceSettings(settings?: PublicServiceSettingsDto) {
+  return settings ?? DEFAULT_PUBLIC_SERVICE_SETTINGS;
+}
 
 export function getQuickDateOptions() {
   const today = new Date();
@@ -48,11 +67,49 @@ export function getNextWeekdayInputValue(weekday: number) {
   return formatDateInputValue(date);
 }
 
-export function formatDeliveryIntervalLabel(startTime: string) {
-  const [hourValue] = startTime.split(":");
-  const startHour = Number(hourValue);
-  const endHour = startHour + DELIVERY_INTERVAL_HOURS;
-  return `${startTime}–${String(endHour).padStart(2, "0")}:00`;
+export function getDeliveryIntervals(settings?: PublicServiceSettingsDto) {
+  const safeSettings = getSafeServiceSettings(settings);
+  const workdayStart = parseTimeToMinutes(safeSettings.workday_start);
+  const workdayEnd = parseTimeToMinutes(safeSettings.workday_end);
+  const slotMinutes = safeSettings.delivery_slot_minutes;
+
+  if (
+    workdayStart === null ||
+    workdayEnd === null ||
+    workdayStart >= workdayEnd ||
+    slotMinutes < 15
+  ) {
+    return getDeliveryIntervals(DEFAULT_PUBLIC_SERVICE_SETTINGS);
+  }
+
+  const intervals: string[] = [];
+
+  for (
+    let current = workdayStart;
+    current + slotMinutes <= workdayEnd;
+    current += slotMinutes
+  ) {
+    intervals.push(formatMinutesAsTime(current));
+  }
+
+  return intervals;
+}
+
+export function formatDeliveryIntervalLabel(
+  startTime: string,
+  settings?: PublicServiceSettingsDto,
+) {
+  const safeSettings = getSafeServiceSettings(settings);
+  const startMinutes = parseTimeToMinutes(startTime);
+
+  if (startMinutes === null) {
+    return startTime;
+  }
+
+  const endTime = formatMinutesAsTime(
+    startMinutes + safeSettings.delivery_slot_minutes,
+  );
+  return `${startTime}–${endTime}`;
 }
 
 export function formatDeliveryDateLabel(value: Date) {
@@ -64,11 +121,13 @@ export function isDeliveryIntervalAvailable({
   selectedTime,
   selectedTariff,
   bookingSlots,
+  settings,
 }: {
   selectedDate: string;
   selectedTime: string;
   selectedTariff: TariffType;
   bookingSlots: BookingSlot[];
+  settings?: PublicServiceSettingsDto;
 }) {
   const startAt = getDateTimeFromInputs(selectedDate, selectedTime);
   const presetEnd = getPresetEndInputValues(
@@ -81,6 +140,15 @@ export function isDeliveryIntervalAvailable({
     : null;
 
   if (!startAt || !endAt) {
+    return false;
+  }
+
+  const safeSettings = getSafeServiceSettings(settings);
+  const minStartAt = new Date(
+    Date.now() + safeSettings.min_order_lead_minutes * 60 * 1000,
+  );
+
+  if (startAt < minStartAt) {
     return false;
   }
 
@@ -98,17 +166,20 @@ export function getAvailableDeliveryIntervals({
   selectedDate,
   selectedTariff,
   bookingSlots,
+  settings,
 }: {
   selectedDate: string;
   selectedTariff: TariffType;
   bookingSlots: BookingSlot[];
+  settings?: PublicServiceSettingsDto;
 }) {
-  return DELIVERY_INTERVALS.filter((selectedTime) =>
+  return getDeliveryIntervals(settings).filter((selectedTime) =>
     isDeliveryIntervalAvailable({
       selectedDate,
       selectedTime,
       selectedTariff,
       bookingSlots,
+      settings,
     }),
   );
 }

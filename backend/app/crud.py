@@ -14,8 +14,6 @@ from app.auth import hash_password, verify_password
 
 
 APP_TIMEZONE = ZoneInfo("Europe/Moscow")
-LOYALTY_CASHBACK_PERCENT = Decimal("0.05")
-MAX_BONUS_SPEND_PERCENT = Decimal("0.30")
 MONEY_ZERO = Decimal("0.00")
 BOOKING_BLOCKING_STATUSES = (
     schemas.OrderStatus.PENDING.value,
@@ -262,6 +260,64 @@ async def update_service_settings(
     await db.commit()
     await db.refresh(settings)
     return settings
+
+
+def _settings_percent_to_decimal(percent: int) -> Decimal:
+    return Decimal(percent) / Decimal("100")
+
+
+def _is_payment_method_enabled(
+    settings: models.ServiceSettingsModel,
+    payment_method: schemas.PaymentMethod,
+) -> bool:
+    return {
+        schemas.PaymentMethod.CASH: settings.cash_enabled,
+        schemas.PaymentMethod.CARD: settings.card_enabled,
+        schemas.PaymentMethod.SBP: settings.sbp_enabled,
+    }[payment_method]
+
+
+def validate_order_against_service_settings(
+    settings: models.ServiceSettingsModel,
+    order_data: schemas.OrderCreate,
+    planned_start_at: datetime,
+) -> None:
+    if not settings.service_is_active:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=settings.service_pause_message or "Сервис временно не принимает заказы",
+        )
+
+    if not _is_payment_method_enabled(settings, order_data.payment_method):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Выбранный способ оплаты сейчас недоступен",
+        )
+
+    lead_deadline = datetime.now(tz=APP_TIMEZONE) + timedelta(
+        minutes=settings.min_order_lead_minutes,
+    )
+
+    if planned_start_at < lead_deadline:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Выберите более поздний интервал доставки",
+        )
+
+    workday_start = _parse_settings_time(settings.workday_start)
+    workday_end = _parse_settings_time(settings.workday_end)
+    delivery_end_at = planned_start_at + timedelta(
+        minutes=settings.delivery_slot_minutes,
+    )
+
+    if (
+        planned_start_at.timetz().replace(tzinfo=None) < workday_start
+        or delivery_end_at.timetz().replace(tzinfo=None) > workday_end
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Выберите интервал в рабочее время сервиса",
+        )
 
 
 async def estimate_delivery(
@@ -688,10 +744,14 @@ async def get_loyalty_summary(
 ) -> schemas.LoyaltySummaryRead:
     account = await get_or_create_loyalty_account(db=db, user_id=user_id)
     transactions = await list_loyalty_transactions(db=db, user_id=user_id)
+    settings = await get_service_settings(db=db)
 
     return schemas.LoyaltySummaryRead(
         account=account,
         recent_transactions=transactions,
+        cashback_percent=settings.cashback_percent,
+        bonus_to_ruble_rate=settings.bonus_to_ruble_rate,
+        max_bonus_spend_percent=settings.max_bonus_spend_percent,
     )
 
 
@@ -911,11 +971,14 @@ def calculate_bonus_spend(
     requested_bonus_spend: Decimal | None,
     subtotal_price: Decimal,
     promo_discount_amount: Decimal,
+    max_bonus_spend_percent: int,
 ) -> Decimal:
     if not requested_bonus_spend or requested_bonus_spend <= MONEY_ZERO:
         return MONEY_ZERO
 
-    max_by_percent = normalize_money(subtotal_price * MAX_BONUS_SPEND_PERCENT)
+    max_by_percent = normalize_money(
+        subtotal_price * _settings_percent_to_decimal(max_bonus_spend_percent),
+    )
     price_after_promo = max(MONEY_ZERO, subtotal_price - promo_discount_amount)
     return normalize_money(
         min(account_balance, requested_bonus_spend, max_by_percent, price_after_promo),
@@ -964,8 +1027,9 @@ async def process_loyalty_for_returned_order(
     if not order.user_id:
         return
 
+    settings = await get_service_settings(db=db)
     bonus_amount = (
-        order.total_price * LOYALTY_CASHBACK_PERCENT
+        order.total_price * _settings_percent_to_decimal(settings.cashback_percent)
     ).to_integral_value(rounding=ROUND_FLOOR)
     bonus_amount = normalize_money(bonus_amount)
 
@@ -982,7 +1046,7 @@ async def process_loyalty_for_returned_order(
             order_id=order.id,
             type=schemas.LoyaltyTransactionType.EARNED.value,
             amount=bonus_amount,
-            description=f"5% за аренду №{order.id}",
+            description=f"{settings.cashback_percent}% за аренду №{order.id}",
         ),
     )
 
@@ -1251,6 +1315,7 @@ async def create_order(
     order_data: schemas.OrderCreate,
     user: models.UserModel,
 ) -> models.OrderModel:
+    settings = await get_service_settings(db=db)
     item = await db.get(models.ItemModel, order_data.item_id)
 
     if not item:
@@ -1269,6 +1334,11 @@ async def create_order(
         rental_date=order_data.rental_date,
         rental_time=order_data.rental_time,
         tariff_type=order_data.tariff_type,
+    )
+    validate_order_against_service_settings(
+        settings=settings,
+        order_data=order_data,
+        planned_start_at=planned_start_at,
     )
     await ensure_booking_slot_is_free(
         db=db,
@@ -1309,6 +1379,7 @@ async def create_order(
         requested_bonus_spend=order_data.bonus_spend_amount,
         subtotal_price=subtotal_price,
         promo_discount_amount=promo_discount_amount,
+        max_bonus_spend_percent=settings.max_bonus_spend_percent,
     )
     total_price = normalize_money(
         max(MONEY_ZERO, subtotal_price - promo_discount_amount - bonus_spent_amount),

@@ -28,7 +28,7 @@ export function CatalogItemCard({
             <img
               src={item.image_url}
               alt={item.title}
-              className="size-full object-cover"
+              className="size-full object-contain"
             />
           </div>
         ) : (

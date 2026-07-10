@@ -392,6 +392,24 @@ export interface BackendServiceSettingsDto {
   updated_at: string;
 }
 
+export interface PublicServiceSettingsDto {
+  timezone: string;
+  workday_start: string;
+  workday_end: string;
+  delivery_slot_minutes: number;
+  min_order_lead_minutes: number;
+  support_phone: string | null;
+  service_is_active: boolean;
+  service_pause_message: string | null;
+  cash_enabled: boolean;
+  card_enabled: boolean;
+  sbp_enabled: boolean;
+  default_payment_method: PaymentMethod;
+  cashback_percent: number;
+  max_bonus_spend_percent: number;
+  bonus_to_ruble_rate: number;
+}
+
 export interface AdminServiceSettingsPayload {
   timezone?: string;
   workday_start?: string;

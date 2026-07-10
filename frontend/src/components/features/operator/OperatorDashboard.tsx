@@ -53,10 +53,7 @@ export function OperatorDashboard({
 
         {activeTab === "orders" && (
           <section className="flex flex-col gap-5">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-lg font-black tracking-tight text-slate-950">
-                {UI_COPY.operator.title}
-              </h3>
+            <div className="flex justify-end">
               <button
                 type="button"
                 onClick={() => void adminOrders.refreshOrders()}

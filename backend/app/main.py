@@ -122,6 +122,17 @@ async def health_check() -> schemas.HealthRead:
 
 
 @app.get(
+    "/settings/service",
+    response_model=schemas.PublicServiceSettingsRead,
+    tags=["Settings"],
+)
+async def read_public_service_settings(
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> models.ServiceSettingsModel:
+    return await crud.get_service_settings(db=db)
+
+
+@app.get(
     "/web-push/public-key",
     response_model=schemas.WebPushPublicKeyRead,
     tags=["Push Notifications"],

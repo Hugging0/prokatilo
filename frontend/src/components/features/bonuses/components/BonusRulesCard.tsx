@@ -4,14 +4,26 @@ import type { LucideIcon } from "lucide-react";
 import { AppCard } from "@/components/ui/AppCard";
 import { UI_COPY } from "@/lib/copy";
 
-export function BonusRulesCard() {
+export function BonusRulesCard({
+  cashbackPercent,
+  maxBonusSpendPercent,
+}: {
+  cashbackPercent: number;
+  maxBonusSpendPercent: number;
+}) {
   return (
     <AppCard className="flex flex-col gap-4">
       <h2 className="text-lg font-black tracking-tight text-slate-950">
         {UI_COPY.bonus.rulesTitle}
       </h2>
-      <BonusRuleRow icon={Percent} value={UI_COPY.bonus.ruleEarn} />
-      <BonusRuleRow icon={BadgeCheck} value={UI_COPY.bonus.ruleSpend} />
+      <BonusRuleRow
+        icon={Percent}
+        value={`Начисляем ${cashbackPercent}% после завершённой аренды`}
+      />
+      <BonusRuleRow
+        icon={BadgeCheck}
+        value={`Бонусами можно оплатить до ${maxBonusSpendPercent}% следующей брони`}
+      />
       <BonusRuleRow icon={Gift} value={UI_COPY.bonus.rulePromo} />
     </AppCard>
   );

@@ -6,17 +6,33 @@ import { UI_COPY } from "@/lib/copy";
 
 import { formatBonusAmount } from "../lib/bonus-formatters";
 
-export function BonusBalanceCard({ balance }: { balance: number }) {
+function getBonusRateHint(rate: number) {
+  if (rate === 1) {
+    return "1 бонус = 1 ₽";
+  }
+
+  return `${rate} бонусов = 1 ₽`;
+}
+
+export function BonusBalanceCard({
+  balance,
+  cashbackPercent,
+  bonusToRubleRate,
+}: {
+  balance: number;
+  cashbackPercent: number;
+  bonusToRubleRate: number;
+}) {
   return (
     <AppCard variant="hero" className="overflow-hidden">
       <div className={`mb-5 flex size-14 items-center justify-center rounded-3xl ${BRAND_GRADIENT} text-white shadow-lg`}>
         <Gift size={25} />
       </div>
       <p className="text-sm font-black uppercase tracking-widest text-slate-500">
-        {UI_COPY.bonus.subtitle}
+        Возвращаем {cashbackPercent}% бонусами
       </p>
       <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950">
-        {UI_COPY.bonus.title}
+        Бонусы ПРОКАТило
       </h1>
       <div className="mt-6 rounded-[1.5rem] bg-slate-50 p-5">
         <p className="text-4xl font-black tracking-tight text-slate-950">
@@ -26,7 +42,7 @@ export function BonusBalanceCard({ balance }: { balance: number }) {
           {UI_COPY.bonus.balanceMeta}
         </p>
         <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">
-          {UI_COPY.bonus.rateHint}
+          {getBonusRateHint(bonusToRubleRate)}
         </p>
       </div>
     </AppCard>

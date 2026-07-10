@@ -20,6 +20,7 @@ import { useCatalogFilter } from "@/hooks/use-catalog-filter";
 import { useCheckoutState } from "@/hooks/use-checkout-state";
 import { useItems } from "@/hooks/use-items";
 import { useOrders } from "@/hooks/use-orders";
+import { useServiceSettings } from "@/hooks/use-service-settings";
 import { useToast } from "@/hooks/use-toast";
 import { createOrder } from "@/lib/api/orders";
 import { UI_COPY } from "@/lib/copy";
@@ -48,6 +49,7 @@ export function AppShell({ initialItemId }: AppShellProps) {
     reload: reloadCatalog,
   } = useItems();
   const { toast, showNotification } = useToast();
+  const serviceSettings = useServiceSettings();
   const checkout = useCheckoutState();
   const deepLinkedItem = initialItemId
     ? items.find((item) => item.id === initialItemId) ?? null
@@ -228,6 +230,8 @@ export function AppShell({ initialItemId }: AppShellProps) {
           promoDiscountPreview={checkout.promoDiscountPreview}
           bonusSpendAmount={checkout.bonusSpendAmount}
           bookingSlots={bookingSlotsState.bookingSlots}
+          serviceSettings={serviceSettings.settings}
+          serviceSettingsError={serviceSettings.error}
           isBookingsLoading={bookingSlotsState.isBookingsLoading}
           bookingsError={bookingSlotsState.bookingsError}
           isSubmitting={isBookingSubmitting}

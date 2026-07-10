@@ -42,14 +42,21 @@ export function BonusesView({ authToken, onNotify }: BonusesViewProps) {
 
         {loyalty.summary && (
           <>
-            <BonusBalanceCard balance={loyalty.summary.account.balance} />
+            <BonusBalanceCard
+              balance={loyalty.summary.account.balance}
+              cashbackPercent={loyalty.summary.cashbackPercent}
+              bonusToRubleRate={loyalty.summary.bonusToRubleRate}
+            />
             <PromoCodeActivationCard
               promoCode={loyalty.promoCode}
               isActivating={loyalty.isActivating}
               onPromoCodeChange={loyalty.setPromoCode}
               onActivate={() => void loyalty.activatePromoCode()}
             />
-            <BonusRulesCard />
+            <BonusRulesCard
+              cashbackPercent={loyalty.summary.cashbackPercent}
+              maxBonusSpendPercent={loyalty.summary.maxBonusSpendPercent}
+            />
             <BonusTransactionsList
               transactions={loyalty.summary.recentTransactions}
             />

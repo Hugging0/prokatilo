@@ -359,6 +359,26 @@ class ServiceSettingsRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PublicServiceSettingsRead(BaseModel):
+    timezone: str
+    workday_start: str
+    workday_end: str
+    delivery_slot_minutes: int
+    min_order_lead_minutes: int
+    support_phone: str | None
+    service_is_active: bool
+    service_pause_message: str | None
+    cash_enabled: bool
+    card_enabled: bool
+    sbp_enabled: bool
+    default_payment_method: PaymentMethod
+    cashback_percent: int
+    max_bonus_spend_percent: int
+    bonus_to_ruble_rate: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class OrderRead(OrderBase):
     id: int
     user_id: int | None

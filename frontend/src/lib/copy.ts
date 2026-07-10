@@ -62,7 +62,7 @@ export const UI_COPY = {
   },
   operator: {
     navLabel: "Оператор",
-    title: "Заявки и аренды",
+    title: "Заявки",
     catalogTitle: "Каталог",
     settingsTitle: "Настройки",
     subtitle: "Оператор сервиса",
@@ -141,7 +141,7 @@ export const UI_COPY = {
   },
   bonus: {
     title: "Бонусы ПРОКАТило",
-    subtitle: "Возвращаем 5% бонусами",
+    subtitle: "Бонусы за аренду",
     balanceMeta: "Можно списать при следующей аренде",
     rateHint: "1 бонус = 1 ₽",
     promoTitle: "Промокод",
@@ -149,7 +149,7 @@ export const UI_COPY = {
     promoPlaceholder: "Введите код",
     activateButton: "Активировать",
     rulesTitle: "Как это работает",
-    ruleEarn: "Начисляем 5% после завершённой аренды",
+    ruleEarn: "Начисляем бонусы после завершённой аренды",
     ruleSpend: "Бонусами можно оплатить часть следующей брони",
     rulePromo: "Промокоды дают скидку или бонусы",
     historyTitle: "История бонусов",
