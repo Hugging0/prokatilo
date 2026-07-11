@@ -104,20 +104,20 @@ export function HomeView({
               type="button"
               onClick={() => onOpenDetails(item)}
               disabled={!item.available}
-              className="flex w-full items-center rounded-[1.5rem] border border-slate-100 bg-white p-4 text-left shadow-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed"
+              className="flex w-full items-center gap-4 rounded-[1.5rem] border border-slate-100 bg-white px-4 py-3.5 text-left shadow-sm transition-all active:scale-[0.98] disabled:cursor-not-allowed"
             >
               {item.imageUrl ? (
-                <div className="mr-4 h-16 w-16 shrink-0 overflow-hidden rounded-[1.5rem] bg-slate-100">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.imageUrl}
                     alt={item.title}
-                    className="h-full w-full object-contain"
+                    className="max-h-full max-w-full object-contain drop-shadow-[0_16px_18px_rgba(15,23,42,0.14)]"
                   />
                 </div>
               ) : (
                 <div
-                  className={`w-16 h-16 rounded-[1.5rem] ${item.bg} ${item.color} flex items-center justify-center mr-4 shrink-0`}
+                  className={`w-16 h-16 rounded-[1.5rem] ${item.bg} ${item.color} flex items-center justify-center shrink-0`}
                 >
                   <item.icon size={30} strokeWidth={1.7} />
                 </div>
@@ -138,7 +138,7 @@ export function HomeView({
                 </AppBadge>
               </div>
 
-              <div className="text-right">
+              <div className="shrink-0 text-right">
                 <p className="text-xl font-black text-slate-900 tracking-tighter leading-none">
                   {item.price3h}₽
                 </p>

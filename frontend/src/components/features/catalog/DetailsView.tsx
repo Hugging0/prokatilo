@@ -30,12 +30,12 @@ export function DetailsView({
         </button>
 
         {item.imageUrl ? (
-          <div className="h-[330px] w-full overflow-hidden rounded-b-[2.5rem] bg-slate-100">
+          <div className="flex h-[330px] w-full items-center justify-center overflow-hidden rounded-b-[2.5rem] bg-gradient-to-b from-white to-slate-100 px-8 pb-8 pt-16">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.imageUrl}
               alt={item.title}
-              className="h-full w-full object-contain"
+              className="max-h-full max-w-full object-contain drop-shadow-[0_28px_34px_rgba(15,23,42,0.16)]"
             />
           </div>
         ) : (

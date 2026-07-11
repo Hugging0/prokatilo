@@ -347,8 +347,9 @@
   .catalogHero {
     display: flex;
     flex-direction: column;
-    min-height: calc(100svh - 68px);
+    min-height: 0;
     padding: 0 18px max(14px, env(safe-area-inset-bottom));
+    overflow: clip;
     --side-offset: 43vw;
   }
 
@@ -375,15 +376,18 @@
   .mobileIntro { display: inline; }
 
   .orbitStage {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     width: calc(100% + 36px);
-    min-height: 280px;
-    height: auto;
+    height: clamp(250px, 44svh, 380px);
+    min-height: 0;
     margin-left: -18px;
   }
 
   .orbitLine { top: 54%; left: 50%; width: 128vw; height: 165px; }
-  .product { top: 51%; left: 50%; width: min(92vw, 430px); }
+  .product { top: 51%; left: 50%; width: min(88vw, 430px, calc(44svh - 16px)); }
+  .productActive { transform: translate(-50%, -50%) translate(0, -8px) scale(1.04) rotate(0); }
+  .productRight { transform: translate(-50%, -50%) translate(var(--side-offset), min(9svh, 58px)) scale(0.5) rotate(-8deg); }
+  .productLeft { transform: translate(-50%, -50%) translate(calc(0px - var(--side-offset)), min(9svh, 58px)) scale(0.5) rotate(8deg); }
   .orbitControl { top: 55%; width: 46px; height: 46px; }
   .previous { left: 10px; }
   .next { right: 10px; }
@@ -415,7 +419,8 @@
   .heroCopy { padding-top: 16px; }
   .heroCopy h1 { font-size: clamp(31px, 9.2vw, 39px); }
   .heroCopy p { max-width: 27ch; font-size: 14px; }
-  .orbitStage { min-height: 250px; }
+  .orbitStage { height: clamp(228px, 42svh, 330px); }
+  .product { width: min(86vw, 370px, calc(42svh - 14px)); }
   .orbitControl { width: 42px; height: 42px; }
 
   .infoRail {
@@ -426,6 +431,32 @@
 
   .prices { padding: 10px 0 2px; border-top: 1px solid #e2e8f0; }
   .bookButton { width: 100%; }
+}
+
+@media (max-width: 540px) and (max-height: 680px) {
+  .catalogHero {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .heroCopy { padding-top: 12px; }
+  .heroCopy h1 { font-size: clamp(28px, 8.3vw, 34px); }
+  .heroCopy p { margin-top: 8px; font-size: 13px; line-height: 1.35; }
+  .orbitStage {
+    width: calc(100% + 32px);
+    height: clamp(208px, 39svh, 268px);
+    margin-left: -16px;
+  }
+  .product {
+    width: min(80vw, 320px, calc(39svh - 18px));
+  }
+  .orbitLine { height: 128px; }
+  .infoRail { gap: 9px 12px; padding-top: 11px; }
+  .productSummary h2 { font-size: 18px; }
+  .prices { padding-top: 8px; }
+  .prices dt { font-size: 11px; }
+  .prices dd { font-size: 14px; }
+  .bookButton { min-height: 44px; }
 }
 
 @media (max-height: 760px) and (min-width: 861px) {

@@ -49,6 +49,18 @@ function getItemPresentation(iconKey: string): ItemPresentation {
   return ICON_PRESENTATION[iconKey] ?? ICON_PRESENTATION.package;
 }
 
+function getTransparentCatalogImageUrl(imageUrl: string | null): string | null {
+  const catalogPath = "/uploads/catalog/items/";
+
+  if (!imageUrl?.includes(catalogPath)) return imageUrl;
+  if (imageUrl.includes(`${catalogPath}transparent/`)) return imageUrl;
+
+  const fileName = imageUrl.split("/").pop();
+  if (!fileName) return imageUrl;
+
+  return `${catalogPath}transparent/${fileName}`;
+}
+
 export function mapBackendItemToAppItem(
   item: BackendItemDto,
 ): AppItem {
@@ -65,7 +77,7 @@ export function mapBackendItemToAppItem(
     available: item.is_available && item.is_active,
     active: item.is_active,
     iconKey: item.icon_key,
-    imageUrl: item.image_url,
+    imageUrl: getTransparentCatalogImageUrl(item.image_url),
     sortOrder: item.sort_order,
     ...presentation,
   };
