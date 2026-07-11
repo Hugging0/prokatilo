@@ -1,7 +1,7 @@
 import type { AppOrder } from "@/types";
 
 import { getTariffLabel } from "@/lib/tariffs";
-import { formatPricePerDay } from "../lib/orders-view.utils";
+import { formatOrderPrice } from "../lib/orders-view.utils";
 import { OrderIcon } from "./OrderIcon";
 
 export function OrderProductHeader({
@@ -21,7 +21,7 @@ export function OrderProductHeader({
           {order.title}
         </h2>
         <p className="mt-1 text-base font-bold text-slate-500">
-          {formatPricePerDay(order)}
+          {formatOrderPrice(order)}
         </p>
         {showDuration && (
           <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">

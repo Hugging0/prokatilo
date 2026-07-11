@@ -1,1 +1,1 @@
-export type OrdersTab = "active" | "completed" | "all";
+export type OrdersTab = "active" | "completed";

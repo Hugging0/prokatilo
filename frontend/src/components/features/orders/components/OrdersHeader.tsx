@@ -4,12 +4,12 @@ import { UI_COPY } from "@/lib/copy";
 
 export function OrdersHeader({ onRefresh }: { onRefresh: () => void }) {
   return (
-    <header className="flex items-center justify-between gap-4">
+    <header className="flex items-start justify-between gap-4">
       <div>
-        <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-slate-400">
-          ПРОКАТИЛО
+        <p className="text-sm font-extrabold text-slate-400">
+          ПРОКАТило
         </p>
-        <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950">
+        <h1 className="mt-1 text-3xl font-black leading-tight tracking-tight text-slate-950">
           {UI_COPY.orders.title}
         </h1>
       </div>

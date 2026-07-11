@@ -12,9 +12,8 @@ import { FeaturedOrderCard } from "./components/FeaturedOrderCard";
 import { OrderDetailsView } from "./components/OrderDetailsView";
 import { OrdersHeader } from "./components/OrdersHeader";
 import { OrdersTabs } from "./components/OrdersTabs";
-import { StatusBadge } from "./components/StatusBadge";
 import {
-  getNextOrder,
+  getFeaturedOrder,
   getVisibleOrdersByTab,
   sortOrders,
 } from "./lib/orders-view.utils";
@@ -48,13 +47,32 @@ export function MyOrdersView({
     () => getVisibleOrdersByTab(sortedOrders, "active"),
     [sortedOrders],
   );
-  const visibleOrders = useMemo(
-    () => getVisibleOrdersByTab(sortedOrders, activeTab),
-    [activeTab, sortedOrders],
+  const historyOrders = useMemo(
+    () => getVisibleOrdersByTab(sortedOrders, "completed"),
+    [sortedOrders],
   );
-  const selectedOrder = sortedOrders.find((order) => order.id === selectedOrderId);
-  const nextOrder = getNextOrder(activeOrders);
-  const restOrders = visibleOrders.filter((order) => order.id !== nextOrder?.id);
+  const visibleOrders = useMemo(
+    () => (activeTab === "active" ? activeOrders : historyOrders),
+    [activeOrders, activeTab, historyOrders],
+  );
+  const selectedOrder = sortedOrders.find(
+    (order) => order.id === selectedOrderId,
+  );
+  const featuredOrder =
+    activeTab === "active" ? getFeaturedOrder(activeOrders) : null;
+  const restOrders = featuredOrder
+    ? visibleOrders.filter((order) => order.id !== featuredOrder.id)
+    : visibleOrders;
+
+  const handleTabChange = (tab: OrdersTab) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleOpenOrder = (orderId: number) => {
+    setSelectedOrderId(orderId);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (selectedOrder) {
     return (
@@ -72,7 +90,12 @@ export function MyOrdersView({
         <OrdersHeader onRefresh={onRefresh} />
 
         {orders.length > 0 && (
-          <OrdersTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <OrdersTabs
+            activeTab={activeTab}
+            activeCount={activeOrders.length}
+            historyCount={historyOrders.length}
+            onTabChange={handleTabChange}
+          />
         )}
 
         {isLoading && <AppNotice>{UI_COPY.orders.loading}</AppNotice>}
@@ -94,45 +117,68 @@ export function MyOrdersView({
           <EmptyOrdersState onOpenCatalog={onOpenCatalog} />
         )}
 
-        {orders.length > 0 && activeTab === "active" && nextOrder && (
+        {!isLoading && !error && featuredOrder && (
           <section className="flex flex-col gap-3">
-            <AppSectionHeader
-              title="Следующая бронь"
-              meta={<StatusBadge status={nextOrder.status} />}
-            />
+            <AppSectionHeader title="Ближайшее по аренде" />
             <FeaturedOrderCard
-              order={nextOrder}
-              onOpen={() => setSelectedOrderId(nextOrder.id)}
+              order={featuredOrder}
+              onOpen={() => handleOpenOrder(featuredOrder.id)}
             />
           </section>
         )}
 
-        {orders.length > 0 && (
+        {!isLoading && !error && restOrders.length > 0 && (
           <section className="flex flex-col gap-3">
             <AppSectionHeader
-              title={activeTab === "active" ? "Остальные брони" : "Брони"}
-              meta={<AppBadge>{visibleOrders.length}</AppBadge>}
+              title={getOrdersSectionTitle(activeTab, restOrders.length)}
+              meta={<AppBadge>{restOrders.length}</AppBadge>}
             />
-            {restOrders.length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {restOrders.map((order) => (
-                  <CompactOrderCard
-                    key={order.id}
-                    order={order}
-                    onOpen={() => setSelectedOrderId(order.id)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <AppNotice>
-                {activeTab === "active"
-                  ? "Других активных броней пока нет."
-                  : "В этой вкладке пока нет броней."}
-              </AppNotice>
-            )}
+            <div className="flex flex-col gap-3">
+              {restOrders.map((order) => (
+                <CompactOrderCard
+                  key={order.id}
+                  order={order}
+                  onOpen={() => handleOpenOrder(order.id)}
+                />
+              ))}
+            </div>
           </section>
         )}
+
+        {!isLoading &&
+          !error &&
+          orders.length > 0 &&
+          visibleOrders.length === 0 && (
+            <AppNotice>
+              {activeTab === "active"
+                ? "Активных броней сейчас нет."
+                : "История броней пока пуста."}
+            </AppNotice>
+          )}
       </div>
     </main>
   );
+}
+
+function getOrdersSectionTitle(tab: OrdersTab, count: number) {
+  if (tab === "completed") {
+    return "История броней";
+  }
+
+  const lastTwoDigits = count % 100;
+  const lastDigit = count % 10;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return `Ещё ${count} броней`;
+  }
+
+  if (lastDigit === 1) {
+    return "Ещё одна бронь";
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return `Ещё ${count} брони`;
+  }
+
+  return `Ещё ${count} броней`;
 }
