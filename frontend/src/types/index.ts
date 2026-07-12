@@ -77,6 +77,7 @@ export interface AppOrder {
   id: number;
   itemId: number;
   title: string;
+  imageUrl: string | null;
   icon: LucideIcon;
   color: string;
   bg: string;

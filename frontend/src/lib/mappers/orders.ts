@@ -30,6 +30,7 @@ export function mapBackendOrderToAppOrder(
     id: order.id,
     itemId: order.item_id,
     title: mappedItem?.title || order.item.title,
+    imageUrl: mappedItem?.imageUrl ?? order.item.image_url ?? null,
     icon: mappedItem?.icon || FALLBACK_ITEM_STYLES.icon,
     color: mappedItem?.color || FALLBACK_ITEM_STYLES.color,
     bg: mappedItem?.bg || FALLBACK_ITEM_STYLES.bg,
