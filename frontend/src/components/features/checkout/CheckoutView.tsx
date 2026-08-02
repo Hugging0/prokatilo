@@ -22,6 +22,10 @@ import { ReviewStep } from "./components/ReviewStep";
 import { TimingStep } from "./components/TimingStep";
 import { useCheckoutAvailability } from "./hooks/useCheckoutAvailability";
 
+function formatMoney(amount: number) {
+  return `${amount.toLocaleString("ru-RU")} ₽`;
+}
+
 interface CheckoutViewProps {
   selectedItem: AppItem;
   selectedTariff: TariffType;
@@ -181,8 +185,41 @@ export function CheckoutView({
     onStepChange((current) => current + 1);
   };
 
+  const totalAfterDiscounts = Math.max(
+    0,
+    availability.totalPrice -
+      (appliedPromoCode ? promoDiscountPreview : 0) -
+      bonusSpendAmount,
+  );
+  const totalLabel = availability.deliveryEstimate.isExactFree
+    ? formatMoney(totalAfterDiscounts)
+    : `${formatMoney(totalAfterDiscounts)} + доставка`;
+  const footerSummary = (() => {
+    switch (step) {
+      case 1:
+        return {
+          label: selectedItem.title,
+          value: `${availability.rentalDurationSummary} · ${formatMoney(
+            availability.totalPrice,
+          )}`,
+        };
+      case 2:
+        return {
+          label: deliveryAddress.trim() || "Укажите адрес доставки",
+          value: availability.deliveryEstimate.needsOperatorConfirmation
+            ? "Уточнит оператор"
+            : availability.deliveryEstimate.priceLabel,
+        };
+      default:
+        return {
+          label: "К оплате при получении",
+          value: totalLabel,
+        };
+    }
+  })();
+
   return (
-    <main className="min-h-screen bg-slate-50 pb-10">
+    <main className="min-h-screen bg-slate-50 pb-[calc(9rem+env(safe-area-inset-bottom))] sm:pb-32">
       <CheckoutHeader step={step} onBack={goBack} />
 
       <div className="mx-auto max-w-2xl px-6 pt-7">
@@ -310,6 +347,8 @@ export function CheckoutView({
         step={step}
         isSubmitting={isSubmitting}
         requiresAuth={requiresAuth}
+        summaryLabel={footerSummary.label}
+        summaryValue={footerSummary.value}
         disabled={
           isSubmitting ||
           (step === 1 &&
