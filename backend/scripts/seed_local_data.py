@@ -77,6 +77,62 @@ LOCAL_ITEMS = [
         "icon_key": "vacuum",
         "sort_order": 40,
     },
+    {
+        "title": "Instax Square SQ1",
+        "description": (
+            "Моментальная камера с квадратными снимками и селфи-режимом. "
+            "Кассету на 10 снимков можно приобрести у курьера за 2 000 ₽."
+        ),
+        "category": "Фото",
+        "price_per_3h": Decimal("500"),
+        "price_per_24h": Decimal("700"),
+        "price_per_7d": Decimal("2000"),
+        "image_url": "/uploads/catalog/items/transparent/instax-square-sq1.webp",
+        "icon_key": "camera",
+        "sort_order": 50,
+    },
+    {
+        "title": "Xbox Series S 512 ГБ",
+        "description": (
+            "Комплект для игры одному или вдвоём: два геймпада, Game Pass "
+            "Ultimate, дополнительный диск 1 ТБ и подборка популярных игр."
+        ),
+        "category": "Игры",
+        "price_per_3h": Decimal("700"),
+        "price_per_24h": Decimal("950"),
+        "price_per_7d": Decimal("3000"),
+        "image_url": "/uploads/catalog/items/transparent/xbox-series-s.webp",
+        "icon_key": "gamepad",
+        "sort_order": 60,
+    },
+    {
+        "title": "Перфоратор SDS+",
+        "description": (
+            "Для сверления бетона и кирпича, штробления и небольшого демонтажа. "
+            "В комплекте буры, пики и дополнительная рукоятка."
+        ),
+        "category": "Инструменты",
+        "price_per_3h": Decimal("400"),
+        "price_per_24h": Decimal("700"),
+        "price_per_7d": Decimal("2100"),
+        "image_url": "/uploads/catalog/items/transparent/rotary-hammer.webp",
+        "icon_key": "tools",
+        "sort_order": 70,
+    },
+    {
+        "title": "Электроотвертка Makita DF001DW",
+        "description": (
+            "Компактная аккумуляторная отвертка для сборки мебели и мелкого "
+            "ремонта. Поворотная рукоятка, подсветка и набор из 81 предмета."
+        ),
+        "category": "Инструменты",
+        "price_per_3h": Decimal("400"),
+        "price_per_24h": Decimal("600"),
+        "price_per_7d": Decimal("1500"),
+        "image_url": "/uploads/catalog/items/transparent/makita-df001dw.webp",
+        "icon_key": "tools",
+        "sort_order": 80,
+    },
 ]
 
 

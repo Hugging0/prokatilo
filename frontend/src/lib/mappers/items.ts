@@ -1,4 +1,4 @@
-import { Brush, Gamepad2, Package, Sparkles } from "lucide-react";
+import { Brush, Camera, Gamepad2, Package, Sparkles, Wrench } from "lucide-react";
 
 import type { AppItem, BackendItemDto } from "@/types";
 
@@ -35,6 +35,18 @@ const ICON_PRESENTATION: Record<string, ItemPresentation> = {
     border: "border-emerald-500",
     bg: "bg-emerald-50",
   },
+  camera: {
+    icon: Camera,
+    color: "text-orange-500",
+    border: "border-orange-500",
+    bg: "bg-orange-50",
+  },
+  tools: {
+    icon: Wrench,
+    color: "text-amber-600",
+    border: "border-amber-600",
+    bg: "bg-amber-50",
+  },
 };
 
 export const ITEM_ICON_KEYS = [
@@ -43,6 +55,8 @@ export const ITEM_ICON_KEYS = [
   "brush",
   "package",
   "vacuum",
+  "camera",
+  "tools",
 ] as const;
 
 function getItemPresentation(iconKey: string): ItemPresentation {
