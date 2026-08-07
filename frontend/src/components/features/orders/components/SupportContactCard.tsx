@@ -2,11 +2,25 @@ import { Phone, Send } from "lucide-react";
 
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
+import {
+  BUSINESS_PHONE_HREF,
+  BUSINESS_TELEGRAM_URL,
+} from "@/lib/business";
 
 import { ORDER_DETAILS_COPY } from "../lib/order-details-copy";
 
-export function SupportContactCard() {
+export function SupportContactCard({
+  supportPhone,
+  supportTelegramUrl,
+}: {
+  supportPhone?: string | null;
+  supportTelegramUrl?: string | null;
+}) {
   const copy = ORDER_DETAILS_COPY.support;
+  const phoneHref = supportPhone
+    ? `tel:${supportPhone.replace(/[^+\d]/g, "")}`
+    : BUSINESS_PHONE_HREF;
+  const telegramUrl = supportTelegramUrl || BUSINESS_TELEGRAM_URL;
 
   return (
     <AppCard id="order-support" className="flex flex-col gap-4">
@@ -22,7 +36,7 @@ export function SupportContactCard() {
         <AppButton
           type="button"
           onClick={() =>
-            window.open(copy.telegramUrl, "_blank", "noopener,noreferrer")
+            window.open(telegramUrl, "_blank", "noopener,noreferrer")
           }
           fullWidth
         >
@@ -33,7 +47,7 @@ export function SupportContactCard() {
           type="button"
           variant="secondary"
           onClick={() => {
-            window.location.href = copy.phoneHref;
+            window.location.href = phoneHref;
           }}
           fullWidth
         >

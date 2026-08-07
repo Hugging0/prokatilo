@@ -4,12 +4,13 @@ import { AppBadge } from "@/components/ui/AppBadge";
 import { AppNotice } from "@/components/ui/AppNotice";
 import { AppSectionHeader } from "@/components/ui/AppSectionHeader";
 import { UI_COPY } from "@/lib/copy";
-import type { AppOrder } from "@/types";
+import type { AppOrder, PublicServiceSettingsDto } from "@/types";
 
 import { CompactOrderCard } from "./components/CompactOrderCard";
 import { EmptyOrdersState } from "./components/EmptyOrdersState";
 import { FeaturedOrderCard } from "./components/FeaturedOrderCard";
 import { OrderDetailsView } from "./components/OrderDetailsView";
+import { InstructionGuideView } from "./components/InstructionGuideView";
 import { OrdersHeader } from "./components/OrdersHeader";
 import { OrdersTabs } from "./components/OrdersTabs";
 import {
@@ -30,6 +31,8 @@ interface MyOrdersViewProps {
     rating: number,
     comment: string,
   ) => void;
+  serviceSettings: PublicServiceSettingsDto;
+  onInstructionOpenChange: (isOpen: boolean) => void;
 }
 
 export function MyOrdersView({
@@ -39,9 +42,14 @@ export function MyOrdersView({
   onRefresh,
   onOpenCatalog,
   onLeaveReview,
+  serviceSettings,
+  onInstructionOpenChange,
 }: MyOrdersViewProps) {
   const [activeTab, setActiveTab] = useState<OrdersTab>("active");
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [instructionOrderId, setInstructionOrderId] = useState<number | null>(
+    null,
+  );
   const sortedOrders = useMemo(() => sortOrders(orders), [orders]);
   const activeOrders = useMemo(
     () => getVisibleOrdersByTab(sortedOrders, "active"),
@@ -57,6 +65,9 @@ export function MyOrdersView({
   );
   const selectedOrder = sortedOrders.find(
     (order) => order.id === selectedOrderId,
+  );
+  const instructionOrder = sortedOrders.find(
+    (order) => order.id === instructionOrderId,
   );
   const featuredOrder =
     activeTab === "active" ? getFeaturedOrder(activeOrders) : null;
@@ -74,12 +85,37 @@ export function MyOrdersView({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleOpenInstruction = (orderId: number) => {
+    setInstructionOrderId(orderId);
+    onInstructionOpenChange(true);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  const handleCloseInstruction = () => {
+    setInstructionOrderId(null);
+    onInstructionOpenChange(false);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  if (instructionOrder?.instruction) {
+    return (
+      <InstructionGuideView
+        itemTitle={instructionOrder.title}
+        instruction={instructionOrder.instruction}
+        serviceSettings={serviceSettings}
+        onBack={handleCloseInstruction}
+      />
+    );
+  }
+
   if (selectedOrder) {
     return (
       <OrderDetailsView
         order={selectedOrder}
         onBack={() => setSelectedOrderId(null)}
         onLeaveReview={onLeaveReview}
+        onOpenInstruction={() => handleOpenInstruction(selectedOrder.id)}
+        serviceSettings={serviceSettings}
       />
     );
   }

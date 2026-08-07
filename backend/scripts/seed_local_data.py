@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -12,6 +13,25 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 from app.auth import hash_password
 from app.database import SessionLocal
 from app.models import ItemModel, UserModel
+
+
+INSTRUCTION_DATA_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "data"
+    / "catalog_instructions.v1.json"
+)
+
+
+def load_instructions_by_title() -> dict[str, dict[str, object]]:
+    entries = json.loads(INSTRUCTION_DATA_PATH.read_text(encoding="utf-8"))
+    return {
+        title: entry["instruction"]
+        for entry in entries
+        for title in entry["titles"]
+    }
+
+
+INSTRUCTIONS_BY_TITLE = load_instructions_by_title()
 
 
 LOCAL_USERS = [
@@ -45,7 +65,7 @@ LOCAL_ITEMS = [
         "sort_order": 10,
     },
     {
-        "title": "PlayStation VR",
+        "title": "PlayStation VR2",
         "description": "VR-комплект для игрового вечера и первого знакомства с VR.",
         "category": "Игры",
         "price_per_3h": Decimal("900"),
@@ -169,16 +189,22 @@ async def upsert_item(item_data: dict[str, object]) -> None:
         )
         item = result.scalar_one_or_none()
 
+        instruction = INSTRUCTIONS_BY_TITLE.get(str(item_data["title"]))
+
         if item:
             for key, value in item_data.items():
                 setattr(item, key, value)
             item.is_available = True
             item.is_active = True
+            item.instruction = instruction
+            item.instruction_is_published = instruction is not None
         else:
             item = ItemModel(
                 **item_data,
                 is_available=True,
                 is_active=True,
+                instruction=instruction,
+                instruction_is_published=instruction is not None,
             )
             db.add(item)
 

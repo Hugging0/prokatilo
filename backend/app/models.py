@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
@@ -19,6 +19,8 @@ class ItemModel(Base):
     price_per_7d: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     is_available: Mapped[bool] = mapped_column(Boolean, default=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    instruction: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    instruction_is_published: Mapped[bool] = mapped_column(Boolean, default=False)
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
@@ -177,6 +179,10 @@ class ServiceSettingsModel(Base):
     delivery_slot_minutes: Mapped[int] = mapped_column(Integer, default=120)
     min_order_lead_minutes: Mapped[int] = mapped_column(Integer, default=15)
     support_phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    support_telegram_url: Mapped[str | None] = mapped_column(
+        String(2048),
+        nullable=True,
+    )
     service_is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     service_pause_message: Mapped[str | None] = mapped_column(
         String(500),

@@ -1,10 +1,13 @@
 import type { FormEvent } from "react";
+import { useState } from "react";
 
 import { AppButton } from "@/components/ui/AppButton";
 import { AppCard } from "@/components/ui/AppCard";
 import { UI_COPY } from "@/lib/copy";
 import { ITEM_ICON_KEYS } from "@/lib/mappers/items";
 import type { CatalogItemFormState } from "@/types";
+
+import { InstructionEditor } from "./InstructionEditor";
 
 interface CatalogItemFormProps {
   form: CatalogItemFormState;
@@ -13,7 +16,9 @@ interface CatalogItemFormProps {
     field: keyof CatalogItemFormState,
     value: string | boolean,
   ) => void;
-  onCancel: () => void;
+  onInstructionChange: (
+    instruction: CatalogItemFormState["instruction"],
+  ) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
@@ -40,28 +45,53 @@ export function CatalogItemForm({
   form,
   isEditing,
   onFieldChange,
-  onCancel,
+  onInstructionChange,
   onSubmit,
 }: CatalogItemFormProps) {
+  const [activeTab, setActiveTab] = useState<"item" | "instruction">("item");
+
   return (
     <AppCard>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-black tracking-tight text-slate-950">
-            {isEditing
-              ? UI_COPY.operator.editItemTitle
-              : UI_COPY.operator.newItemTitle}
-          </h3>
-          <p className="mt-2 text-base font-bold leading-relaxed text-slate-500">
-            Форма открывается только для добавления или редактирования товара.
-          </p>
-        </div>
-        <AppButton type="button" variant="secondary" size="sm" onClick={onCancel}>
-          Закрыть
-        </AppButton>
+      <div>
+        <h3 className="text-lg font-black tracking-tight text-slate-950">
+          {isEditing
+            ? UI_COPY.operator.editItemTitle
+            : UI_COPY.operator.newItemTitle}
+        </h3>
+        <p className="mt-2 text-base font-bold leading-relaxed text-slate-500">
+          {isEditing
+            ? "Измените карточку товара или перейдите к его инструкции."
+            : "Заполните карточку товара и при необходимости добавьте инструкцию."}
+        </p>
       </div>
 
       <form onSubmit={onSubmit} className="mt-5 flex flex-col gap-4">
+        <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("item")}
+            className={`min-h-11 rounded-xl px-3 text-sm font-black transition ${
+              activeTab === "item"
+                ? "bg-white text-slate-950 shadow-sm"
+                : "text-slate-500"
+            }`}
+          >
+            Карточка товара
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("instruction")}
+            className={`min-h-11 rounded-xl px-3 text-sm font-black transition ${
+              activeTab === "instruction"
+                ? "bg-white text-slate-950 shadow-sm"
+                : "text-slate-500"
+            }`}
+          >
+            Инструкция
+          </button>
+        </div>
+
+        <div className={activeTab === "item" ? "contents" : "hidden"}>
         <Field label={UI_COPY.operator.titleLabel}>
           <input
             value={form.title}
@@ -197,6 +227,18 @@ export function CatalogItemForm({
               </span>
             </span>
           </label>
+        </div>
+        </div>
+
+        <div className={activeTab === "instruction" ? "block" : "hidden"}>
+          <InstructionEditor
+            instruction={form.instruction}
+            isPublished={form.instruction_is_published}
+            onChange={onInstructionChange}
+            onPublishedChange={(isPublished) =>
+              onFieldChange("instruction_is_published", isPublished)
+            }
+          />
         </div>
 
         <AppButton type="submit" fullWidth>

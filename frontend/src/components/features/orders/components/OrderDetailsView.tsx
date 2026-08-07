@@ -3,7 +3,7 @@ import { CalendarDays, MapPin, Phone } from "lucide-react";
 import { AppCard } from "@/components/ui/AppCard";
 import { formatDateTime, formatDeliveryWindow } from "@/lib/booking-time";
 import { getTariffLabel } from "@/lib/tariffs";
-import type { AppOrder } from "@/types";
+import type { AppOrder, PublicServiceSettingsDto } from "@/types";
 
 import { DetailRow } from "./DetailRow";
 import { OrderDetailsHeader } from "./OrderDetailsHeader";
@@ -14,17 +14,25 @@ import { OrderProductHeader } from "./OrderProductHeader";
 import { OrderStatusHero } from "./OrderStatusHero";
 import { ReviewBlock } from "./ReviewBlock";
 import { SupportContactCard } from "./SupportContactCard";
+import { InstructionSummaryCard } from "./InstructionSummaryCard";
 
 export function OrderDetailsView({
   order,
   onBack,
   onLeaveReview,
+  onOpenInstruction,
+  serviceSettings,
 }: {
   order: AppOrder;
   onBack: () => void;
   onLeaveReview: (orderId: number, rating: number, comment: string) => void;
+  onOpenInstruction: () => void;
+  serviceSettings: PublicServiceSettingsDto;
 }) {
   const hasActualRental = Boolean(order.rentalStartAt && order.rentalEndAt);
+  const shouldShowInstruction =
+    order.instruction &&
+    ["confirmed", "delivery", "active", "returned"].includes(order.status);
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 pt-10 pb-32">
@@ -35,6 +43,13 @@ export function OrderDetailsView({
         <AppCard>
           <OrderProductHeader order={order} showDuration={false} />
         </AppCard>
+
+        {shouldShowInstruction && (
+          <InstructionSummaryCard
+            instruction={order.instruction!}
+            onOpen={onOpenInstruction}
+          />
+        )}
 
         <OrderDetailsSection title="Главное по брони">
           <DetailRow
@@ -66,7 +81,10 @@ export function OrderDetailsView({
 
         <OrderPaymentCard order={order} />
         <OrderNextSteps order={order} />
-        <SupportContactCard />
+        <SupportContactCard
+          supportPhone={serviceSettings.support_phone}
+          supportTelegramUrl={serviceSettings.support_telegram_url}
+        />
 
         {order.status === "returned" && (
           <ReviewBlock order={order} onLeaveReview={onLeaveReview} />

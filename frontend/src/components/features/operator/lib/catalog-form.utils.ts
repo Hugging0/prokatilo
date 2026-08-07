@@ -3,7 +3,22 @@ import type {
   AdminItemFormPayload,
   BackendItemDto,
   CatalogItemFormState,
+  ItemInstruction,
 } from "@/types";
+
+export const EMPTY_ITEM_INSTRUCTION: ItemInstruction = {
+  title: "",
+  intro: "",
+  sections: [
+    {
+      title: "",
+      steps: [{ title: "", text: "" }],
+    },
+  ],
+  warning: null,
+  return_checklist: [],
+  manual_url: null,
+};
 
 export const EMPTY_CATALOG_FORM: CatalogItemFormState = {
   title: "",
@@ -17,6 +32,8 @@ export const EMPTY_CATALOG_FORM: CatalogItemFormState = {
   sort_order: "100",
   is_available: true,
   is_active: true,
+  instruction: EMPTY_ITEM_INSTRUCTION,
+  instruction_is_published: false,
 };
 
 export type CatalogFilter = "all" | "active" | "hidden" | "paused";
@@ -41,12 +58,31 @@ export function toCatalogFormState(item: BackendItemDto): CatalogItemFormState {
     sort_order: String(item.sort_order),
     is_available: item.is_available,
     is_active: item.is_active,
+    instruction: item.instruction ?? EMPTY_ITEM_INSTRUCTION,
+    instruction_is_published: item.instruction_is_published,
   };
+}
+
+function hasInstructionContent(instruction: ItemInstruction): boolean {
+  return Boolean(
+    instruction.title.trim() ||
+      instruction.intro.trim() ||
+      instruction.warning?.trim() ||
+      instruction.manual_url?.trim() ||
+      instruction.return_checklist.some((item) => item.trim()) ||
+      instruction.sections.some(
+        (section) =>
+          section.title.trim() ||
+          section.steps.some((step) => step.title.trim() || step.text.trim()),
+      ),
+  );
 }
 
 export function normalizeCatalogPayload(
   form: CatalogItemFormState,
 ): AdminItemFormPayload {
+  const hasInstruction = hasInstructionContent(form.instruction);
+
   return {
     title: form.title.trim(),
     description: form.description.trim() || null,
@@ -59,6 +95,26 @@ export function normalizeCatalogPayload(
     sort_order: Number(form.sort_order),
     is_available: form.is_available,
     is_active: form.is_active,
+    instruction: hasInstruction
+      ? {
+          title: form.instruction.title.trim(),
+          intro: form.instruction.intro.trim(),
+          sections: form.instruction.sections.map((section) => ({
+            title: section.title.trim(),
+            steps: section.steps.map((step) => ({
+              title: step.title.trim(),
+              text: step.text.trim(),
+            })),
+          })),
+          warning: form.instruction.warning?.trim() || null,
+          return_checklist: form.instruction.return_checklist
+            .map((item) => item.trim())
+            .filter(Boolean),
+          manual_url: form.instruction.manual_url?.trim() || null,
+        }
+      : null,
+    instruction_is_published:
+      hasInstruction && form.instruction_is_published,
   };
 }
 
@@ -98,8 +154,43 @@ export function validateCatalogForm(form: CatalogItemFormState): string | null {
 
   const imageUrl = form.image_url.trim();
 
-  if (imageUrl && !/^https?:\/\/.+/.test(imageUrl)) {
-    return "URL изображения должен начинаться с http:// или https://";
+  if (imageUrl && !/^(?:https?:\/\/|\/).+/.test(imageUrl)) {
+    return "Укажите полный URL изображения или локальный путь от /";
+  }
+
+  if (hasInstructionContent(form.instruction)) {
+    if (!form.instruction.title.trim()) {
+      return "Укажите заголовок инструкции";
+    }
+
+    if (!form.instruction.intro.trim()) {
+      return "Добавьте короткое описание инструкции";
+    }
+
+    if (form.instruction.sections.length === 0) {
+      return "Добавьте хотя бы один раздел инструкции";
+    }
+
+    for (const section of form.instruction.sections) {
+      if (!section.title.trim()) {
+        return "Укажите название каждого раздела инструкции";
+      }
+
+      if (section.steps.length === 0) {
+        return `Добавьте шаги в раздел «${section.title}»`;
+      }
+
+      for (const step of section.steps) {
+        if (!step.title.trim() || !step.text.trim()) {
+          return `Заполните название и текст каждого шага в разделе «${section.title}»`;
+        }
+      }
+    }
+
+    const manualUrl = form.instruction.manual_url?.trim();
+    if (manualUrl && !/^https?:\/\/.+/.test(manualUrl)) {
+      return "Ссылка на руководство должна начинаться с http:// или https://";
+    }
   }
 
   return null;

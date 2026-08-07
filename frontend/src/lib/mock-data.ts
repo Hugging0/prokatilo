@@ -32,6 +32,8 @@ export const INITIAL_ITEMS: AppItem[] = [
     iconKey: "gamepad",
     imageUrl: null,
     sortOrder: 10,
+    instruction: null,
+    instructionPublished: false,
   },
   {
     id: 2,
@@ -50,6 +52,8 @@ export const INITIAL_ITEMS: AppItem[] = [
     iconKey: "gamepad",
     imageUrl: null,
     sortOrder: 20,
+    instruction: null,
+    instructionPublished: false,
   },
   {
     id: 3,
@@ -68,6 +72,8 @@ export const INITIAL_ITEMS: AppItem[] = [
     iconKey: "sparkles",
     imageUrl: null,
     sortOrder: 30,
+    instruction: null,
+    instructionPublished: false,
   },
   {
     id: 4,
@@ -86,6 +92,8 @@ export const INITIAL_ITEMS: AppItem[] = [
     iconKey: "vacuum",
     imageUrl: null,
     sortOrder: 40,
+    instruction: null,
+    instructionPublished: false,
   },
   {
     id: 5,
@@ -104,5 +112,7 @@ export const INITIAL_ITEMS: AppItem[] = [
     iconKey: "package",
     imageUrl: null,
     sortOrder: 50,
+    instruction: null,
+    instructionPublished: false,
   },
 ];

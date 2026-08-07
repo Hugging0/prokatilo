@@ -60,6 +60,7 @@ export function mapBackendOrderToAppOrder(
     createdAt: order.created_at,
     updatedAt: order.updated_at,
     review: existingReview,
+    instruction: mappedItem?.instruction ?? null,
   };
 }
 

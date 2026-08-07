@@ -93,6 +93,11 @@ export function mapBackendItemToAppItem(
     iconKey: item.icon_key,
     imageUrl: getTransparentCatalogImageUrl(item.image_url),
     sortOrder: item.sort_order,
+    instruction:
+      item.instruction_is_published && item.instruction
+        ? item.instruction
+        : null,
+    instructionPublished: item.instruction_is_published,
     ...presentation,
   };
 }

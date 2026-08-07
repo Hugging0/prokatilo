@@ -49,6 +49,25 @@ export interface User {
   isAdmin: boolean;
 }
 
+export interface ItemInstructionStep {
+  title: string;
+  text: string;
+}
+
+export interface ItemInstructionSection {
+  title: string;
+  steps: ItemInstructionStep[];
+}
+
+export interface ItemInstruction {
+  title: string;
+  intro: string;
+  sections: ItemInstructionSection[];
+  warning: string | null;
+  return_checklist: string[];
+  manual_url: string | null;
+}
+
 export interface AppItem {
   id: number;
   title: string;
@@ -66,6 +85,8 @@ export interface AppItem {
   iconKey: string;
   imageUrl: string | null;
   sortOrder: number;
+  instruction: ItemInstruction | null;
+  instructionPublished: boolean;
 }
 
 export interface Review {
@@ -105,6 +126,7 @@ export interface AppOrder {
   createdAt: string;
   updatedAt: string;
   review: Review | null;
+  instruction: ItemInstruction | null;
 }
 
 export interface BackendItemDto {
@@ -120,6 +142,8 @@ export interface BackendItemDto {
   sort_order: number;
   is_available: boolean;
   is_active: boolean;
+  instruction: ItemInstruction | null;
+  instruction_is_published: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -136,6 +160,8 @@ export interface AdminItemFormPayload {
   sort_order: number;
   is_available: boolean;
   is_active: boolean;
+  instruction: ItemInstruction | null;
+  instruction_is_published: boolean;
 }
 
 export interface CatalogItemFormState {
@@ -150,6 +176,8 @@ export interface CatalogItemFormState {
   sort_order: string;
   is_available: boolean;
   is_active: boolean;
+  instruction: ItemInstruction;
+  instruction_is_published: boolean;
 }
 
 export interface BackendOrderDto {
@@ -380,6 +408,7 @@ export interface BackendServiceSettingsDto {
   delivery_slot_minutes: number;
   min_order_lead_minutes: number;
   support_phone: string | null;
+  support_telegram_url: string | null;
   service_is_active: boolean;
   service_pause_message: string | null;
   cash_enabled: boolean;
@@ -400,6 +429,7 @@ export interface PublicServiceSettingsDto {
   delivery_slot_minutes: number;
   min_order_lead_minutes: number;
   support_phone: string | null;
+  support_telegram_url: string | null;
   service_is_active: boolean;
   service_pause_message: string | null;
   cash_enabled: boolean;
@@ -418,6 +448,7 @@ export interface AdminServiceSettingsPayload {
   delivery_slot_minutes?: number;
   min_order_lead_minutes?: number;
   support_phone?: string | null;
+  support_telegram_url?: string | null;
   service_is_active?: boolean;
   service_pause_message?: string | null;
   cash_enabled?: boolean;

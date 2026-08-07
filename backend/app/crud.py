@@ -33,6 +33,7 @@ SERVICE_SETTINGS_DEFAULTS = {
     "delivery_slot_minutes": 120,
     "min_order_lead_minutes": 15,
     "support_phone": None,
+    "support_telegram_url": "https://t.me/xapkoofff",
     "service_is_active": True,
     "service_pause_message": None,
     "cash_enabled": True,

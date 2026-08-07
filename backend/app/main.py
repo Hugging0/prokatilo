@@ -235,7 +235,7 @@ async def read_me(
 
 @app.get(
     "/items/",
-    response_model=list[schemas.ItemRead],
+    response_model=list[schemas.PublicItemRead],
     tags=["Items"],
 )
 async def read_items(
@@ -248,7 +248,7 @@ async def read_items(
 
 @app.get(
     "/items/available/",
-    response_model=list[schemas.ItemRead],
+    response_model=list[schemas.PublicItemRead],
     tags=["Items"],
 )
 async def read_available_items(
@@ -259,7 +259,7 @@ async def read_available_items(
 
 @app.get(
     "/items/search/",
-    response_model=list[schemas.ItemRead],
+    response_model=list[schemas.PublicItemRead],
     tags=["Items"],
 )
 async def search_items(
@@ -303,7 +303,7 @@ async def read_item_bookings(
 
 @app.get(
     "/items/{item_id}",
-    response_model=schemas.ItemRead,
+    response_model=schemas.PublicItemRead,
     tags=["Items"],
 )
 async def read_item(

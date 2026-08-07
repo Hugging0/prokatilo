@@ -1,7 +1,8 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import { AppButton } from "@/components/ui/AppButton";
 import { AppEmptyState } from "@/components/ui/AppEmptyState";
@@ -46,6 +47,7 @@ export function CatalogManagement({
   const [activeFilter, setActiveFilter] = useState<CatalogFilter>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const catalogScrollY = useRef(0);
   const visibleItems = useMemo(
     () => filterCatalogItems(items, activeFilter),
     [activeFilter, items],
@@ -79,24 +81,36 @@ export function CatalogManagement({
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  const updateInstruction = (instruction: CatalogItemFormState["instruction"]) => {
+    setForm((current) => ({ ...current, instruction }));
+  };
+
   const openNewForm = () => {
+    catalogScrollY.current = window.scrollY;
     setEditingItemId(null);
     setForm(EMPTY_CATALOG_FORM);
     setMessage(null);
     setIsFormOpen(true);
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
   };
 
   const openEditForm = (item: BackendItemDto) => {
+    catalogScrollY.current = window.scrollY;
     setEditingItemId(item.id);
     setForm(toCatalogFormState(item));
     setMessage(null);
     setIsFormOpen(true);
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
   };
 
   const closeForm = () => {
+    const scrollY = catalogScrollY.current;
     setEditingItemId(null);
     setForm(EMPTY_CATALOG_FORM);
     setIsFormOpen(false);
+    requestAnimationFrame(() =>
+      window.scrollTo({ top: scrollY, behavior: "auto" }),
+    );
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -187,6 +201,31 @@ export function CatalogManagement({
     }
   };
 
+  if (isFormOpen) {
+    return (
+      <section className="flex flex-col gap-5">
+        <button
+          type="button"
+          onClick={closeForm}
+          className="flex min-h-11 w-fit items-center gap-2 rounded-2xl px-1 pr-3 text-sm font-black text-slate-600 transition hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+        >
+          <ArrowLeft size={19} />
+          Назад к каталогу
+        </button>
+
+        {message && <AppNotice>{message}</AppNotice>}
+
+        <CatalogItemForm
+          form={form}
+          isEditing={Boolean(editingItemId)}
+          onFieldChange={updateField}
+          onInstructionChange={updateInstruction}
+          onSubmit={handleSubmit}
+        />
+      </section>
+    );
+  }
+
   return (
     <section className="flex flex-col gap-5">
       <AppSectionHeader
@@ -214,16 +253,6 @@ export function CatalogManagement({
           </button>
         ))}
       </div>
-
-      {isFormOpen && (
-        <CatalogItemForm
-          form={form}
-          isEditing={Boolean(editingItemId)}
-          onFieldChange={updateField}
-          onCancel={closeForm}
-          onSubmit={handleSubmit}
-        />
-      )}
 
       {isLoading && <AppNotice>Загружаем товары…</AppNotice>}
 

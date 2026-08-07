@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class TariffType(StrEnum):
@@ -48,6 +48,33 @@ class LoyaltyTransactionType(StrEnum):
     ADJUSTMENT = "adjustment"
 
 
+class ItemInstructionStep(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+    text: str = Field(..., min_length=1, max_length=1000)
+
+
+class ItemInstructionSection(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+    steps: list[ItemInstructionStep] = Field(..., min_length=1, max_length=12)
+
+
+class ItemInstruction(BaseModel):
+    title: str = Field(..., min_length=1, max_length=160)
+    intro: str = Field(..., min_length=1, max_length=600)
+    sections: list[ItemInstructionSection] = Field(
+        ...,
+        min_length=1,
+        max_length=8,
+    )
+    warning: str | None = Field(None, max_length=1200)
+    return_checklist: list[str] = Field(default_factory=list, max_length=16)
+    manual_url: str | None = Field(
+        None,
+        max_length=2048,
+        pattern=r"^https?://.+",
+    )
+
+
 class ItemBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(None, max_length=2000)
@@ -60,6 +87,8 @@ class ItemBase(BaseModel):
     sort_order: int = Field(default=100, ge=0)
     is_available: bool = True
     is_active: bool = True
+    instruction: ItemInstruction | None = None
+    instruction_is_published: bool = False
 
 
 class ItemCreate(ItemBase):
@@ -78,6 +107,8 @@ class ItemUpdate(BaseModel):
     sort_order: int | None = Field(None, ge=0)
     is_available: bool | None = None
     is_active: bool | None = None
+    instruction: ItemInstruction | None = None
+    instruction_is_published: bool | None = None
 
 
 class ItemRead(ItemBase):
@@ -86,6 +117,14 @@ class ItemRead(ItemBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PublicItemRead(ItemRead):
+    @model_validator(mode="after")
+    def hide_unpublished_instruction(self) -> "PublicItemRead":
+        if not self.instruction_is_published:
+            self.instruction = None
+        return self
 
 
 class AdminItemRead(ItemRead):
@@ -325,6 +364,11 @@ class ServiceSettingsUpdate(BaseModel):
     delivery_slot_minutes: int | None = Field(None, ge=15, le=240)
     min_order_lead_minutes: int | None = Field(None, ge=0, le=1440)
     support_phone: str | None = Field(None, max_length=50)
+    support_telegram_url: str | None = Field(
+        None,
+        max_length=2048,
+        pattern=r"^https?://.+",
+    )
     service_is_active: bool | None = None
     service_pause_message: str | None = Field(None, max_length=500)
     cash_enabled: bool | None = None
@@ -344,6 +388,7 @@ class ServiceSettingsRead(BaseModel):
     delivery_slot_minutes: int
     min_order_lead_minutes: int
     support_phone: str | None
+    support_telegram_url: str | None
     service_is_active: bool
     service_pause_message: str | None
     cash_enabled: bool
@@ -366,6 +411,7 @@ class PublicServiceSettingsRead(BaseModel):
     delivery_slot_minutes: int
     min_order_lead_minutes: int
     support_phone: str | None
+    support_telegram_url: str | None
     service_is_active: bool
     service_pause_message: str | None
     cash_enabled: bool
@@ -396,7 +442,7 @@ class OrderRead(OrderBase):
     rental_end_at: datetime | None
     created_at: datetime
     updated_at: datetime
-    item: AdminItemRead
+    item: PublicItemRead
 
     model_config = ConfigDict(from_attributes=True)
 

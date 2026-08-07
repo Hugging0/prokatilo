@@ -39,6 +39,7 @@ export function AppShell({ initialItemId }: AppShellProps) {
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [isPushPromptOpen, setIsPushPromptOpen] = useState(false);
   const [isPushPromptSubmitting, setIsPushPromptSubmitting] = useState(false);
+  const [isInstructionOpen, setIsInstructionOpen] = useState(false);
   const [shouldReturnToCheckoutAfterAuth, setShouldReturnToCheckoutAfterAuth] =
     useState(false);
 
@@ -267,6 +268,8 @@ export function AppShell({ initialItemId }: AppShellProps) {
           onRefresh={() => void ordersState.reloadOrders()}
           onOpenCatalog={() => setView("home")}
           onLeaveReview={ordersState.leaveReview}
+          serviceSettings={serviceSettings.settings}
+          onInstructionOpenChange={setIsInstructionOpen}
         />
       )}
 
@@ -324,7 +327,7 @@ export function AppShell({ initialItemId }: AppShellProps) {
         />
       )}
 
-      {view !== "auth" && view !== "checkout" && (
+      {view !== "auth" && view !== "checkout" && !isInstructionOpen && (
         <AppNavigation
           view={view}
           isAdmin={Boolean(auth.user?.isAdmin)}

@@ -251,6 +251,20 @@ export function OperatorSettingsPanel({
               placeholder="+7 999 000-00-00"
             />
           </SettingsField>
+          <SettingsField
+            label="Telegram поддержки"
+            hint="Ссылка для кнопки связи в заказах и инструкциях."
+          >
+            <input
+              type="url"
+              value={form.support_telegram_url}
+              onChange={(event) =>
+                updateField("support_telegram_url", event.target.value)
+              }
+              className={TEXT_INPUT_CLASS}
+              placeholder="https://t.me/username"
+            />
+          </SettingsField>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <SettingsField label="Часовой пояс">

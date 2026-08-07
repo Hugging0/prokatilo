@@ -1,4 +1,5 @@
 import type { PublicServiceSettingsDto } from "@/types";
+import { BUSINESS_TELEGRAM_URL } from "@/lib/business";
 
 export const DEFAULT_PUBLIC_SERVICE_SETTINGS: PublicServiceSettingsDto = {
   timezone: "Europe/Moscow",
@@ -7,6 +8,7 @@ export const DEFAULT_PUBLIC_SERVICE_SETTINGS: PublicServiceSettingsDto = {
   delivery_slot_minutes: 120,
   min_order_lead_minutes: 15,
   support_phone: null,
+  support_telegram_url: BUSINESS_TELEGRAM_URL,
   service_is_active: true,
   service_pause_message: null,
   cash_enabled: true,

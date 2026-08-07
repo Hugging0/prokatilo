@@ -11,6 +11,7 @@ export interface ServiceSettingsFormState {
   delivery_slot_minutes: string;
   min_order_lead_minutes: string;
   support_phone: string;
+  support_telegram_url: string;
   service_is_active: boolean;
   service_pause_message: string;
   cash_enabled: boolean;
@@ -29,6 +30,7 @@ export const DEFAULT_SERVICE_SETTINGS_FORM: ServiceSettingsFormState = {
   delivery_slot_minutes: "120",
   min_order_lead_minutes: "15",
   support_phone: "",
+  support_telegram_url: "https://t.me/xapkoofff",
   service_is_active: true,
   service_pause_message: "",
   cash_enabled: true,
@@ -60,6 +62,7 @@ export function mapSettingsDtoToForm(
     delivery_slot_minutes: String(settings.delivery_slot_minutes),
     min_order_lead_minutes: String(settings.min_order_lead_minutes),
     support_phone: settings.support_phone ?? "",
+    support_telegram_url: settings.support_telegram_url ?? "",
     service_is_active: settings.service_is_active,
     service_pause_message: settings.service_pause_message ?? "",
     cash_enabled: settings.cash_enabled,
@@ -127,6 +130,13 @@ export function validateSettingsForm(
     return "Включите хотя бы один способ оплаты";
   }
 
+  if (
+    form.support_telegram_url.trim() &&
+    !/^https?:\/\/.+/.test(form.support_telegram_url.trim())
+  ) {
+    return "Ссылка Telegram должна начинаться с http:// или https://";
+  }
+
   if (!form[PAYMENT_ENABLED_KEY[form.default_payment_method]]) {
     return "Способ оплаты по умолчанию должен быть включен";
   }
@@ -144,6 +154,7 @@ export function mapSettingsFormToPayload(
     delivery_slot_minutes: Number(form.delivery_slot_minutes),
     min_order_lead_minutes: Number(form.min_order_lead_minutes),
     support_phone: form.support_phone.trim() || null,
+    support_telegram_url: form.support_telegram_url.trim() || null,
     service_is_active: form.service_is_active,
     service_pause_message: form.service_pause_message.trim() || null,
     cash_enabled: form.cash_enabled,
