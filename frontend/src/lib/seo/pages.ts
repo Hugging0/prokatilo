@@ -54,7 +54,7 @@ const catalogPage: SeoPageConfig = {
   path: "/catalog",
   title: "Аренда вещей и техники в Москве | ПРОКАТило",
   description:
-    "Каталог вещей и техники в аренду на западе Москвы: PS5, VR, робот-мойщик окон и моющий пылесос. Выберите срок и оформите бронь онлайн.",
+    "Каталог вещей и техники в аренду на западе Москвы: игровые приставки, фототехника, уборочная техника и инструменты. Выберите срок и оформите бронь онлайн.",
   h1: "Аренда вещей рядом с домом",
   intro: "Для редких задач. Попользовались — вернули.",
   updatedAt: SEO_UPDATED_AT,
@@ -78,15 +78,14 @@ const catalogPage: SeoPageConfig = {
     },
   ],
   relatedLinks: [
-    { name: "Аренда PlayStation 5", path: "/rent/ps5" },
-    { name: "Аренда PlayStation VR", path: "/rent/playstation-vr" },
-    { name: "Аренда робота-мойщика окон", path: "/rent/robot-moyshchik-okon" },
-    {
-      name: "Аренда моющего пылесоса",
-      path: "/rent/moyushchiy-pylesos-dlya-mebeli",
-    },
+    ...SEO_CATALOG_ITEMS.map((item) => ({
+      name: item.title,
+      path: `/rent/${item.slug}` as SeoRoute,
+    })),
     { name: "Игровые приставки", path: "/catalog/igrovye-pristavki" },
     { name: "Уборка", path: "/catalog/uborka" },
+    { name: "Фототехника", path: "/catalog/foto" },
+    { name: "Инструменты", path: "/catalog/instrumenty" },
     { name: "Зона доставки", path: "/delivery-area" },
   ],
 };
@@ -96,7 +95,9 @@ const categoryPages = SEO_CATEGORIES.map((category) => ({
   title:
     category.slug === "uborka"
       ? "Техника для уборки в аренду в Москве | ПРОКАТило"
-      : "Игровые приставки в аренду в Москве | ПРОКАТило",
+      : category.slug === "igrovye-pristavki"
+        ? "Игровые приставки в аренду в Москве | ПРОКАТило"
+        : `${category.title} в аренду в Москве | ПРОКАТило`,
   description: category.metaDescription,
   h1: `${category.title} в аренду`,
   eyebrow: "Категория",
@@ -131,14 +132,7 @@ const categoryPages = SEO_CATEGORIES.map((category) => ({
 
 const itemPages = SEO_CATALOG_ITEMS.map((item) => ({
   path: `/rent/${item.slug}` as SeoRoute,
-  title:
-    item.slug === "ps5"
-      ? "Аренда PS5 на вечер и сутки в Москве | ПРОКАТило"
-      : item.slug === "playstation-vr"
-        ? "Аренда PlayStation VR в Москве | ПРОКАТило"
-        : item.slug === "robot-moyshchik-okon"
-          ? "Аренда робота-мойщика окон в Москве | ПРОКАТило"
-          : "Аренда моющего пылесоса для мебели | ПРОКАТило",
+  title: item.seoTitle,
   description: item.metaDescription,
   h1: `${item.title} в аренду`,
   eyebrow: item.categoryTitle,
@@ -158,7 +152,7 @@ const itemPages = SEO_CATALOG_ITEMS.map((item) => ({
   image: item.image,
   imageAlt: item.imageAlt,
   ctaLabel: "Забронировать в приложении",
-  ctaHref: "/app",
+  ctaHref: `/app?product=${item.slug}`,
   secondaryCtaLabel: "Посмотреть зону доставки",
   secondaryCtaHref: "/delivery-area" as SeoRoute,
   jsonLdType: "item" as const,
@@ -404,4 +398,8 @@ export const SEO_PAGE_BY_PATH = new Map<SeoRoute, SeoPageConfig>(
 
 export function getSeoPage(path: SeoRoute) {
   return SEO_PAGE_BY_PATH.get(path);
+}
+
+export function getSeoProductPage(slug: string) {
+  return SEO_PAGES.find((page) => page.catalogItem?.slug === slug);
 }

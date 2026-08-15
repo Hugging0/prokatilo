@@ -5,17 +5,29 @@ export const SEO_SITE_NAME = "ПРОКАТило";
 export const SEO_SITE_DESCRIPTION =
   "Локальный сервис аренды вещей и техники рядом с домом: для редких задач, разумного потребления и жизни без лишнего хлама дома.";
 export const SEO_DEFAULT_IMAGE = "/icons/prokatilo-icon-512.png";
-export const SEO_UPDATED_AT = "2026-07-09";
+export const SEO_UPDATED_AT = "2026-08-15";
+
+export type SeoCategorySlug =
+  | "igrovye-pristavki"
+  | "uborka"
+  | "foto"
+  | "instrumenty";
+
+export type SeoProductSlug =
+  | "ps5"
+  | "playstation-vr"
+  | "robot-moyshchik-okon"
+  | "moyushchiy-pylesos-dlya-mebeli"
+  | "instax-square-sq1"
+  | "xbox-series-s"
+  | "perforator-sds-plus"
+  | "elektrootvertka-makita-df001dw";
 
 export type SeoRoute =
   | "/"
   | "/catalog"
-  | "/catalog/igrovye-pristavki"
-  | "/catalog/uborka"
-  | "/rent/ps5"
-  | "/rent/playstation-vr"
-  | "/rent/robot-moyshchik-okon"
-  | "/rent/moyushchiy-pylesos-dlya-mebeli"
+  | `/catalog/${SeoCategorySlug}`
+  | `/rent/${SeoProductSlug}`
   | "/delivery-area"
   | "/faq"
   | "/about"
@@ -39,12 +51,13 @@ export type JsonLdEntity = Record<string, unknown>;
 
 export interface SeoCatalogItem {
   appItemId: number;
-  slug: string;
+  slug: SeoProductSlug;
+  seoTitle: string;
   title: string;
   shortTitle: string;
   orbitTitle: string;
   orbitDescription: string;
-  categorySlug: "igrovye-pristavki" | "uborka";
+  categorySlug: SeoCategorySlug;
   categoryTitle: string;
   description: string;
   metaDescription: string;

@@ -1,22 +1,8 @@
+import { SEO_PAGES } from "./pages";
 import type { SeoRoute } from "./site";
 
 export const SEO_INDEXABLE_ROUTES: SeoRoute[] = [
-  "/",
-  "/catalog",
-  "/catalog/igrovye-pristavki",
-  "/catalog/uborka",
-  "/rent/ps5",
-  "/rent/playstation-vr",
-  "/rent/robot-moyshchik-okon",
-  "/rent/moyushchiy-pylesos-dlya-mebeli",
-  "/delivery-area",
-  "/faq",
-  "/about",
-  "/blog",
-  "/blog/arenda-ili-pokupka-tehniki",
-  "/blog/arenda-ps5-na-vecher",
-  "/blog/kak-pochistit-divan-doma",
-  "/blog/robot-moyshchik-okon-arenda",
+  ...SEO_PAGES.map((page) => page.path),
   "/privacy",
   "/terms",
   "/consent",

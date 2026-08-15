@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
-import { APP_NAME } from "@/lib/brand";
+import { SeoSiteFooter, SeoSiteHeader } from "@/components/seo/SeoSiteChrome";
 
 interface LegalPageProps {
   title: string;
@@ -118,41 +118,34 @@ export function LegalPage({
   const documentDate = getDocumentDate(text);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-5 py-8 sm:py-12">
-      <article className="mx-auto max-w-3xl rounded-[2rem] border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-10">
-        <div className="flex items-center justify-between gap-4">
-          <Link
-            href="/app"
-            className="rounded-2xl bg-slate-50 p-3 text-slate-900 shadow-sm active:scale-95"
-            aria-label="Вернуться в приложение"
-          >
-            <ArrowLeft size={21} />
-          </Link>
-          <Link
-            href="/app"
-            className="text-sm font-black uppercase tracking-wide text-orange-700"
-          >
-            {APP_NAME}
-          </Link>
-        </div>
-
-        <header className="mt-5 border-b border-slate-100 pb-6">
-          <h1 className="text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">
+    <main className="min-h-screen bg-white text-slate-950">
+      <SeoSiteHeader />
+      <header className="border-b border-slate-100 bg-slate-50">
+        <div className="mx-auto max-w-4xl px-5 py-12 sm:py-16">
+          <nav aria-label="Хлебные крошки" className="flex items-center gap-1.5 text-sm font-bold text-slate-500">
+            <Link href="/" className="transition hover:text-slate-950">Главная</Link>
+            <ChevronRight size={14} className="text-slate-300" />
+            <span className="truncate text-slate-700">{title}</span>
+          </nav>
+          <p className="mt-8 text-sm font-black uppercase text-orange-700">Документы и информация</p>
+          <h1 className="mt-3 text-4xl font-black leading-[1.08] text-slate-950 sm:text-5xl">
             {title}
           </h1>
           {description && (
-            <p className="mt-3 text-base font-bold leading-relaxed text-slate-500">
+            <p className="mt-5 max-w-2xl text-lg font-semibold leading-relaxed text-slate-600">
               {description}
             </p>
           )}
           {documentDate && (
-            <p className="mt-4 text-sm font-extrabold text-slate-400">
+            <p className="mt-6 text-sm font-extrabold text-slate-400">
               {documentDate.label}: {documentDate.value}
             </p>
           )}
-        </header>
+        </div>
+      </header>
 
-        <div className="mt-7 space-y-5">
+      <article className="mx-auto max-w-4xl px-5 py-12 sm:py-16">
+        <div className="max-w-3xl space-y-5">
           {blocks.map((block, index) => {
             if (block.type === "heading") {
               const isPrimaryHeading = index === 0 && block.level === 1;
@@ -163,8 +156,8 @@ export function LegalPage({
 
               const headingClass =
                 block.level === 2
-                  ? "pt-4 text-xl font-black leading-snug tracking-tight text-slate-950"
-                  : "pt-2 text-lg font-black leading-snug tracking-tight text-slate-900";
+                  ? "pt-7 text-2xl font-black leading-snug text-slate-950"
+                  : "pt-3 text-lg font-black leading-snug text-slate-900";
 
               return (
                 <h2 key={`${block.content}-${index}`} className={headingClass}>
@@ -204,6 +197,7 @@ export function LegalPage({
           })}
         </div>
       </article>
+      <SeoSiteFooter />
     </main>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { AuthView } from "@/components/features/auth/AuthView";
+import { AppDeepLinkLoading } from "@/components/features/app/AppDeepLinkLoading";
 import { BonusesView } from "@/components/features/bonuses/BonusesView";
 import { CheckoutView } from "@/components/features/checkout/CheckoutView";
 import { DetailsView } from "@/components/features/catalog/DetailsView";
@@ -23,18 +24,22 @@ import { useOrders } from "@/hooks/use-orders";
 import { useServiceSettings } from "@/hooks/use-service-settings";
 import { useToast } from "@/hooks/use-toast";
 import { createOrder } from "@/lib/api/orders";
+import { findCatalogItemBySlug } from "@/lib/catalog-product-links";
 import { UI_COPY } from "@/lib/copy";
 import { enablePushNotifications } from "@/lib/push-notifications";
 import { mapAppCheckoutToOrderCreatePayload } from "@/lib/mappers/orders";
 import { getRentalTotalPrice } from "@/lib/tariffs";
+import type { SeoProductSlug } from "@/lib/seo/site";
 import type { AppItem, AppView, PaymentMethod } from "@/types";
 
 interface AppShellProps {
   initialItemId: number | null;
+  initialProductSlug: SeoProductSlug | null;
 }
 
-export function AppShell({ initialItemId }: AppShellProps) {
-  const [view, setView] = useState<AppView>(initialItemId ? "details" : "home");
+export function AppShell({ initialItemId, initialProductSlug }: AppShellProps) {
+  const hasDeepLink = Boolean(initialItemId || initialProductSlug);
+  const [view, setView] = useState<AppView>(hasDeepLink ? "details" : "home");
   const [paymentMethod] = useState<PaymentMethod>("cash");
   const [isBookingSubmitting, setIsBookingSubmitting] = useState(false);
   const [isPushPromptOpen, setIsPushPromptOpen] = useState(false);
@@ -52,10 +57,16 @@ export function AppShell({ initialItemId }: AppShellProps) {
   const { toast, showNotification } = useToast();
   const serviceSettings = useServiceSettings();
   const checkout = useCheckoutState();
-  const deepLinkedItem = initialItemId
-    ? items.find((item) => item.id === initialItemId) ?? null
-    : null;
+  const deepLinkedItem = initialProductSlug
+    ? findCatalogItemBySlug(items, initialProductSlug)
+    : initialItemId
+      ? items.find((item) => item.id === initialItemId) ?? null
+      : null;
   const detailsItem = checkout.selectedItem ?? deepLinkedItem;
+  const isDeepLinkLoading = view === "details" && !detailsItem && isCatalogLoading;
+  const visibleView = view === "details" && !detailsItem && !isCatalogLoading
+    ? "home"
+    : view;
 
   const requestPushAfterAuth = async (token: string) => {
     const result = await enablePushNotifications(token);
@@ -190,7 +201,9 @@ export function AppShell({ initialItemId }: AppShellProps) {
         />
       )}
 
-      {view === "home" && (
+      {isDeepLinkLoading && <AppDeepLinkLoading />}
+
+      {visibleView === "home" && !isDeepLinkLoading && (
         <HomeView
           items={catalogFilter.filteredItems}
           categories={catalogFilter.categories}
@@ -204,7 +217,7 @@ export function AppShell({ initialItemId }: AppShellProps) {
         />
       )}
 
-      {view === "details" && detailsItem && (
+      {visibleView === "details" && detailsItem && (
         <DetailsView
           item={detailsItem}
           onBack={() => setView("home")}
@@ -327,9 +340,12 @@ export function AppShell({ initialItemId }: AppShellProps) {
         />
       )}
 
-      {view !== "auth" && view !== "checkout" && !isInstructionOpen && (
+      {view !== "auth" &&
+        view !== "checkout" &&
+        !isInstructionOpen &&
+        !isDeepLinkLoading && (
         <AppNavigation
-          view={view}
+          view={visibleView}
           isAdmin={Boolean(auth.user?.isAdmin)}
           onNavigate={(nextView) => {
             window.scrollTo({ top: 0, behavior: "smooth" });

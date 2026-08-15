@@ -2,6 +2,25 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  skipTrailingSlashRedirect: process.env.NODE_ENV !== "production",
+  async rewrites() {
+    if (process.env.NODE_ENV === "production") {
+      return [];
+    }
+
+    const backendUrl = process.env.LOCAL_BACKEND_URL ?? "http://127.0.0.1:8000";
+
+    return [
+      {
+        source: "/api/:path*/",
+        destination: `${backendUrl}/:path*/`,
+      },
+      {
+        source: "/api/:path*",
+        destination: `${backendUrl}/:path*`,
+      },
+    ];
+  },
   async headers() {
     const headers = [
       {
