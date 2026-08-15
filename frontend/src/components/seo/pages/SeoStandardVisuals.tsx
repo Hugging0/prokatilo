@@ -73,7 +73,7 @@ function CategoryVisual({ page }: { page: SeoPageConfig }) {
             alt={item.imageAlt}
             width={520}
             height={520}
-            priority
+            loading="eager"
             sizes="(max-width: 1023px) 42vw, 20vw"
             className="w-full object-contain drop-shadow-[0_24px_24px_rgba(15,23,42,0.14)]"
           />
