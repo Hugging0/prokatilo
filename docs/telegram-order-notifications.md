@@ -21,7 +21,7 @@ Usernames are case-insensitive and can be written with or without `@`.
 After deploying the migration and backend, register the webhook once:
 
 ```bash
-docker compose exec -T backend python scripts/configure_telegram_webhook.py
+docker compose exec -T backend python -m scripts.configure_telegram_webhook
 ```
 
 Each allowed administrator opens `@prokatilo_alerts_bot` and presses Start.
