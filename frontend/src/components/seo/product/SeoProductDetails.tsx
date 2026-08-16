@@ -2,7 +2,6 @@ import { AlertTriangle, Check, PackageCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { SEO_CATALOG_ITEMS } from "@/lib/seo/content";
 import type { SeoCatalogItem, SeoPageConfig } from "@/lib/seo/site";
 
 const moneyFormatter = new Intl.NumberFormat("ru-RU");
@@ -39,11 +38,17 @@ function ProductList({ items }: { items: string[] }) {
   );
 }
 
-function RelatedProducts({ item }: { item: SeoCatalogItem }) {
-  const sameCategory = SEO_CATALOG_ITEMS.filter(
+function RelatedProducts({
+  item,
+  catalogItems,
+}: {
+  item: SeoCatalogItem;
+  catalogItems: SeoCatalogItem[];
+}) {
+  const sameCategory = catalogItems.filter(
     (candidate) => candidate.slug !== item.slug && candidate.categorySlug === item.categorySlug,
   );
-  const fallback = SEO_CATALOG_ITEMS.filter(
+  const fallback = catalogItems.filter(
     (candidate) => candidate.slug !== item.slug && candidate.categorySlug !== item.categorySlug,
   );
   const related = [...sameCategory, ...fallback].slice(0, 3);
@@ -92,7 +97,13 @@ function RelatedProducts({ item }: { item: SeoCatalogItem }) {
   );
 }
 
-export function SeoProductDetails({ page }: { page: SeoPageConfig }) {
+export function SeoProductDetails({
+  page,
+  catalogItems,
+}: {
+  page: SeoPageConfig;
+  catalogItems: SeoCatalogItem[];
+}) {
   const item = page.catalogItem!;
   const utilityLinks = page.relatedLinks?.filter(
     (link) => link.path !== `/catalog/${item.categorySlug}`,
@@ -221,7 +232,7 @@ export function SeoProductDetails({ page }: { page: SeoPageConfig }) {
         </nav>
       )}
 
-      <RelatedProducts item={item} />
+      <RelatedProducts item={item} catalogItems={catalogItems} />
     </>
   );
 }

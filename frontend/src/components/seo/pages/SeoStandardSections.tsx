@@ -3,14 +3,20 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { SeoFaqList } from "@/components/seo/SeoFaqList";
-import { SEO_BLOG_POSTS, SEO_CATALOG_ITEMS } from "@/lib/seo/content";
-import type { SeoPageConfig } from "@/lib/seo/site";
+import { SEO_BLOG_POSTS } from "@/lib/seo/content";
+import type { SeoCatalogItem, SeoPageConfig } from "@/lib/seo/site";
 
 const moneyFormatter = new Intl.NumberFormat("ru-RU");
 
-function CategorySections({ page }: { page: SeoPageConfig }) {
+function CategorySections({
+  page,
+  catalogItems,
+}: {
+  page: SeoPageConfig;
+  catalogItems: SeoCatalogItem[];
+}) {
   const categorySlug = page.path.replace("/catalog/", "");
-  const items = SEO_CATALOG_ITEMS.filter((item) => item.categorySlug === categorySlug);
+  const items = catalogItems.filter((item) => item.categorySlug === categorySlug);
 
   return (
     <section className="bg-slate-50">
@@ -147,8 +153,16 @@ function BlogSections() {
   );
 }
 
-export function SeoStandardSections({ page }: { page: SeoPageConfig }) {
-  if (page.jsonLdType === "category") return <CategorySections page={page} />;
+export function SeoStandardSections({
+  page,
+  catalogItems,
+}: {
+  page: SeoPageConfig;
+  catalogItems: SeoCatalogItem[];
+}) {
+  if (page.jsonLdType === "category") {
+    return <CategorySections page={page} catalogItems={catalogItems} />;
+  }
   if (page.jsonLdType === "area") return <DeliverySections page={page} />;
   if (page.jsonLdType === "faq") return <FaqSections page={page} />;
   if (page.jsonLdType === "about") return <AboutSections page={page} />;

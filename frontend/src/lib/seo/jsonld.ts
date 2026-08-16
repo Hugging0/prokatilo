@@ -14,6 +14,7 @@ import {
   SEO_SITE_NAME,
   SEO_SITE_URL,
   type JsonLdEntity,
+  type SeoCatalogItem,
   type SeoPageConfig,
 } from "./site";
 
@@ -133,17 +134,20 @@ function itemServiceJsonLd(page: SeoPageConfig): JsonLdEntity | null {
   };
 }
 
-function itemListJsonLd(page: SeoPageConfig): JsonLdEntity | null {
+function itemListJsonLd(
+  page: SeoPageConfig,
+  catalogItems: SeoCatalogItem[],
+): JsonLdEntity | null {
   if (page.jsonLdType !== "catalog" && page.jsonLdType !== "category") {
     return null;
   }
 
   const items =
     page.jsonLdType === "category"
-      ? SEO_CATALOG_ITEMS.filter((item) =>
+      ? catalogItems.filter((item) =>
           page.path.endsWith(item.categorySlug),
         )
-      : SEO_CATALOG_ITEMS;
+      : catalogItems;
 
   return {
     "@context": "https://schema.org",
@@ -217,12 +221,15 @@ function localBusinessJsonLd(page: SeoPageConfig): JsonLdEntity | null {
   };
 }
 
-export function buildJsonLd(page: SeoPageConfig): JsonLdEntity[] {
+export function buildJsonLd(
+  page: SeoPageConfig,
+  catalogItems: SeoCatalogItem[] = SEO_CATALOG_ITEMS,
+): JsonLdEntity[] {
   return [
     organizationJsonLd(),
     breadcrumbsJsonLd(page),
     localBusinessJsonLd(page),
-    itemListJsonLd(page),
+    itemListJsonLd(page, catalogItems),
     itemServiceJsonLd(page),
     articleJsonLd(page),
     faqJsonLd(page),

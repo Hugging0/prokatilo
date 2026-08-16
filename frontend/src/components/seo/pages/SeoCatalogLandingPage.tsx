@@ -6,31 +6,36 @@ import { SeoFaqList } from "@/components/seo/SeoFaqList";
 import { SeoRentalConditions } from "@/components/seo/SeoRentalConditions";
 import { SeoSiteFooter, SeoSiteHeader } from "@/components/seo/SeoSiteChrome";
 import { CatalogOrbit } from "@/components/seo/catalog/CatalogOrbit";
-import { SEO_BLOG_POSTS, SEO_CATALOG_ITEMS } from "@/lib/seo/content";
+import { SEO_BLOG_POSTS } from "@/lib/seo/content";
 import { buildJsonLd } from "@/lib/seo/jsonld";
-import type { SeoPageConfig } from "@/lib/seo/site";
+import type { SeoCatalogItem, SeoPageConfig } from "@/lib/seo/site";
 
-const CATALOG_ORBIT_ITEMS = SEO_CATALOG_ITEMS.map((item) => ({
-  appItemId: item.appItemId,
-  title: item.orbitTitle,
-  description: item.orbitDescription,
-  image: item.image,
-  imageAlt: item.imageAlt,
-  prices: item.prices,
-}));
-
-export function SeoCatalogLandingPage({ page }: { page: SeoPageConfig }) {
+export function SeoCatalogLandingPage({
+  page,
+  catalogItems,
+}: {
+  page: SeoPageConfig;
+  catalogItems: SeoCatalogItem[];
+}) {
   const isHome = page.path === "/";
+  const orbitItems = catalogItems.map((item) => ({
+    appItemId: item.appItemId,
+    title: item.orbitTitle,
+    description: item.orbitDescription,
+    image: item.image,
+    imageAlt: item.imageAlt,
+    prices: item.prices,
+  }));
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <JsonLdScript entities={buildJsonLd(page)} />
+      <JsonLdScript entities={buildJsonLd(page, catalogItems)} />
       <SeoSiteHeader immersive />
       <CatalogOrbit
         heading={page.h1}
         intro={page.intro}
         mobileIntro={isHome ? "Для редких задач. Попользовались — вернули." : undefined}
-        items={CATALOG_ORBIT_ITEMS}
+        items={orbitItems}
       />
       <SeoRentalConditions />
 

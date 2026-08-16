@@ -17,6 +17,7 @@ POSTGRES_USER=prokatilo
 POSTGRES_PASSWORD=change-me-production-postgres-password
 
 NEXT_PUBLIC_API_URL=/api
+BACKEND_INTERNAL_URL=http://backend:8000
 CORS_ORIGINS=https://myprokatilo.ru,https://www.myprokatilo.ru,http://myprokatilo.ru,http://www.myprokatilo.ru
 YOOKASSA_RETURN_URL=https://myprokatilo.ru
 ```
@@ -26,6 +27,7 @@ YOOKASSA_RETURN_URL=https://myprokatilo.ru
 - задает домен для Caddy;
 - задает Postgres database/user/password;
 - задает public frontend API URL;
+- задает внутренний backend URL для server-side каталога;
 - задает CORS и YooKassa return URL.
 
 ## `backend/.env`
@@ -54,15 +56,17 @@ CREATE_TABLES_ON_STARTUP=false
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
+BACKEND_INTERNAL_URL=http://127.0.0.1:8000
 ```
 
 Production через Caddy:
 
 ```env
 NEXT_PUBLIC_API_URL=/api
+BACKEND_INTERNAL_URL=http://backend:8000
 ```
 
-Frontend env не должен содержать секреты. Все публичные переменные начинаются с `NEXT_PUBLIC_`.
+`BACKEND_INTERNAL_URL` используется только Next.js-сервером и не попадает в браузерный bundle. Frontend env не должен содержать секреты. Все публичные переменные начинаются с `NEXT_PUBLIC_`.
 
 ## Что нельзя коммитить
 
