@@ -12,6 +12,9 @@ const PRODUCT_TITLE_ALIASES: Record<SeoProductSlug, readonly string[]> = {
   "xbox-series-s": ["Xbox Series S 512 ГБ"],
   "perforator-sds-plus": ["Перфоратор SDS+"],
   "elektrootvertka-makita-df001dw": ["Электроотвертка Makita DF001DW"],
+  "mikronaushnik-mxmedia-black-magnet": [
+    "Микронаушник MXMEDIA Black Magnet",
+  ],
 };
 
 export function isSeoProductSlug(value: string): value is SeoProductSlug {

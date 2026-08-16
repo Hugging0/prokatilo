@@ -36,7 +36,7 @@ export function CheckoutFooter({
   return (
     <footer
       data-testid="checkout-action-dock"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-2xl border-x border-t border-slate-200 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))]"
     >
       <div className="mx-auto grid max-w-2xl gap-3 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-6 sm:py-4">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-1 sm:block sm:px-0">

@@ -172,7 +172,8 @@ export function AppShell({ initialItemId, initialProductSlug }: AppShellProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-100">
+      <div className="mx-auto min-h-screen w-full max-w-2xl overflow-x-clip bg-slate-50 md:border-x md:border-slate-200/80">
       <Toast message={toast} />
       <CookieNotice />
       <PushNotificationPrompt
@@ -359,6 +360,7 @@ export function AppShell({ initialItemId, initialProductSlug }: AppShellProps) {
           }}
         />
       )}
+      </div>
     </div>
   );
 }

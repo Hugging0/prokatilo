@@ -74,7 +74,7 @@ export function HomeView({
               key={category}
               type="button"
               onClick={() => onCategoryChange(category)}
-              className={`whitespace-nowrap rounded-2xl px-5 py-2.5 text-xs font-black shadow-sm transition-all ${
+              className={`whitespace-nowrap rounded-2xl px-4 py-2.5 text-xs font-black shadow-sm transition-all ${
                 activeCategory === category
                   ? "bg-slate-900 text-white shadow-lg scale-105 font-black"
                   : "border border-slate-100 bg-white text-slate-500 hover:bg-slate-100"

@@ -11,7 +11,8 @@ export type SeoCategorySlug =
   | "igrovye-pristavki"
   | "uborka"
   | "foto"
-  | "instrumenty";
+  | "instrumenty"
+  | "gadzhety";
 
 export type SeoProductSlug =
   | "ps5"
@@ -21,7 +22,8 @@ export type SeoProductSlug =
   | "instax-square-sq1"
   | "xbox-series-s"
   | "perforator-sds-plus"
-  | "elektrootvertka-makita-df001dw";
+  | "elektrootvertka-makita-df001dw"
+  | "mikronaushnik-mxmedia-black-magnet";
 
 export type SeoRoute =
   | "/"
@@ -63,6 +65,11 @@ export interface SeoCatalogItem {
   metaDescription: string;
   image: string;
   imageAlt: string;
+  gallery?: Array<{
+    src: string;
+    alt: string;
+    caption: string;
+  }>;
   fromPrice: string;
   prices: {
     short: number;

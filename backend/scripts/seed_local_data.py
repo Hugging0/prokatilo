@@ -153,6 +153,20 @@ LOCAL_ITEMS = [
         "icon_key": "tools",
         "sort_order": 80,
     },
+    {
+        "title": "Микронаушник MXMEDIA Black Magnet",
+        "description": (
+            "Магнитный Bluetooth-комплект с петлей, адаптивным микрофоном, "
+            "безопасными динамиками и набором магнитных элементов."
+        ),
+        "category": "Гаджеты",
+        "price_per_3h": Decimal("500"),
+        "price_per_24h": Decimal("700"),
+        "price_per_7d": Decimal("2600"),
+        "image_url": "/uploads/catalog/items/transparent/mxmedia-black-magnet.webp",
+        "icon_key": "headphones",
+        "sort_order": 90,
+    },
 ]
 
 

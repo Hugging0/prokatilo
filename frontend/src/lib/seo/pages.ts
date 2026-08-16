@@ -86,6 +86,7 @@ const catalogPage: SeoPageConfig = {
     { name: "Уборка", path: "/catalog/uborka" },
     { name: "Фототехника", path: "/catalog/foto" },
     { name: "Инструменты", path: "/catalog/instrumenty" },
+    { name: "Гаджеты", path: "/catalog/gadzhety" },
     { name: "Зона доставки", path: "/delivery-area" },
   ],
 };

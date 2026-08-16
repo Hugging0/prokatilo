@@ -100,6 +100,41 @@ export function SeoProductDetails({ page }: { page: SeoPageConfig }) {
 
   return (
     <>
+      {item.gallery && item.gallery.length > 0 && (
+        <section className="bg-white">
+          <div className="mx-auto max-w-6xl px-5 py-14 lg:py-20">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl font-black text-slate-950 sm:text-4xl">
+                Комплект крупным планом
+              </h2>
+              <p className="mt-3 text-base font-semibold leading-relaxed text-slate-600">
+                Посмотрите основные элементы до бронирования и сверьте комплект вместе с курьером при получении.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-6 md:grid-cols-2">
+              {item.gallery.map((image) => (
+                <figure key={image.src}>
+                  <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-slate-950">
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      width={1200}
+                      height={900}
+                      sizes="(max-width: 767px) calc(100vw - 2.5rem), 50vw"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  <figcaption className="mt-3 text-sm font-bold leading-relaxed text-slate-600">
+                    {image.caption}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="border-y border-slate-100 bg-slate-50">
         <div className="mx-auto grid max-w-6xl gap-8 px-5 py-14 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:py-20">
           <div>
