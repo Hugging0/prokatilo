@@ -186,6 +186,27 @@ class PushSubscriptionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class TelegramUser(BaseModel):
+    id: int
+    username: str | None = None
+
+
+class TelegramChat(BaseModel):
+    id: int
+    type: str
+
+
+class TelegramMessage(BaseModel):
+    text: str | None = None
+    from_user: TelegramUser | None = Field(None, alias="from")
+    chat: TelegramChat
+
+
+class TelegramUpdate(BaseModel):
+    update_id: int
+    message: TelegramMessage | None = None
+
+
 class OrderBase(BaseModel):
     item_id: int = Field(..., gt=0)
     customer_name: str = Field(..., min_length=1, max_length=100)

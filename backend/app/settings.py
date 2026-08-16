@@ -49,6 +49,26 @@ class Settings(BaseSettings):
         default="mailto:support@prokatilo.local",
         alias="WEB_PUSH_VAPID_SUBJECT",
     )
+    telegram_bot_token: str | None = Field(
+        default=None,
+        alias="TELEGRAM_BOT_TOKEN",
+    )
+    telegram_webhook_secret: str | None = Field(
+        default=None,
+        alias="TELEGRAM_WEBHOOK_SECRET",
+    )
+    telegram_webhook_url: str | None = Field(
+        default=None,
+        alias="TELEGRAM_WEBHOOK_URL",
+    )
+    telegram_allowed_usernames: str = Field(
+        default="",
+        alias="TELEGRAM_ALLOWED_USERNAMES",
+    )
+    telegram_admin_app_url: str = Field(
+        default="https://myprokatilo.ru/app",
+        alias="TELEGRAM_ADMIN_APP_URL",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -82,6 +102,22 @@ class Settings(BaseSettings):
             self.web_push_vapid_public_key
             and self.web_push_vapid_private_key
             and self.web_push_vapid_subject
+        )
+
+    @property
+    def telegram_allowed_username_set(self) -> set[str]:
+        return {
+            username.strip().removeprefix("@").lower()
+            for username in self.telegram_allowed_usernames.split(",")
+            if username.strip().removeprefix("@")
+        }
+
+    @property
+    def telegram_is_configured(self) -> bool:
+        return bool(
+            self.telegram_bot_token
+            and self.telegram_webhook_secret
+            and self.telegram_allowed_username_set
         )
 
 

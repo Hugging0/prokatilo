@@ -1,6 +1,15 @@
+import secrets
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    Header,
+    HTTPException,
+    Query,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +20,7 @@ from app.database import Base, engine, get_db
 from app.notifications import notify_admins_about_new_order, notify_user_about_order_status
 from app.payments import create_yookassa_payment, get_yookassa_payment
 from app.settings import get_settings
+from app.telegram_notifications import handle_telegram_update
 
 
 settings = get_settings()
@@ -119,6 +129,31 @@ async def health_check() -> schemas.HealthRead:
         status="ok",
         service="prokatilo-api",
     )
+
+
+@app.post(
+    "/telegram/webhook",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["Telegram"],
+    include_in_schema=False,
+)
+async def telegram_webhook(
+    update: schemas.TelegramUpdate,
+    x_telegram_bot_api_secret_token: Annotated[str | None, Header()] = None,
+) -> None:
+    expected_secret = settings.telegram_webhook_secret
+    if (
+        not settings.telegram_is_configured
+        or expected_secret is None
+        or x_telegram_bot_api_secret_token is None
+        or not secrets.compare_digest(
+            x_telegram_bot_api_secret_token,
+            expected_secret,
+        )
+    ):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    await handle_telegram_update(settings=settings, update=update)
 
 
 @app.get(
@@ -421,6 +456,7 @@ async def delete_admin_item(
 )
 async def create_order(
     order: schemas.OrderCreate,
+    background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[models.UserModel, Depends(get_current_user)],
 ) -> models.OrderModel:
@@ -429,10 +465,10 @@ async def create_order(
         order_data=order,
         user=current_user,
     )
-    await notify_admins_about_new_order(
-        db=db,
+    background_tasks.add_task(
+        notify_admins_about_new_order,
         settings=settings,
-        order=created_order,
+        order_id=created_order.id,
     )
     return created_order
 
