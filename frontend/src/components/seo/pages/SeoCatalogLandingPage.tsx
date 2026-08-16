@@ -10,21 +10,17 @@ import { SEO_BLOG_POSTS, SEO_CATALOG_ITEMS } from "@/lib/seo/content";
 import { buildJsonLd } from "@/lib/seo/jsonld";
 import type { SeoPageConfig } from "@/lib/seo/site";
 
-const CATALOG_ORBIT_ITEM_IDS = [3, 4, 6, 5] as const;
+const CATALOG_ORBIT_ITEMS = SEO_CATALOG_ITEMS.map((item) => ({
+  appItemId: item.appItemId,
+  title: item.orbitTitle,
+  description: item.orbitDescription,
+  image: item.image,
+  imageAlt: item.imageAlt,
+  prices: item.prices,
+}));
 
 export function SeoCatalogLandingPage({ page }: { page: SeoPageConfig }) {
   const isHome = page.path === "/";
-  const orbitItems = CATALOG_ORBIT_ITEM_IDS.flatMap((itemId) => {
-    const item = SEO_CATALOG_ITEMS.find((candidate) => candidate.appItemId === itemId);
-    return item ? [{
-      appItemId: item.appItemId,
-      title: item.orbitTitle,
-      description: item.orbitDescription,
-      image: item.image,
-      imageAlt: item.imageAlt,
-      prices: item.prices,
-    }] : [];
-  });
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -34,7 +30,7 @@ export function SeoCatalogLandingPage({ page }: { page: SeoPageConfig }) {
         heading={page.h1}
         intro={page.intro}
         mobileIntro={isHome ? "Для редких задач. Попользовались — вернули." : undefined}
-        items={orbitItems}
+        items={CATALOG_ORBIT_ITEMS}
       />
       <SeoRentalConditions />
 

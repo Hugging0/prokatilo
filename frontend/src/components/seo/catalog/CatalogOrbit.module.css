@@ -100,7 +100,7 @@
   top: 51%;
   left: 58%;
   display: block;
-  width: clamp(320px, 46vw, 760px);
+  width: min(clamp(320px, 46vw, 760px), calc(100svh - 314px));
   aspect-ratio: 1;
   padding: 0;
   border: 0;
@@ -224,16 +224,19 @@
 }
 
 .progressDots {
-  display: grid;
-  grid-template-columns: repeat(4, 24px);
-  gap: 5px;
+  display: flex;
+  width: 100%;
+  max-width: 190px;
+  gap: 4px;
   margin-top: 4px;
 }
 
 .progressDots button {
   position: relative;
-  width: 24px;
+  width: auto;
+  min-width: 0;
   height: 24px;
+  flex: 1 1 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -462,6 +465,7 @@
 @media (max-height: 760px) and (min-width: 861px) {
   .heroCopy { top: 34px; }
   .orbitStage { height: calc(100svh - 78px - 130px); }
+  .product { width: min(clamp(320px, 46vw, 760px), calc(100svh - 266px)); }
   .infoRail { min-height: 108px; }
 }
 
