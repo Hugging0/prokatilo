@@ -493,7 +493,7 @@ export interface AuthRegisterPayload {
   email: string;
   password: string;
   name: string;
-  phone?: string | null;
+  phone: string;
 }
 
 export interface AuthLoginPayload {

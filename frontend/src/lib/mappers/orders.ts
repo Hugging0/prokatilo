@@ -89,6 +89,7 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
   tariff: TariffType;
   paymentMethod: PaymentMethod;
   deliveryAddress: string;
+  customerPhone: string;
   courierComment: string;
   selectedDate: string;
   selectedTime: string;
@@ -100,7 +101,7 @@ export function mapAppCheckoutToOrderCreatePayload(input: {
     item_id: input.item.id,
     customer_name: input.user.name,
     customer_email: input.user.email,
-    customer_phone: input.user.phone,
+    customer_phone: input.customerPhone.trim(),
     delivery_address:
       input.deliveryAddress.trim() || UI_COPY.checkout.addressFallback,
     payment_method: input.paymentMethod,

@@ -32,6 +32,7 @@ export function useCheckoutAvailability({
   selectedTime,
   bookingSlots,
   deliveryAddress,
+  customerPhone,
   serviceSettings,
 }: {
   selectedItem: AppItem;
@@ -40,6 +41,7 @@ export function useCheckoutAvailability({
   selectedTime: string;
   bookingSlots: BookingSlot[];
   deliveryAddress: string;
+  customerPhone: string;
   serviceSettings: PublicServiceSettingsDto;
 }) {
   const [remoteDeliveryEstimate, setRemoteDeliveryEstimate] = useState<{
@@ -83,7 +85,8 @@ export function useCheckoutAvailability({
   );
   const canGoNextFromTiming =
     selectedItem.available && isPeriodValid && !hasConflict;
-  const canGoNextFromAddress = deliveryAddress.trim().length >= 5;
+  const canGoNextFromAddress =
+    deliveryAddress.trim().length >= 5 && customerPhone.trim().length >= 3;
   const rentalDurationSummary = getTariffLabel(selectedTariff);
   const deliveryIntervalSummary = selectedStartAt
       ? `${formatDeliveryDateLabel(

@@ -8,6 +8,7 @@ import type { DeliveryEstimate } from "../lib/delivery-zone";
 export function ReviewStep({
   selectedItem,
   deliveryAddress,
+  customerPhone,
   deliveryEstimate,
   deliveryIntervalSummary,
   rentalDurationSummary,
@@ -17,6 +18,7 @@ export function ReviewStep({
 }: {
   selectedItem: AppItem;
   deliveryAddress: string;
+  customerPhone: string;
   deliveryEstimate: DeliveryEstimate;
   deliveryIntervalSummary: string;
   rentalDurationSummary: string;
@@ -82,6 +84,11 @@ export function ReviewStep({
         <ReviewRow
           title="Адрес доставки"
           value={deliveryAddress}
+          onEdit={onEditAddress}
+        />
+        <ReviewRow
+          title="Телефон для связи"
+          value={customerPhone}
           onEdit={onEditAddress}
         />
         <ReviewRow

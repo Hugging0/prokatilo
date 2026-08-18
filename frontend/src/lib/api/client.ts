@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/lib/env";
+import { normalizeApiErrorDetail } from "@/lib/api/errors";
 
 interface ApiRequestOptions extends RequestInit {
   query?: Record<string, string | number | boolean | undefined>;
@@ -57,9 +58,9 @@ export async function apiRequest<T>(
 
     try {
       const errorBody = (await response.json()) as {
-        detail?: string;
+        detail?: unknown;
       };
-      detail = errorBody.detail || detail;
+      detail = normalizeApiErrorDetail(errorBody.detail) ?? detail;
     } catch {
       // Ignore parsing errors and keep a generic message.
     }

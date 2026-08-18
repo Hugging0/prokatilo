@@ -98,6 +98,7 @@ export function AppShell({ initialItemId, initialProductSlug }: AppShellProps) {
     },
     onLogout: () => {
       setShouldReturnToCheckoutAfterAuth(false);
+      checkout.setCustomerPhone("");
       setView("home");
     },
   });
@@ -139,6 +140,8 @@ export function AppShell({ initialItemId, initialProductSlug }: AppShellProps) {
           tariff: checkout.selectedTariff,
           paymentMethod,
           deliveryAddress: checkout.deliveryAddress,
+          customerPhone:
+            checkout.customerPhone.trim() || auth.user.phone.trim(),
           courierComment: checkout.courierComment,
           promoCode: checkout.appliedPromoCode,
           bonusSpendAmount: checkout.bonusSpendAmount,
@@ -238,6 +241,9 @@ export function AppShell({ initialItemId, initialProductSlug }: AppShellProps) {
           selectedDate={checkout.selectedDate}
           selectedTime={checkout.selectedTime}
           deliveryAddress={checkout.deliveryAddress}
+          customerPhone={
+            checkout.customerPhone || auth.user?.phone || ""
+          }
           courierComment={checkout.courierComment}
           authToken={auth.authToken ?? ""}
           promoCode={checkout.promoCode}
@@ -262,6 +268,7 @@ export function AppShell({ initialItemId, initialProductSlug }: AppShellProps) {
           onEndDateChange={checkout.setSelectedEndDate}
           onEndTimeChange={checkout.setSelectedEndTime}
           onDeliveryAddressChange={checkout.setDeliveryAddress}
+          onCustomerPhoneChange={checkout.setCustomerPhone}
           onCourierCommentChange={checkout.setCourierComment}
           onNotify={showNotification}
           onPromoCodeChange={checkout.setPromoCode}

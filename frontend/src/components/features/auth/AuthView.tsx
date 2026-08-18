@@ -126,6 +126,11 @@ export function AuthView({
               <input
                 name="phone"
                 type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                required
+                minLength={3}
+                maxLength={50}
                 placeholder={UI_COPY.auth.phonePlaceholder}
                 className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl py-5 pl-14 pr-6 font-bold text-slate-700 outline-none focus:border-rose-500 transition-all"
               />

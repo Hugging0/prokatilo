@@ -129,6 +129,7 @@ export function CheckoutLoyaltyCard({
           value={promoCode}
           onChange={(event) => onPromoCodeChange(event.target.value.toUpperCase())}
           placeholder="Промокод"
+          maxLength={50}
           className="min-h-12 min-w-0 flex-1 rounded-2xl border border-slate-200 px-4 text-base font-black uppercase text-slate-950 outline-none focus:border-orange-300"
         />
         <AppButton

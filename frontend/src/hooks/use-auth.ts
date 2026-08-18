@@ -95,6 +95,11 @@ export function useAuth({
       return;
     }
 
+    if (authMode === "register" && phone.length < 3) {
+      onNotify("Введите телефон для связи");
+      return;
+    }
+
     if (authMode === "register" && !hasAcceptedLegalTerms) {
       onNotify(UI_COPY.legal.registrationAgreementHint);
       return;
@@ -109,7 +114,7 @@ export function useAuth({
               email,
               password,
               name,
-              phone: phone || null,
+              phone,
             })
           : await loginUser({
               email,

@@ -1,4 +1,4 @@
-import { Info, MapPin } from "lucide-react";
+import { Info, MapPin, Phone } from "lucide-react";
 import { useState } from "react";
 
 import { CheckoutPanel } from "./CheckoutPanel";
@@ -11,15 +11,19 @@ import {
 
 export function AddressStep({
   deliveryAddress,
+  customerPhone,
   courierComment,
   deliveryEstimate,
   onDeliveryAddressChange,
+  onCustomerPhoneChange,
   onCourierCommentChange,
 }: {
   deliveryAddress: string;
+  customerPhone: string;
   courierComment: string;
   deliveryEstimate: DeliveryEstimate;
   onDeliveryAddressChange: (address: string) => void;
+  onCustomerPhoneChange: (phone: string) => void;
   onCourierCommentChange: (comment: string) => void;
 }) {
   const [isDeliveryInfoOpen, setIsDeliveryInfoOpen] = useState(false);
@@ -39,6 +43,7 @@ export function AddressStep({
             value={deliveryAddress}
             onChange={(event) => onDeliveryAddressChange(event.target.value)}
             placeholder="Например: Профсоюзная 152"
+            maxLength={500}
             className="mt-4 w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-base font-bold text-slate-700 outline-none transition focus:border-slate-300"
           />
           {addressSuggestions.length > 0 && (
@@ -78,11 +83,30 @@ export function AddressStep({
               </p>
             )}
           </div>
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <PanelLabel icon={Phone} label="Телефон для связи" />
+            <input
+              value={customerPhone}
+              onChange={(event) => onCustomerPhoneChange(event.target.value)}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              minLength={3}
+              maxLength={50}
+              placeholder="+7 999 000-00-00"
+              aria-label="Телефон для связи"
+              className="mt-4 w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-base font-bold text-slate-700 outline-none transition focus:border-slate-300"
+            />
+            <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
+              Нужен оператору для подтверждения доставки.
+            </p>
+          </div>
           <textarea
             value={courierComment}
             onChange={(event) => onCourierCommentChange(event.target.value)}
             placeholder="Комментарий курьеру"
             rows={3}
+            maxLength={1000}
             className="mt-3 w-full resize-none rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-base font-bold text-slate-700 outline-none transition focus:border-slate-300"
           />
         </CheckoutPanel>

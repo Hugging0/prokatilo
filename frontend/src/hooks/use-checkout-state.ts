@@ -14,6 +14,7 @@ export function useCheckoutState() {
   const [selectedEndDate, setSelectedEndDate] = useState(getTodayDateInputValue);
   const [selectedEndTime, setSelectedEndTime] = useState("15:00");
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [courierComment, setCourierComment] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
@@ -69,6 +70,7 @@ export function useCheckoutState() {
     selectedEndDate,
     selectedEndTime,
     deliveryAddress,
+    customerPhone,
     courierComment,
     promoCode,
     appliedPromoCode,
@@ -81,6 +83,7 @@ export function useCheckoutState() {
     setSelectedEndDate,
     setSelectedEndTime,
     setDeliveryAddress,
+    setCustomerPhone,
     setCourierComment,
     setPromoCode,
     setAppliedPromoCode,

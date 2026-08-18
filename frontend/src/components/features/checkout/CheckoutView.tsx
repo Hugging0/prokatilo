@@ -32,6 +32,7 @@ interface CheckoutViewProps {
   selectedDate: string;
   selectedTime: string;
   deliveryAddress: string;
+  customerPhone: string;
   courierComment: string;
   authToken: string;
   promoCode: string;
@@ -56,6 +57,7 @@ interface CheckoutViewProps {
   onEndDateChange: (date: string) => void;
   onEndTimeChange: (time: string) => void;
   onDeliveryAddressChange: (address: string) => void;
+  onCustomerPhoneChange: (phone: string) => void;
   onCourierCommentChange: (comment: string) => void;
   onNotify: (message: string) => void;
   onPromoCodeChange: (code: string) => void;
@@ -70,6 +72,7 @@ export function CheckoutView({
   selectedDate,
   selectedTime,
   deliveryAddress,
+  customerPhone,
   courierComment,
   authToken,
   promoCode,
@@ -94,6 +97,7 @@ export function CheckoutView({
   onEndDateChange,
   onEndTimeChange,
   onDeliveryAddressChange,
+  onCustomerPhoneChange,
   onCourierCommentChange,
   onNotify,
   onPromoCodeChange,
@@ -108,6 +112,7 @@ export function CheckoutView({
     selectedTime,
     bookingSlots,
     deliveryAddress,
+    customerPhone,
     serviceSettings,
   });
 
@@ -257,9 +262,11 @@ export function CheckoutView({
         {step === 2 && (
           <AddressStep
             deliveryAddress={deliveryAddress}
+            customerPhone={customerPhone}
             courierComment={courierComment}
             deliveryEstimate={availability.deliveryEstimate}
             onDeliveryAddressChange={onDeliveryAddressChange}
+            onCustomerPhoneChange={onCustomerPhoneChange}
             onCourierCommentChange={onCourierCommentChange}
           />
         )}
@@ -269,6 +276,7 @@ export function CheckoutView({
             <ReviewStep
               selectedItem={selectedItem}
               deliveryAddress={deliveryAddress}
+              customerPhone={customerPhone}
               deliveryEstimate={availability.deliveryEstimate}
               deliveryIntervalSummary={availability.deliveryIntervalSummary}
               rentalDurationSummary={availability.rentalDurationSummary}
