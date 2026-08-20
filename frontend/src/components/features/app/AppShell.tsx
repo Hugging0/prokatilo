@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { AuthView } from "@/components/features/auth/AuthView";
 import { AppDeepLinkLoading } from "@/components/features/app/AppDeepLinkLoading";
+import { InstallAppPrompt } from "@/components/features/app/InstallAppPrompt";
 import { BonusesView } from "@/components/features/bonuses/BonusesView";
 import { CheckoutView } from "@/components/features/checkout/CheckoutView";
 import { DetailsView } from "@/components/features/catalog/DetailsView";
@@ -179,6 +180,7 @@ export function AppShell({ initialItemId, initialProductSlug }: AppShellProps) {
       <div className="mx-auto min-h-screen w-full max-w-2xl overflow-x-clip bg-slate-50 md:border-x md:border-slate-200/80">
       <Toast message={toast} />
       <CookieNotice />
+      <InstallAppPrompt />
       <PushNotificationPrompt
         isOpen={isPushPromptOpen}
         isLoading={isPushPromptSubmitting}

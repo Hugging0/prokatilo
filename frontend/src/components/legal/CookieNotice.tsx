@@ -21,6 +21,7 @@ export function CookieNotice() {
   const acceptNotice = () => {
     localStorage.setItem(COOKIE_NOTICE_KEY, "true");
     setIsVisible(false);
+    window.dispatchEvent(new Event("prokatilo:cookie-notice-accepted"));
   };
 
   if (!isVisible) {

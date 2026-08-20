@@ -44,3 +44,31 @@ button {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@keyframes install-prompt-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes install-prompt-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+}
+
+.install-prompt-backdrop {
+  animation: install-prompt-backdrop-in 180ms ease-out both;
+}
+
+.install-prompt-sheet {
+  animation: install-prompt-sheet-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-prompt-backdrop,
+  .install-prompt-sheet {
+    animation: none;
+  }
+}
